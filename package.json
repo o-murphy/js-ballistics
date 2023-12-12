@@ -1,6 +1,6 @@
 {
   "name": "js-ballistics",
-  "version": "1.0.0",
+  "version": "1.0.0post1",
   "description": "LGPL library for small arms ballistic calculations (JavaScript ES6+)",
   "main": "src/index.js",
   "scripts": {
@@ -11,13 +11,10 @@
     "url": "git+https://github.com/o-murphy/js-ballistics.git"
   },
   "keywords": [
-    "py_ballisticcalc",
-    "ballistics",
-    "Cython",
     "ballistic",
     "calculator",
-    "python",
-    "python3"
+    "js",
+    "es6"
   ],
   "author": "o-murphy",
   "license": "ISC",

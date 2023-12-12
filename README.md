@@ -2,8 +2,8 @@
 LGPL library for small arms ballistic calculations (JavaScript ES6+)
 
 ### Table of contents
-<!-- * **[Installation](#installation)**
-  * [Latest stable](#latest-stable-release-from-pypi)
+* **[Installation](#installation)**
+<!--   * [Latest stable](#latest-stable-release-from-pypi)
   * [From sources](#installing-from-sources)
   * [Clone and build](#clone-and-build)
 * **[Usage](#usage)**
@@ -17,6 +17,11 @@ LGPL library for small arms ballistic calculations (JavaScript ES6+)
 * **[Sister projects](#sister-projects)** -->
 * **[About project](#about-project)**
 
+
+## Installation
+```shell
+npm i js-ballistics
+```
 
 ## About project
 
