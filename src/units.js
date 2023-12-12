@@ -593,9 +593,9 @@ Energy.Joule = Unit.Joule;
 // console.log(distance.in(Distance.Inch));
 
 
-module.exports = {
-    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict
-}
+// module.exports = {
+//     AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict
+// }
 
-// // ES6 syntax
-// export { AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict }
+// ES6 syntax
+export { AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict }
