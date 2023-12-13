@@ -2,99 +2,117 @@
 
 
 class AbstractUnit {
-
-    // Abstract class for unit of measure instance definition
-    // Stores defined unit and value, applies conversions to other units
-
+    /**
+     * Abstract class for unit of measure instance definition.
+     * Stores defined unit and value, applies conversions to other units.
+     *
+     * @param {number} value - Numeric value of the unit.
+     * @param {Unit} units - Unit as Unit enum.
+     */
     constructor(value, units) {
-
-        // :param units: unit as Unit enum
-        // :param value: numeric value of the unit
-
         this._value = this.toRaw(value, units);
         this._definedUnits = units;
     }
 
+    /**
+     * Returns a human-readable representation of the value with its unit.
+     *
+     * @return {string} A string representing the value with its unit.
+     */
     toString() {
-
-        // Returns readable unit value
-        // :return: readable unit value
-
+        // Extract the unit details based on the defined units.
         const units = this._definedUnits;
         const props = UnitPropsDict[units];
+
+        // Convert the raw value to the specified unit.
         const v = this.fromRaw(this._value, units);
+
+        // Format the value with a fixed number of decimal places and concatenate the unit symbol.
         return `${v.toFixed(props.accuracy)}${props.symbol}`;
     }
 
+    /**
+     * Validates the units.
+     *
+     * @param {number} value - Value of the unit.
+     * @param {Unit} units - Unit enum type.
+     * @return {number} Value in specified units.
+     * @throws {TypeError} When the provided units are not of the expected type.
+     * @throws {Error} When the provided units are not supported.
+     */
     _unit_support_error(value, units) {
-
-        // Validates the units
-        // :param value: value of the unit
-        // :param units: Unit enum type
-        // :return: value in specified units
 
         if (!(units instanceof this.constructor)) {
             const err_msg = `Type expected: ${this.constructor.name}, ${typeof units} found: ${units} (${value})`;
             throw new TypeError(err_msg);
         }
+
         if (!Object.values(this).includes(units)) {
             throw new Error(`${this.constructor.name}: unit ${units} is not supported`);
         }
+
         return 0;
     }
 
+    /**
+     * Converts value with specified units to raw value.
+     *
+     * @param {number} value - Value of the unit.
+     * @param {Unit} units - Unit enum type.
+     * @return {number} Value in specified units.
+     */
     toRaw(value, units) {
-
-        // Converts value with specified units to raw value
-        // :param value: value of the unit
-        // :param units: Unit enum type
-        // :return: value in specified units
-
         return this._unit_support_error(value, units);
     }
 
+    /**
+     * Converts raw value to specified units.
+     *
+     * @param {number} value - Raw value of the unit.
+     * @param {Unit} units - Unit enum type.
+     * @return {number} Value in specified units.
+     */
     fromRaw(value, units) {
-
-        // Converts raw value to specified units
-        // :param value: raw value of the unit
-        // :param units: Unit enum type
-        // :return: value in specified units
-
         return this._unit_support_error(value, units);
     }
 
+    /**
+     * Returns a new unit instance in specified units.
+     *
+     * @param {Unit} units - Unit enum type.
+     * @return {AbstractUnit} New unit instance in specified units.
+     */
     to(units) {
-
-        // Returns new unit instance in specified units
-        // :param units: Unit enum type
-        // :return: new unit instance in specified units
-
         const value = this.in(units);
         return new this.constructor(value, units);
     }
 
+    /**
+     * Returns value in specified units.
+     *
+     * @param {Unit} units - Unit enum type.
+     * @return {number} Value in specified units.
+     */
     in(units) {
-
-        // Returns value in specified units
-        // :param units: Unit enum type
-        // :return: value in specified units
 
         return this.fromRaw(this._value, units);
     }
 
+    /**
+     * Returns defined units.
+     *
+     * @return {Unit} Defined units.
+     */
     get units() {
-
-        // Returns defined units
-        // :return: defined units
-
         return this._definedUnits;
     }
 
+    /**
+     * Raw unit value getter.
+     *
+     * @return {number} Raw unit value.
+     */
     get rawValue() {
-
-        // Raw unit value getter
-        // :return: raw unit value
-
         return this._value;
     }
 };
@@ -425,9 +443,8 @@ class Energy extends AbstractUnit {
 }
 
 
+// Unit types enum
 const Unit = {
-    // Unit types enum
-
     RAD: 0,
     Degree: 1,
     MOA: 2,
@@ -472,6 +489,7 @@ const Unit = {
 };
 
 
+// Dict of properties of the Unit enum type
 const UnitPropsDict = {
     [Unit.RAD]: { name: 'radian', accuracy: 6, symbol: 'rad' },
     [Unit.Degree]: { name: 'degree', accuracy: 4, symbol: '°' },
@@ -593,9 +611,34 @@ Energy.Joule = Unit.Joule;
 // console.log(distance.in(Distance.Inch));
 
 
-// module.exports = {
-//     AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict
-// }
+/**
+ * Coerces the given instance to the specified class type or creates a new instance.
+ *
+ * @param {Object} instance - The instance to coerce or create.
+ * @param {Class} expectedClass - The expected class type.
+ * @param {Unit} defaultUnit - The default unit for creating a new instance.
+ * @returns {AbstractUnit|Object} An instance of the expected class type.
+ * @throws {TypeError} If the instance is not of the expected class type or 'number'.
+ */
+function unitTypeCoerce(instance, expectedClass, defaultUnit) {
+    if (!instance) {
+        // If the instance is falsy, create a new instance using the default unit.
+        return new expectedClass(instance, defaultUnit);
+    } else if (instance instanceof expectedClass) {
+        // If the instance is already of the expected class type, return it.
+        return instance;
+    } else if (typeof instance === 'number') {
+        // If the instance is a number, create a new instance using the default unit.
+        return new expectedClass(instance, defaultUnit);
+    } else {
+        // If the instance is not of the expected type, throw a TypeError.
+        throw new TypeError(`Instance must be a type of ${expectedClass.className} or 'number'`);
+    }
+}
 
-// ES6 syntax
-export { AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict }
+
+
+export {
+    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
+    Unit, UnitPropsDict, unitTypeCoerce
+}

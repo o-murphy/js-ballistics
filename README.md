@@ -1,5 +1,5 @@
 # BallisticCalculator
-LGPL library for small arms ballistic calculations (JavaScript ES6+)
+ISC library for small arms ballistic calculations (JavaScript ES6+)
 
 ### Table of contents
 * **[Installation](#installation)**
