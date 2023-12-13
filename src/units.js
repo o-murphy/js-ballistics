@@ -593,9 +593,22 @@ Energy.Joule = Unit.Joule;
 // console.log(distance.in(Distance.Inch));
 
 
-// module.exports = {
-//     AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict
-// }
+function unitTypeCoerce(instance, expectedClass, defaultUnit) {
 
-// ES6 syntax
-export { AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict }
+    if (!instance) {
+        return new expectedClass(instance, defaultUnit)
+    }
+    else if (instance instanceof expectedClass) {
+        return instance
+    } else if (typeof instance === 'number') {
+        return new expectedClass(instance, defaultUnit)
+    } else {
+        throw new TypeError(`Instance have to be a type of ${expectedClass.className} or 'number'`)
+    }
+}
+
+
+export {
+    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
+    Unit, UnitPropsDict, unitTypeCoerce
+}
