@@ -104,6 +104,9 @@ dist
 .temp
 .cache
 
+# intelij
+.idea/*
+
 # Docusaurus cache and generated files
 .docusaurus
 
