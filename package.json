@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "js-ballistics",
   "version": "1.0.0post1",
   "description": "LGPL library for small arms ballistic calculations (JavaScript ES6+)",
