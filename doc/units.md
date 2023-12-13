@@ -1,8 +1,5 @@
 # Units Module Documentation
 
-
-# Units Module Documentation
-
 - [AbstractUnit Class](#abstractunit-class)
   - [Constructor](#constructor)
   - [Methods](#methods)
