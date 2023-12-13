@@ -1,8 +1,10 @@
-import {Unit, Distance} from './units'; // Adjust the path accordingly
+import { Unit, Distance, unitTypeCoerce } from './units'; // Adjust the path accordingly
 
 class CalcSettings {
-    // Global settings class of the js-ballistics library
-
+    /**
+     * Global settings class of the js-ballistics library.
+     * Defines default units and configuration settings.
+     */
     constructor() {
         this.Units = {
             sight_height: Unit.Inch,
@@ -26,20 +28,18 @@ class CalcSettings {
         this.USE_POWDER_SENSITIVITY = false;
     }
 
+    /**
+     * Sets the maximum calculation step size.
+     * @param {number | Distance} value - The value of the maximum calculation step size.
+     */
     setMaxCalcStepSize(value) {
-        console.warn("Settings._MAX_CALC_STEP_SIZE: " +
-            "Change this property only if you know what you are doing;" +
+        console.warn("CalcSettings._MAX_CALC_STEP_SIZE: " +
+            "Change this property only if you know what you are doing; " +
             "too big step can corrupt calculation accuracy");
-        console.warn(value)
-        if (!(value instanceof Distance) && !(typeof value === 'number')) {
-            throw new Error("MAX_CALC_STEP_SIZE must be a type of 'Distance'");
-        } else if (value instanceof Distance) {
-            this._MAX_CALC_STEP_SIZE = value
-        } else {
-            this._MAX_CALC_STEP_SIZE = new Distance(value, this.Units.distance);
-        }
+
+        this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Distance, this.Units.distance);
     }
 }
 
-const calcSettings = new CalcSettings();  // Global settings instance of the js-ballistics library
+const calcSettings = new CalcSettings(); // Global settings instance of the js-ballistics library
 export default calcSettings;
