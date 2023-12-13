@@ -333,7 +333,7 @@ class Pressure extends AbstractUnit {
         if (units === Pressure.Bar) {
             return value * 750.061683;
         }
-        if (units === Pressure.HP) {
+        if (units === Pressure.hPa) {
             return value * 750.061683 / 1000;
         }
         if (units === Pressure.PSI) {
@@ -352,7 +352,7 @@ class Pressure extends AbstractUnit {
         if (units === Pressure.Bar) {
             return value / 750.061683;
         }
-        if (units === Pressure.HP) {
+        if (units === Pressure.hPa) {
             return value / 750.061683 * 1000;
         }
         if (units === Pressure.PSI) {
@@ -452,7 +452,7 @@ const Unit = {
     MmHg: 40,
     InHg: 41,
     Bar: 42,
-    HP: 43,
+    hPa: 43,
     PSI: 44,
     Fahrenheit: 50,
     Celsius: 51,
@@ -500,7 +500,7 @@ const UnitPropsDict = {
     [Unit.MmHg]: { name: 'mmHg', accuracy: 0, symbol: 'mmHg' },
     [Unit.InHg]: { name: 'inHg', accuracy: 6, symbol: 'inHg' },
     [Unit.Bar]: { name: 'bar', accuracy: 2, symbol: 'bar' },
-    [Unit.HP]: { name: 'hPa', accuracy: 4, symbol: 'hPa' },
+    [Unit.hPa]: { name: 'hPa', accuracy: 4, symbol: 'hPa' },
     [Unit.PSI]: { name: 'psi', accuracy: 4, symbol: 'psi' },
 
     [Unit.Fahrenheit]: { name: 'fahrenheit', accuracy: 1, symbol: '°F' },
@@ -569,7 +569,7 @@ Weight.Newton = Unit.Newton;
 Pressure.MmHg = Unit.MmHg;
 Pressure.InHg = Unit.InHg;
 Pressure.Bar = Unit.Bar;
-Pressure.HP = Unit.HP;
+Pressure.hPa = Unit.hPa;
 Pressure.PSI = Unit.PSI;
 
 

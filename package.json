@@ -1,8 +1,8 @@
 {
   "type": "module",
   "name": "js-ballistics",
-  "version": "1.0.0post1",
-  "description": "LGPL library for small arms ballistic calculations (JavaScript ES6+)",
+  "version": "1.0.1",
+  "description": "ISC library for small arms ballistic calculations (JavaScript ES6+)",
   "main": "src/index.js",
   "scripts": {
     "test": "jest"
