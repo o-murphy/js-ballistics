@@ -1,4 +1,4 @@
-import { AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy, Unit, UnitPropsDict } from "../src/units.js";
+import { Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy } from "../src/index";
 
 
 describe('Ballistics Library Tests', () => {
