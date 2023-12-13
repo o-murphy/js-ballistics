@@ -23,6 +23,11 @@ describe('Settings', () => {
         expect(calcSettings._MAX_CALC_STEP_SIZE).toEqual(new Distance(100, calcSettings.Units.distance));
     });
 
+    test('should throw error for invalid MAX_CALC_STEP_SIZE value', () => {
+        const invalidValue = 'invalid'; // Replace with an invalid value
+        expect(() => calcSettings.setMaxCalcStepSize(invalidValue)).toThrowError("MAX_CALC_STEP_SIZE must be a type of 'Distance'");
+    });
+
     test('should modify USE_POWDER_SENSITIVITY', () => {
         calcSettings.USE_POWDER_SENSITIVITY = true;
         expect(calcSettings.USE_POWDER_SENSITIVITY).toBe(true);
