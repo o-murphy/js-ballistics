@@ -22,7 +22,7 @@ class AbstractUnit {
     toString() {
         // Extract the unit details based on the defined units.
         const units = this._definedUnits;
-        const props = UnitPropsDict[units];
+        const props = UnitProps[units];
 
         // Convert the raw value to the specified unit.
         const v = this.fromRaw(this._value, units);
@@ -490,7 +490,7 @@ const Unit = {
 
 
 // Dict of properties of the Unit enum type
-const UnitPropsDict = {
+const UnitProps = {
     [Unit.Radian]: { name: 'radian', accuracy: 6, symbol: 'rad' },
     [Unit.Degree]: { name: 'degree', accuracy: 4, symbol: '°' },
     [Unit.MOA]: { name: 'MOA', accuracy: 2, symbol: 'MOA' },
@@ -755,5 +755,5 @@ function unitTypeCoerce2(instance, expected) {
 
 export {
     // AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
-    Unit, UnitPropsDict, unitTypeCoerce, unitTypeCoerce2, UNew, Measure
+    Unit, UnitProps, unitTypeCoerce, unitTypeCoerce2, UNew, Measure
 }
