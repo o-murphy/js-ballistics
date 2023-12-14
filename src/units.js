@@ -131,7 +131,7 @@ class Angular extends AbstractUnit {
         if (units === Angular.MOA) {
             return (value / 180) * Math.PI / 60;
         }
-        if (units === Angular.Mil) {
+        if (units === Angular.MIL) {
             return (value / 3200) * Math.PI;
         }
         if (units === Angular.MRad) {
@@ -163,7 +163,7 @@ class Angular extends AbstractUnit {
         if (units === Angular.MOA) {
             return (value * 180) / Math.PI * 60;
         }
-        if (units === Angular.Mil) {
+        if (units === Angular.MIL) {
             return (value * 3200) / Math.PI;
         }
         if (units === Angular.MRad) {
@@ -545,7 +545,7 @@ const UnitPropsDict = {
 Angular.Radian = Unit.RAD;
 Angular.Degree = Unit.Degree;
 Angular.MOA = Unit.MOA;
-Angular.Mil = Unit.MIL;
+Angular.MIL = Unit.MIL;
 Angular.MRad = Unit.MRAD;
 Angular.Thousand = Unit.Thousand;
 Angular.InchesPer100Yd = Unit.InchesPer100Yd;

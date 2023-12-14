@@ -24,6 +24,10 @@ import {
     cSpeedOfSound
 } from "./conditions";
 import {
+    Weapon,
+    Ammo
+} from "./munition";
+import {
     DragDataPoint,
     DragModel,
     makeDataPoints
@@ -53,5 +57,7 @@ export {
     cSpeedOfSound,
     DragDataPoint,
     DragModel,
-    makeDataPoints
+    makeDataPoints,
+    Weapon,
+    Ammo
 }
