@@ -22,7 +22,12 @@ import {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound
-} from "./conditions.js";
+} from "./conditions";
+import {
+    DragDataPoint,
+    DragModel,
+    makeDataPoints
+} from "./drag_model";
 
 export {
     AbstractUnit,
@@ -46,4 +51,7 @@ export {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound,
+    DragDataPoint,
+    DragModel,
+    makeDataPoints
 }
