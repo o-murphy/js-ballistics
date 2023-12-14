@@ -1,7 +1,6 @@
 import {
-    Distance, Angular, calcSettings,
-    Weapon, Unit, DragTable,
-    Ammo, DragModel, Velocity, Temperature
+    calcSettings, Weapon, Ammo,
+    UNew, Unit, DragTable, DragModel
 } from '../src/index'; // Import necessary modules and classes
 
 
@@ -16,10 +15,10 @@ describe('Weapon Class', () => {
     });
 
     test('Custom Constructor', () => {
-        const customSightHeight = new Distance(3, Unit.Inch);
-        const customZeroDistance = new Distance(200, Unit.Yard);
-        const customTwist = new Distance(3, Unit.Inch);
-        const customZeroLookAngle = new Angular(2, Unit.MIL);
+        const customSightHeight = UNew.Inch(3);
+        const customZeroDistance = UNew.Yard(200);
+        const customTwist = UNew.Inch(3);
+        const customZeroLookAngle = UNew.MIL(2);
 
         const weapon = new Weapon(customSightHeight, customZeroDistance, customTwist, customZeroLookAngle);
 
@@ -44,10 +43,10 @@ describe('Ammo Class', () => {
     });
 
     test('Custom Constructor', () => {
-        const customLength = new Distance(3, Unit.Inch);
-        const customVelocity = new Velocity(3000, Unit.FPS);
+        const customLength = UNew.Inch(3);
+        const customVelocity = UNew.FPS(3000);
         const customTempModifier = 10;
-        const customPowderTemp = new Temperature(20, Unit.Celsius);
+        const customPowderTemp = UNew.Celsius(20);
 
         const dragModel = new DragModel(0.6, DragTable.G7, 150, 0.02);
         const ammo = new Ammo(dragModel, customLength, customVelocity, customTempModifier, customPowderTemp);
@@ -56,15 +55,15 @@ describe('Ammo Class', () => {
         expect(ammo.length.in(Unit.Inch)).toBeCloseTo(3, 4);
         expect(ammo.mv.in(Unit.FPS)).toBeCloseTo(3000, 4);
         expect(ammo.temp_modifier).toBe(customTempModifier);
-        expect(ammo.powder_temp.in(Temperature.Celsius)).toBeCloseTo(20, 4);
+        expect(ammo.powder_temp.in(Unit.Celsius)).toBeCloseTo(20, 4);
     });
 
     test('calcPowderSens', () => {
         const dragModel = new DragModel(0.5, DragTable.G7, 100, 0.01);
         const ammo = new Ammo(dragModel);
 
-        const otherVelocity = new Velocity(2800, Unit.FPS);
-        const otherTemperature = new Temperature(10, Unit.Celsius);
+        const otherVelocity = UNew.FPS(2800);
+        const otherTemperature = UNew.Celsius(10);
 
         const tempModifier = ammo.calcPowderSens(otherVelocity, otherTemperature);
 
@@ -75,7 +74,7 @@ describe('Ammo Class', () => {
         const dragModel = new DragModel(0.5, DragTable.G7, 100, 0.01);
         const ammo = new Ammo(dragModel);
 
-        const currentTemp = new Temperature(25, Unit.Celsius);
+        const currentTemp = UNew.Celsius(25);
 
         const correctedVelocity = ammo.getVelocityForTemp(currentTemp);
 
