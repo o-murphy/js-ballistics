@@ -1,6 +1,6 @@
 // Import necessary modules and classes
 import calcSettings from './settings';
-import { Weight, Distance, unitTypeCoerce } from './unit.js';
+import {Measure, Unit, unitTypeCoerce} from './unit.js';
 import DragTable from "./drag_tables.json";
 
 // Define the DragDataPoint class
@@ -66,9 +66,9 @@ class DragModel {
         }
 
         // Coerce the weight to the appropriate unit using unitTypeCoerce
-        this.weight = unitTypeCoerce(weight, Weight, calcSettings.Units.weight);
+        this.weight = unitTypeCoerce(weight, Measure.Weight, calcSettings.Units.weight);
         // Coerce the diameter to the appropriate unit using unitTypeCoerce
-        this.diameter = unitTypeCoerce(diameter, Distance, calcSettings.Units.diameter);
+        this.diameter = unitTypeCoerce(diameter, Measure.Distance, calcSettings.Units.diameter);
         // Calculate and set the sectional density
         this.sectionalDensity = this._getSectionalDensity();
         // Calculate and set the form factor
@@ -95,8 +95,8 @@ class DragModel {
      */
     _getSectionalDensity() {
         // Get weight in grains and diameter in inches
-        const w = this.weight.in(Weight.Grain);
-        const d = this.diameter.in(Distance.Inch);
+        const w = this.weight.in(Unit.Grain);
+        const d = this.diameter.in(Unit.Inch);
         // Call the sectionalDensity function to calculate and return the result
         return sectionalDensity(w, d);
     }

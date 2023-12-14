@@ -445,7 +445,7 @@ class Energy extends AbstractUnit {
 
 // Unit types enum
 const Unit = {
-    RAD: 0,
+    Radian: 0,
     Degree: 1,
     MOA: 2,
     MIL: 3,
@@ -491,7 +491,7 @@ const Unit = {
 
 // Dict of properties of the Unit enum type
 const UnitPropsDict = {
-    [Unit.RAD]: { name: 'radian', accuracy: 6, symbol: 'rad' },
+    [Unit.Radian]: { name: 'radian', accuracy: 6, symbol: 'rad' },
     [Unit.Degree]: { name: 'degree', accuracy: 4, symbol: '°' },
     [Unit.MOA]: { name: 'MOA', accuracy: 2, symbol: 'MOA' },
     [Unit.MIL]: { name: 'MIL', accuracy: 2, symbol: 'MIL' },
@@ -542,7 +542,7 @@ const UnitPropsDict = {
 
 
 // Angular unit constants
-Angular.Radian = Unit.RAD;
+Angular.Radian = Unit.Radian;
 Angular.Degree = Unit.Degree;
 Angular.MOA = Unit.MOA;
 Angular.MIL = Unit.MIL;
@@ -603,19 +603,22 @@ Energy.FootPound = Unit.FootPound;
 Energy.Joule = Unit.Joule;
 
 
-//// reference of usage
-// let di
-// distance = new Distance(1, Distance.Foot);
-// console.log(distance.toString());
-// console.log(distance.to(Distance.Centimeter));
-// console.log(distance.in(Distance.Inch));
+const Measure = {
+    Angular: Angular,
+    Distance: Distance,
+    Velocity: Velocity,
+    Weight: Weight,
+    Temperature: Temperature,
+    Pressure: Pressure,
+    Energy: Energy,
+}
 
 
 /**
  * Coerces the given instance to the specified class type or creates a new instance.
  *
- * @param {Object} instance - The instance to coerce or create.
- * @param {Class} expectedClass - The expected class type.
+ * @param {AbstractUnit|Object} instance - The instance to coerce or create.
+ * @param {AbstractUnit|Object|function} expectedClass - The expected class type.
  * @param {Unit} defaultUnit - The default unit for creating a new instance.
  * @returns {AbstractUnit|Object} An instance of the expected class type.
  * @throws {TypeError} If the instance is not of the expected class type or 'number'.
@@ -632,19 +635,19 @@ function unitTypeCoerce(instance, expectedClass, defaultUnit) {
         return new expectedClass(instance, defaultUnit);
     } else {
         // If the instance is not of the expected type, throw a TypeError.
-        throw new TypeError(`Instance must be a type of ${expectedClass.className} or 'number'`);
+        throw new TypeError(`Instance must be a type of ${
+            Object.getPrototypeOf(instance).constructor.name
+        } or 'number'`);
     }
 }
 
 
-const U = {
-    T: Unit,
-    N: {
-        RAD: (value) => new Angular(value, Unit.RAD),
+const UNew = {
+        Radian: (value) => new Angular(value, Unit.Radian),
         Degree: (value) => new Angular(value, Unit.Degree),
         MOA: (value) => new Angular(value, Unit.MOA),
         MIL: (value) => new Angular(value, Unit.MIL),
-        MRAD: (value) => new Angular(value, Unit.MRad),
+        MRad: (value) => new Angular(value, Unit.MRad),
         Thousand: (value) => new Angular(value, Unit.Thousand),
         InchesPer100Yd: (value) => new Angular(value, Unit.InchesPer100Yd),
         CmPer100M: (value) => new Angular(value, Unit.CmPer100M),
@@ -679,13 +682,78 @@ const U = {
         Gram: (value) => new Weight(value, Unit.Gram),
         Pound: (value) => new Weight(value, Unit.Pound),
         Kilogram: (value) => new Weight(value, Unit.Kilogram),
-        Newton: (value) => new Weight(value, Unit.Newton),
-    },
+        Newton: (value) => new Weight(value, Unit.Newton)
 };
 
+UNew[Unit.Radian] = UNew.Radian
+UNew[Unit.Degree] = UNew.Degree
+UNew[Unit.MOA] = UNew.MOA
+UNew[Unit.MIL] = UNew.MIL
+UNew[Unit.MRad] = UNew.MRad
+UNew[Unit.Thousand] = UNew.Thousand
+UNew[Unit.InchesPer100Yd] = UNew.InchesPer100Yd
+UNew[Unit.CmPer100M] = UNew.CmPer100M
+UNew[Unit.OClock] = UNew.OClock
+UNew[Unit.Inch] = UNew.Inch
+UNew[Unit.Foot] = UNew.Foot
+UNew[Unit.Yard] = UNew.Yard
+UNew[Unit.Mile] = UNew.Mile
+UNew[Unit.Millimeter] = UNew.Millimeter
+UNew[Unit.Centimeter] = UNew.Centimeter
+UNew[Unit.Meter] = UNew.Meter
+UNew[Unit.Kilometer] = UNew.Kilometer
+UNew[Unit.Line] = UNew.Line
+UNew[Unit.FootPound] = UNew.FootPound
+UNew[Unit.Joule] = UNew.Joule
+UNew[Unit.MmHg] = UNew.MmHg
+UNew[Unit.InHg] = UNew.InHg
+UNew[Unit.Bar] = UNew.Bar
+UNew[Unit.hPa] = UNew.hPa
+UNew[Unit.PSI] = UNew.PSI
+UNew[Unit.Fahrenheit] = UNew.Fahrenheit
+UNew[Unit.Celsius] = UNew.Celsius
+UNew[Unit.Kelvin] = UNew.Kelvin
+UNew[Unit.Rankin] = UNew.Rankin
+UNew[Unit.MPS] = UNew.MPS
+UNew[Unit.KMH] = UNew.KMH
+UNew[Unit.FPS] = UNew.FPS
+UNew[Unit.MPH] = UNew.MPH
+UNew[Unit.KT] = UNew.KT
+UNew[Unit.Grain] = UNew.Grain
+UNew[Unit.Ounce] = UNew.Ounce
+UNew[Unit.Gram] = UNew.Gram
+UNew[Unit.Pound] = UNew.Pound
+UNew[Unit.Kilogram] = UNew.Kilogram
+UNew[Unit.Newton] = UNew.Newton
+
+
+/**
+ * Second realisation of unit type coercion
+ * Coerces the given instance to the specified class type or creates a new instance.
+ *
+ * @param {Object|AbstractUnit|number} instance - The instance to coerce or create.
+ * @param {Unit} expected - The default unit for creating a new instance.
+ * @returns {AbstractUnit|Object} An instance of the expected class type.
+ * @throws {TypeError} If the instance is not of the expected class type or 'number'.
+ */
+function unitTypeCoerce2(instance, expected) {
+    console.log(instance)
+    console.log('Yard' in instance)
+    console.log(instance.hasOwnProperty(expected))
+    if (instance instanceof AbstractUnit) {
+        // If the instance is already of the expected class type, return it.
+        return instance;
+    } else if (typeof instance === 'number') {
+        // If the instance is a number, create a new instance using the default unit.
+        return UNew[expected](instance)
+    } else {
+        // If the instance is not of the expected type, throw a TypeError.
+        throw new TypeError("Instance must be a type of 'AbstractUnit' or 'number'");
+    }
+}
 
 
 export {
-    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
-    Unit, UnitPropsDict, unitTypeCoerce, U
+    // AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
+    Unit, UnitPropsDict, unitTypeCoerce, unitTypeCoerce2, UNew, Measure
 }

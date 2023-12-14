@@ -1,7 +1,7 @@
 // Classes to define zeroing or current environment conditions
 
 import calcSettings from './settings';
-import { Distance, Pressure, Temperature, Unit, Velocity, unitTypeCoerce, Angular } from './unit.js';
+import {Unit, unitTypeCoerce, UNew, Measure} from './unit.js';
 
 // Constants for standard atmospheric conditions
 export const cIcaoStandardTemperatureR = 518.67;
@@ -34,15 +34,15 @@ class Atmo {
      * @param {number} humidity - Relative humidity (default: 0.78).
      */
     constructor(
-        altitude = new Distance(0, Unit.Foot),
-        pressure = new Pressure(cStandardPressure, Unit.InHg),
-        temperature = new Temperature(cStandardTemperature, Unit.Fahrenheit),
+        altitude = UNew.Foot(0),
+        pressure = UNew.InHg(cStandardPressure),
+        temperature = UNew.Fahrenheit(cStandardTemperature),
         humidity = 0.78
     ) {
         // Coerce input values to appropriate units
-        this.altitude = unitTypeCoerce(altitude, Distance, calcSettings.Units.distance);
-        this.pressure = unitTypeCoerce(pressure, Pressure, calcSettings.Units.pressure);
-        this.temperature = unitTypeCoerce(temperature, Temperature, calcSettings.Units.temperature);
+        this.altitude = unitTypeCoerce(altitude, Measure.Distance, calcSettings.Units.distance);
+        this.pressure = unitTypeCoerce(pressure, Measure.Pressure, calcSettings.Units.pressure);
+        this.temperature = unitTypeCoerce(temperature, Measure.Temperature, calcSettings.Units.temperature);
 
         // Ensure humidity is within the valid range [0, 1]
         this.humidity = humidity > 1 ? humidity / 100 : humidity;
@@ -66,23 +66,22 @@ class Atmo {
      * @param {number | Distance} altitude - Altitude above sea level (default: 0 foot).
      * @returns {Atmo} - Atmo instance with ICAO standard values.
      */
-    static icao(altitude = new Distance(0, Unit.Foot)) {
+    static icao(altitude = UNew.Foot(0)) {
         // Coerce altitude to appropriate units
-        const _altitude = unitTypeCoerce(altitude, Distance, calcSettings.Units.distance);
+        const _altitude = unitTypeCoerce(altitude, Measure.Distance, calcSettings.Units.distance);
 
         // Calculate temperature based on ICAO standard values
-        const temperature = new Temperature(
-            cIcaoStandardTemperatureR + (_altitude.in(Distance.Foot))
-            * cTemperatureGradient - cIcaoFreezingPointTemperatureR,
-            Unit.Fahrenheit
+        const temperature = UNew.Fahrenheit(
+            cIcaoStandardTemperatureR + (_altitude.in(Unit.Foot))
+            * cTemperatureGradient - cIcaoFreezingPointTemperatureR
         );
 
         // Calculate pressure based on ICAO standard values
-        const pressure = new Pressure(
+        const pressure = UNew.InHg(
             cStandardPressure * Math.pow(cIcaoStandardTemperatureR / (
-                (temperature.in(Temperature.Fahrenheit) + cIcaoFreezingPointTemperatureR)),
+                (temperature.in(Unit.Fahrenheit) + cIcaoFreezingPointTemperatureR)),
                 cPressureExponent
-            ), Unit.InHg
+            )
         );
 
         // Create and return Atmo instance with ICAO values
@@ -104,7 +103,7 @@ class Atmo {
         // Update instance properties with calculated values
         this.density = density;
         this._mach1 = mach;
-        this.mach = new Velocity(this._mach1, Velocity.FPS);
+        this.mach = UNew.FPS(this._mach1);
     }
 
     /**
@@ -172,14 +171,14 @@ class Wind {
      * @param {number | Distance} untilDistance - Distance up to which the wind data is applicable.
      */
     constructor(
-        velocity = new Velocity(0, Unit.MPS),
-        directionFrom = new Angular(0, Unit.MIL),
-        untilDistance = new Distance(9999, Unit.Meter)
+        velocity = UNew.MPS(0),
+        directionFrom = UNew.MIL(0),
+        untilDistance = UNew.Meter(9999)
     ) {
         // Coerce input values to appropriate units
-        this.velocity = unitTypeCoerce(velocity, Velocity, calcSettings.Units.velocity);
-        this.directionFrom = unitTypeCoerce(directionFrom, Angular, calcSettings.Units.angular);
-        this.untilDistance = unitTypeCoerce(untilDistance, Distance, calcSettings.Units.distance);
+        this.velocity = unitTypeCoerce(velocity, Measure.Velocity, calcSettings.Units.velocity);
+        this.directionFrom = unitTypeCoerce(directionFrom, Measure.Angular, calcSettings.Units.angular);
+        this.untilDistance = unitTypeCoerce(untilDistance, Measure.Distance, calcSettings.Units.distance);
     }
 
 }
@@ -197,18 +196,18 @@ class Shot {
      * @param {Wind[]} winds - Array of wind conditions affecting the shot (default: no wind).
      */
     constructor(
-        maxRange = new Distance(1000, Unit.Yard),
-        zeroAngle = new Angular(0, Unit.Degree),
-        relativeAngle = new Angular(0, Unit.Degree),
-        cantAngle = new Angular(0, Unit.Degree),
+        maxRange = UNew.Yard(1000),
+        zeroAngle = UNew.Degree(0),
+        relativeAngle = UNew.Degree(0),
+        cantAngle = UNew.Degree(0),
         atmo = Atmo.icao(),
         winds = [new Wind()]
     ) {
         // Coerce input values to appropriate units
-        this.maxRange = unitTypeCoerce(maxRange, Distance, calcSettings.Units.distance);
-        this.zeroAngle = unitTypeCoerce(zeroAngle, Angular, calcSettings.Units.angular);
-        this.relativeAngle = unitTypeCoerce(relativeAngle, Angular, calcSettings.Units.angular);
-        this.cantAngle = unitTypeCoerce(cantAngle, Angular, calcSettings.Units.angular);
+        this.maxRange = unitTypeCoerce(maxRange, Measure.Distance, calcSettings.Units.distance);
+        this.zeroAngle = unitTypeCoerce(zeroAngle, Measure.Angular, calcSettings.Units.angular);
+        this.relativeAngle = unitTypeCoerce(relativeAngle, Measure.Angular, calcSettings.Units.angular);
+        this.cantAngle = unitTypeCoerce(cantAngle, Measure.Angular, calcSettings.Units.angular);
 
         // Set atmosphere and wind conditions
         this.atmo = atmo;
