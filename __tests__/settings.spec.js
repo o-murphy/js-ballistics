@@ -1,4 +1,4 @@
-import { Distance, calcSettings } from '../src/index';
+import { calcSettings, UNew } from '../src/index';
 
 
 describe('Settings', () => {
@@ -10,17 +10,15 @@ describe('Settings', () => {
     });
 
     test('should set MAX_CALC_STEP_SIZE', () => {
-        const distanceValue = new Distance(100, Distance.Meter); // Replace with an appropriate value
-        calcSettings.setMaxCalcStepSize(distanceValue);
+        calcSettings.maxCalcStepSize = UNew.Meter(100);
         // Adjust the expectation based on the calculation in your implementation
-        expect(calcSettings._MAX_CALC_STEP_SIZE).toEqual(new Distance(100, Distance.Meter));
+        expect(calcSettings._MAX_CALC_STEP_SIZE).toEqual(UNew.Meter(100));
     });
 
     test('should set MAX_CALC_STEP_SIZE', () => {
-        const distanceValue = 100; // Replace with an appropriate value
-        calcSettings.setMaxCalcStepSize(distanceValue);
+        calcSettings.maxCalcStepSize = 100;
         // Adjust the expectation based on the calculation in your implementation
-        expect(calcSettings._MAX_CALC_STEP_SIZE).toEqual(new Distance(100, calcSettings.Units.distance));
+        expect(calcSettings._MAX_CALC_STEP_SIZE).toEqual(UNew[calcSettings.Units.distance](100));
     });
 
     test('should modify USE_POWDER_SENSITIVITY', () => {
