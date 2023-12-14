@@ -7,10 +7,11 @@ import {
     Temperature,
     Pressure,
     Energy,
+    U,
     Unit,
     UnitPropsDict,
     unitTypeCoerce,
-} from "./units";
+} from "./unit.js";
 import DragTable from "./drag_tables.json";
 import calcSettings from "./settings"
 import {
@@ -44,6 +45,7 @@ export {
     Energy,
     Unit,
     UnitPropsDict,
+    U,
     DragTable,
     calcSettings,
     unitTypeCoerce,
