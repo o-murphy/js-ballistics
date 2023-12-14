@@ -45,8 +45,8 @@ class Ammo {
       throw new Error("'dm' have to be an instance of 'DragModel'")
     }
     this.dm = dm;
-    this.length = unitTypeCoerce(length, Distance, calcSettings.Units.length);;
-    this.mv = unitTypeCoerce(mv, Velocity, calcSettings.Units.velocity);;
+    this.length = unitTypeCoerce(length, Distance, calcSettings.Units.length);
+    this.mv = unitTypeCoerce(mv, Velocity, calcSettings.Units.velocity);
     this.temp_modifier = temp_modifier;
     this.powder_temp = powder_temp;
   }
