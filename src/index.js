@@ -1,7 +1,7 @@
 import {
     UNew,
     Unit,
-    UnitPropsDict,
+    UnitProps,
     Measure,
     unitTypeCoerce,
 } from "./unit.js";
@@ -29,7 +29,7 @@ import {
 
 export {
     Unit,
-    UnitPropsDict,
+    UnitProps,
     UNew,
     DragTable,
     calcSettings,
