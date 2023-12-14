@@ -1,4 +1,4 @@
-import { Unit, Distance, unitTypeCoerce } from './units'; // Adjust the path accordingly
+import { Unit, Distance, unitTypeCoerce } from './unit.js'; // Adjust the path accordingly
 
 class CalcSettings {
     /**

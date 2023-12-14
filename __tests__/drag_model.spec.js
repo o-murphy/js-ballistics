@@ -3,7 +3,6 @@ import {DragDataPoint, DragModel, makeDataPoints, DragTable, calcSettings} from 
 
 // Mock the dependencies
 jest.mock('../src/settings');
-// jest.mock('../src/units');
 
 
 describe('DragDataPoint class', () => {

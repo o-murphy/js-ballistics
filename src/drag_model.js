@@ -1,6 +1,6 @@
 // Import necessary modules and classes
 import calcSettings from './settings';
-import { Weight, Distance, unitTypeCoerce } from './units';
+import { Weight, Distance, unitTypeCoerce } from './unit.js';
 import DragTable from "./drag_tables.json";
 
 // Define the DragDataPoint class
