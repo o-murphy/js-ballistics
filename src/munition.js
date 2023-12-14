@@ -1,7 +1,7 @@
 // Module for Weapon and Ammo properties definitions
 
 // Import necessary units and settings
-import {Unit, Distance, Angular, unitTypeCoerce, Velocity, Temperature} from './units';
+import {Unit, Distance, Angular, unitTypeCoerce, Velocity, Temperature} from './unit.js';
 import calcSettings from './settings';
 import { DragModel } from './drag_model';
 
