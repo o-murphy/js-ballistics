@@ -103,7 +103,7 @@ class DragModel {
 
     /**
      * Create a DragModel instance from MultiBC (mbc) data.
-     * @param {Object} mbc - MultiBC data.
+     * @param {MultiBC} mbc - MultiBC data.
      * @returns {DragModel} - New DragModel instance.
      * @static
      */
