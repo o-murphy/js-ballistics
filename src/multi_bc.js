@@ -1,8 +1,8 @@
 // Import necessary modules and classes
-import calcSettings from './settings';
-import {Atmo} from './conditions';
-import {Unit, UNew, unitTypeCoerce, Measure} from './unit';
-import {makeDataPoints} from './drag_model';
+import calcSettings from './settings.js';
+import {Atmo} from './conditions.js';
+import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
+import {makeDataPoints} from './drag_model.js';
 
 
 class MultiBCRow {

@@ -1,6 +1,6 @@
 // Classes to define zeroing or current environment conditions
 
-import calcSettings from './settings';
+import calcSettings from './settings.js';
 import {Unit, unitTypeCoerce, UNew, Measure} from './unit.js';
 
 // Constants for standard atmospheric conditions

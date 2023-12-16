@@ -1,4 +1,4 @@
-import { DragTable } from "../src/index";
+import { DragTable } from "../src/index.js";
 
 describe("Drag Tables", () => {
     test("First element of TableG1 should have Mach: 0.00 and CD: 0.2629", () => {

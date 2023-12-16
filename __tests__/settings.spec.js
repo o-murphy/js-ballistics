@@ -1,4 +1,4 @@
-import { calcSettings, UNew } from '../src/index';
+import { calcSettings, UNew } from '../src/index.js';
 
 
 describe('Settings', () => {

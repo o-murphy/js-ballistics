@@ -5,8 +5,8 @@ import {
     Measure,
     unitTypeCoerce,
 } from "./unit.js";
-import DragTable from "./drag_tables.json";
-import calcSettings from "./settings"
+import DragTable from "./drag_tables.js";
+import calcSettings from "./settings.js"
 import {
     Atmo,
     Wind,
@@ -16,21 +16,26 @@ import {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound
-} from "./conditions";
+} from "./conditions.js";
 import {
     Weapon,
     Ammo
-} from "./munition";
+} from "./munition.js";
 import {
     DragDataPoint,
     DragModel,
     makeDataPoints
-} from "./drag_model";
+} from "./drag_model.js";
 import {
     MultiBC,
     MultiBCRow,
     BCMachRow
 } from "./multi_bc.js"
+import {
+    TrajectoryData,
+    DangerSpace,
+    HitResult
+} from "./trajectory_data.js"
 
 export {
     Unit,
@@ -55,5 +60,8 @@ export {
     Ammo,
     MultiBC,
     MultiBCRow,
-    BCMachRow
+    BCMachRow,
+    TrajectoryData,
+    DangerSpace,
+    HitResult
 }

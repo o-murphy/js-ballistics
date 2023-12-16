@@ -1,4 +1,4 @@
-{
+const DragTable = {
   "G1": [
     {
       "Mach": 0.00,
@@ -2588,3 +2588,5 @@
     }
   ]
 }
+
+export default DragTable

@@ -1,4 +1,4 @@
-import { UNew, Unit } from "../src/index";
+import { UNew, Unit } from "../src/index.js";
 
 
 describe('Ballistics Library Tests', () => {
