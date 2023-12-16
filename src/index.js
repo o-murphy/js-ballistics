@@ -26,6 +26,11 @@ import {
     DragModel,
     makeDataPoints
 } from "./drag_model";
+import {
+    MultiBC,
+    MultiBCRow,
+    BCMachRow
+} from "./multi_bc.js"
 
 export {
     Unit,
@@ -47,5 +52,8 @@ export {
     DragModel,
     makeDataPoints,
     Weapon,
-    Ammo
+    Ammo,
+    MultiBC,
+    MultiBCRow,
+    BCMachRow
 }
