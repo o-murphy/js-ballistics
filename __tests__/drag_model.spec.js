@@ -2,7 +2,7 @@
 import {DragDataPoint, DragModel, makeDataPoints, DragTable, calcSettings} from '../src/index.js';
 
 // Mock the dependencies
-jest.mock('../src/settings');
+jest.mock('../src/settings.js');
 
 
 describe('DragDataPoint class', () => {
