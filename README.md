@@ -5,9 +5,10 @@ ISC library for small arms ballistic calculations (JavaScript ES6+)
 * **[Installation](#installation)**
 <!--   * [Latest stable](#latest-stable-release-from-pypi)
   * [From sources](#installing-from-sources)
-  * [Clone and build](#clone-and-build)
-* **[Usage](#usage)**
-  * **[Jupyter notebook](#jupyter-notebook)**
+  * [Clone and build](#clone-and-build) -->
+* **[Link to your HTML](#link-to-your-html)**
+
+<!-- * **[Usage](#usage)**
   * [Units of measure](#unit-manipulation-syntax)
   * [An example of calculations](#an-example-of-calculations)
   * [Output example](#example-of-the-formatted-output)
@@ -20,7 +21,45 @@ ISC library for small arms ballistic calculations (JavaScript ES6+)
 
 ## Installation
 ```shell
-npm i js-ballistics
+npm i js-ballistics@latest
+```
+
+## Usage
+
+### Link to your HTML
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your HTML Page</title>
+</head>
+<body>
+
+<script type="module">
+
+    // Link via CDN you want to use unpkg or jsdelivr
+    import * as JSBallisics from 'https://unpkg.com/js-ballistics@latest/src/index.js';
+    // import * as JSBallisics from 'https://cdn.jsdelivr.net/npm/js-ballistics@latest/src/index.js';
+
+    // Make all exports available globally
+    Object.assign(window, JSBallisics);
+
+    // Create a Measure object (example)
+    const exampleMeasure = window.UNew.Meter(10);
+    const exampleMeasureFoot = exampleMeasure.to(Unit.Foot);
+    const exampleValueFoot = exampleMeasure.in(Unit.Foot);
+
+    // Log the Measure object to the console
+    console.log('Example Measure in meter:', `${exampleMeasure}`);
+    console.log('Example Conversion meter to foot:', `${exampleMeasureFoot}`);
+    console.log('Example Conversion meter to number in foot:', `${exampleValueFoot}`);
+
+</script>
+
+</body>
+</html>
 ```
 
 ## About project
