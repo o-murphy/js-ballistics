@@ -7,7 +7,7 @@ import {
     calcSettings,
     cStandardPressure,
     cStandardTemperature
-} from "../src/index";
+} from "../src/index.js";
 
 
 describe('Conditions', () => {

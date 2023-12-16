@@ -1,7 +1,7 @@
 // Import necessary modules and classes
-import calcSettings from './settings';
+import calcSettings from './settings.js';
 import {Measure, Unit, unitTypeCoerce} from './unit.js';
-import DragTable from "./drag_tables.json";
+import DragTable from "./drag_tables.js";
 
 // Define the DragDataPoint class
 class DragDataPoint {

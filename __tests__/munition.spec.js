@@ -1,7 +1,7 @@
 import {
     calcSettings, Weapon, Ammo,
     UNew, Unit, DragTable, DragModel
-} from '../src/index'; // Import necessary modules and classes
+} from '../src/index.js'; // Import necessary modules and classes
 
 
 describe('Weapon Class', () => {

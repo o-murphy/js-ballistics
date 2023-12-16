@@ -2,8 +2,8 @@
 
 // Import necessary units and settings
 import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
-import calcSettings from './settings';
-import { DragModel } from './drag_model';
+import calcSettings from './settings.js';
+import { DragModel } from './drag_model.js';
 
 
 class Weapon {
