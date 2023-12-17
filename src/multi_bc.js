@@ -2,48 +2,20 @@
 import calcSettings from './settings.js';
 import {Atmo} from './conditions.js';
 import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
-import {makeDataPoints} from './drag_model.js';
 
-
-class MultiBCRow {
-    /**
-     * Define the MultiBCRow class
-     *
-     * @param {number | Velocity} V
-     * @param {number} BC
-     */
-    constructor(BC, V) {
-        this.BC = BC;
-        this.V = unitTypeCoerce(V, Measure.Velocity, calcSettings.Units.velocity);
-    }
-}
-
-// Define the BCMachRow class
-class BCMachRow {
-    /**
-     * Define the MultiBCRow class
-     *
-     * @param {number} BC
-     * @param {number} Mach
-     */
-    constructor(BC, Mach) {
-        this.BC = BC;
-        this.Mach = Mach;
-    }
-}
 
 // Define the MultiBC class
 class MultiBC {
     /**
      * Creates instance to calculate custom drag table based on input multi-bc table
      *
-     * @param {Object[]} dragTable
-     * @param {number|Distance} diameter
-     * @param {number|Weight} weight
-     * @param {Object[]} mbcTable
+     * @param {{CD: number, Mach: number}[]} dragTable
+     * @param {number|Distance|Object} diameter
+     * @param {number|Weight|Object} weight
+     * @param {{BC: number, V: number|Velocity|Object}[]} mbcTable
      */
     constructor(dragTable, diameter, weight, mbcTable) {
-        this.mbcTable = mbcTable;
+        // this.mbcTable = mbcTable;
         this.weight = unitTypeCoerce(weight, Measure.Weight, calcSettings.Units.weight);
         this.diameter = unitTypeCoerce(diameter, Measure.Distance, calcSettings.Units.diameter);
         this.sectionalDensity = this._getSectionalDensity();
@@ -53,15 +25,9 @@ class MultiBC {
         const {mach} = atmosphere.getDensityFactorAndMachForAltitude(altitude);
         this.speedOfSound = UNew.FPS(mach).in(Unit.MPS);
 
-        this.tableData = makeDataPoints(dragTable);
-        this.bcTable = this._parseMBC(mbcTable);
-    }
-
-    _parseMBC(mbcTable) {
-        return mbcTable.map(p => {
-            const v = UNew[calcSettings.Units.velocity](p.V).in(Unit.MPS);
-            return new MultiBCRow(p.BC, v);
-        }).sort((a, b) => b.BC - a.BC);
+        // this.tableData = dragTable.map(p => new DragDataPoint(p.CD, p.Mach));
+        this.tableData = dragTable;
+        this.bcTable = mbcTable.sort((a, b) => b.BC - a.BC);
     }
 
     _getSectionalDensity() {
@@ -81,11 +47,28 @@ class MultiBC {
     _interpolateBCTable() {
         // Extends input bc table by creating bc value for each point of standard Drag Model
         const bcTable = [...this.bcTable];
-        const bcMach = [new BCMachRow(bcTable[0].BC, this.tableData[this.tableData.length - 1].Mach)];
-        bcMach.push(...bcTable.map(point => new BCMachRow(point.BC, point.V / this.speedOfSound)));
-        bcMach.push(new BCMachRow(bcMach[bcMach.length - 1].BC, this.tableData[0].Mach));
+        const bcMach = [
+            {
+                BC: bcTable[0].BC,
+                Mach: this.tableData[this.tableData.length - 1].Mach
+            }
+        ];
+        bcMach.push(...bcTable.map(point => {
+                return {
+                    BC: point.BC,
+                    Mach: unitTypeCoerce(point.V, Measure.Velocity, calcSettings.Units.velocity)
+                        .in(Unit.MPS) / this.speedOfSound
+                }
+            }
+        ));
+        bcMach.push(
+            {
+                BC: bcMach[bcMach.length - 1].BC,
+                Mach: this.tableData[0].Mach
+            }
+        );
 
-        const result = [bcMach[0].BC];
+        let result = [bcMach[0].BC];
 
         for (let i = 0; i < bcMach.length - 1; i++) {
             const bcMax = bcMach[i];
@@ -102,7 +85,7 @@ class MultiBC {
     }
 
     cdmGenerator() {
-        const bcExtended = [...this._interpolateBCTable()].reverse();
+        const bcExtended = this._interpolateBCTable().reverse();
         const formFactors = bcExtended.map(bc => this._getFormFactor(bc));
 
         return this.tableData.map((point, i) => {
@@ -116,4 +99,4 @@ class MultiBC {
     }
 }
 
-export {MultiBC, MultiBCRow, BCMachRow};
+export {MultiBC};

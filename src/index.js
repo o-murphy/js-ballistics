@@ -22,14 +22,10 @@ import {
     Ammo
 } from "./munition.js";
 import {
-    DragDataPoint,
     DragModel,
-    makeDataPoints
 } from "./drag_model.js";
 import {
     MultiBC,
-    MultiBCRow,
-    BCMachRow
 } from "./multi_bc.js"
 import {
     TrajectoryData,
@@ -53,14 +49,10 @@ export {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound,
-    DragDataPoint,
     DragModel,
-    makeDataPoints,
     Weapon,
     Ammo,
     MultiBC,
-    MultiBCRow,
-    BCMachRow,
     TrajectoryData,
     DangerSpace,
     HitResult
