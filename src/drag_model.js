@@ -124,15 +124,5 @@ function sectionalDensity(weight, diameter) {
     return weight / Math.pow(diameter, 2) / 7000;
 }
 
-/**
- * Create an array of DragDataPoint instances from the provided drag table.
- * @param {Array} dragTable - Drag table data.
- * @returns {DragDataPoint[]} - Array of DragDataPoint instances.
- */
-function makeDataPoints(dragTable) {
-    // Map each point in the drag table to a new DragDataPoint instance
-    return dragTable.map(point => new DragDataPoint(point.CD, point.Mach));
-}
 
-
-export { DragDataPoint, DragModel, makeDataPoints };
+export { DragDataPoint, DragModel };

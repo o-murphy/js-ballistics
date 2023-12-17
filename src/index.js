@@ -24,12 +24,9 @@ import {
 import {
     DragDataPoint,
     DragModel,
-    makeDataPoints
 } from "./drag_model.js";
 import {
     MultiBC,
-    MultiBCRow,
-    BCMachRow
 } from "./multi_bc.js"
 import {
     TrajectoryData,
@@ -55,12 +52,9 @@ export {
     cSpeedOfSound,
     DragDataPoint,
     DragModel,
-    makeDataPoints,
     Weapon,
     Ammo,
     MultiBC,
-    MultiBCRow,
-    BCMachRow,
     TrajectoryData,
     DangerSpace,
     HitResult
