@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your HTML Page</title>
+</head>
+<body>
+
+<script type="module">
+
+    // Link via CDN you want to use unpkg or jsdelivr
+    import * as JSBallisics from 'https://unpkg.com/js-ballistics@latest/src/index.js';
+    // import * as JSBallisics from 'https://cdn.jsdelivr.net/npm/js-ballistics@latest/src/index.js';
+
+    // Make all exports available globally
+    Object.assign(window, JSBallisics);
+
+    // Create a Measure object (example)
+    const exampleMeasure = window.UNew.Meter(10);
+    const exampleMeasureFoot = exampleMeasure.to(Unit.Foot);
+    const exampleValueFoot = exampleMeasure.in(Unit.Foot);
+
+    // Log the Measure object to the console
+    console.log('Example Measure in meter:', `${exampleMeasure}`);
+    console.log('Example Conversion meter to foot:', `${exampleMeasureFoot}`);
+    console.log('Example Conversion meter to number in foot:', `${exampleValueFoot}`);
+
+    // Display the Measure value in the HTML body
+    document.body.innerHTML += `<p>Example Measure Value: ${exampleMeasure}</p>`;
+    document.body.innerHTML += `<p>Example Conversion meter to foot: ${exampleMeasureFoot}</p>`;
+    document.body.innerHTML += `<p>Example Conversion meterto number in foot: ${exampleValueFoot}</p>`;
+</script>
+
+</body>
+</html>

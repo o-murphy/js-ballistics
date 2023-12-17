@@ -1,18 +1,12 @@
 import {
-    AbstractUnit,
-    Angular,
-    Distance,
-    Velocity,
-    Weight,
-    Temperature,
-    Pressure,
-    Energy,
+    UNew,
     Unit,
-    UnitPropsDict,
+    UnitProps,
+    Measure,
     unitTypeCoerce,
-} from "./units";
-import DragTable from "./drag_tables.json";
-import calcSettings from "./settings"
+} from "./unit.js";
+import DragTable from "./drag_tables.js";
+import calcSettings from "./settings.js"
 import {
     Atmo,
     Wind,
@@ -23,20 +17,33 @@ import {
     cIcaoStandardHumidity,
     cSpeedOfSound
 } from "./conditions.js";
+import {
+    Weapon,
+    Ammo
+} from "./munition.js";
+import {
+    DragDataPoint,
+    DragModel,
+    makeDataPoints
+} from "./drag_model.js";
+import {
+    MultiBC,
+    MultiBCRow,
+    BCMachRow
+} from "./multi_bc.js"
+import {
+    TrajectoryData,
+    DangerSpace,
+    HitResult
+} from "./trajectory_data.js"
 
 export {
-    AbstractUnit,
-    Angular,
-    Distance,
-    Velocity,
-    Weight,
-    Temperature,
-    Pressure,
-    Energy,
     Unit,
-    UnitPropsDict,
+    UnitProps,
+    UNew,
     DragTable,
     calcSettings,
+    Measure,
     unitTypeCoerce,
     Atmo,
     Wind,
@@ -46,4 +53,15 @@ export {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound,
+    DragDataPoint,
+    DragModel,
+    makeDataPoints,
+    Weapon,
+    Ammo,
+    MultiBC,
+    MultiBCRow,
+    BCMachRow,
+    TrajectoryData,
+    DangerSpace,
+    HitResult
 }
