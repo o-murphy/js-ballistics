@@ -5,18 +5,18 @@ import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
 import {makeDataPoints} from './drag_model.js';
 
 
-class MultiBCRow {
-    /**
-     * Define the MultiBCRow class
-     *
-     * @param {number | Velocity} V
-     * @param {number} BC
-     */
-    constructor(BC, V) {
-        this.BC = BC;
-        this.V = unitTypeCoerce(V, Measure.Velocity, calcSettings.Units.velocity);
-    }
-}
+// class MultiBCRow {
+//     /**
+//      * Define the MultiBCRow class
+//      *
+//      * @param {number | Velocity} V
+//      * @param {number} BC
+//      */
+//     constructor(BC, V) {
+//         this.BC = BC;
+//         this.V = unitTypeCoerce(V, Measure.Velocity, calcSettings.Units.velocity);
+//     }
+// }
 
 // Define the BCMachRow class
 class BCMachRow {
@@ -37,13 +37,13 @@ class MultiBC {
     /**
      * Creates instance to calculate custom drag table based on input multi-bc table
      *
-     * @param {Object[]} dragTable
-     * @param {number|Distance} diameter
-     * @param {number|Weight} weight
-     * @param {Object[]} mbcTable
+     * @param {{CD: number, Mach: number[]}} dragTable
+     * @param {number|Distance|Object} diameter
+     * @param {number|Weight|Object} weight
+     * @param {{BC: number, V: number|Velocity|Object}[]} mbcTable
      */
     constructor(dragTable, diameter, weight, mbcTable) {
-        this.mbcTable = mbcTable;
+        // this.mbcTable = mbcTable;
         this.weight = unitTypeCoerce(weight, Measure.Weight, calcSettings.Units.weight);
         this.diameter = unitTypeCoerce(diameter, Measure.Distance, calcSettings.Units.diameter);
         this.sectionalDensity = this._getSectionalDensity();
@@ -53,15 +53,8 @@ class MultiBC {
         const {mach} = atmosphere.getDensityFactorAndMachForAltitude(altitude);
         this.speedOfSound = UNew.FPS(mach).in(Unit.MPS);
 
-        this.tableData = makeDataPoints(dragTable);
-        this.bcTable = this._parseMBC(mbcTable);
-    }
-
-    _parseMBC(mbcTable) {
-        return mbcTable.map(p => {
-            const v = UNew[calcSettings.Units.velocity](p.V).in(Unit.MPS);
-            return new MultiBCRow(p.BC, v);
-        }).sort((a, b) => b.BC - a.BC);
+        this.tableData = dragTable;
+        this.bcTable = mbcTable.sort((a, b) => b.BC - a.BC);
     }
 
     _getSectionalDensity() {
@@ -85,7 +78,7 @@ class MultiBC {
         bcMach.push(...bcTable.map(point => new BCMachRow(point.BC, point.V / this.speedOfSound)));
         bcMach.push(new BCMachRow(bcMach[bcMach.length - 1].BC, this.tableData[0].Mach));
 
-        const result = [bcMach[0].BC];
+        let result = [bcMach[0].BC];
 
         for (let i = 0; i < bcMach.length - 1; i++) {
             const bcMax = bcMach[i];
@@ -116,4 +109,4 @@ class MultiBC {
     }
 }
 
-export {MultiBC, MultiBCRow, BCMachRow};
+export {MultiBC};
