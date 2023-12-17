@@ -26,10 +26,10 @@ jobs:
         run: npm ci
 
       - name: Create .npmrc
-        run: echo "@o-murphy:registry=https://npm.pkg.github.com" > .npmrc
+        run: echo "@${{ github.repository_owner }}:registry=https://npm.pkg.github.com" > .npmrc
 
       - name: Set registry in package.json
-        run: echo $(jq '.publishConfig["@your-username:registry"] = "https://npm.pkg.github.com"' package.json) > package.json
+        run: echo $(jq '.publishConfig["@${{ github.repository_owner }}:registry"] = "https://npm.pkg.github.com"' package.json) > package.json
 
       - name: Publish to GitHub Package Registry
         run: npm publish --registry=https://npm.pkg.github.com/
