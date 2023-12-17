@@ -27,10 +27,13 @@ jobs:
         run: npm ci
 
       - name: Create .npmrc
-        run: echo "@YOUR-USERNAME:registry=https://npm.pkg.github.com" > .npmrc
+        run: echo "//npm.pkg.github.com/:_authToken=${{secrets.GITHUB_TOKEN}}" > .npmrc
 
-      - name: Modify package.json (temporary changes)
-        run: echo $(jq '.publishConfig["@YOUR-USERNAME:registry"]="https://npm.pkg.github.com"' package.json) > package.json
+#      - name: Create .npmrc
+#        run: echo "@YOUR-USERNAME:registry=https://npm.pkg.github.com" > .npmrc
+#
+#      - name: Modify package.json (temporary changes)
+#        run: echo $(jq '.publishConfig["@YOUR-USERNAME:registry"]="https://npm.pkg.github.com"' package.json) > package.json
 
       - name: Publish to GitHub Package Registry
         run: npm publish
