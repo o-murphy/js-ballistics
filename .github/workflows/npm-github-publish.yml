@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Authenticate with GitHub Package Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.TOKEN_GITHUB }}" > ~/.npmrc
 
       - name: Publish to GitHub Package Registry
         run: npm publish --access public
