@@ -3,28 +3,6 @@ import calcSettings from './settings.js';
 import {Measure, Unit, unitTypeCoerce} from './unit.js';
 import DragTable from "./drag_tables.js";
 
-// Define the DragDataPoint class
-class DragDataPoint {
-    /**
-     * Constructor for DragDataPoint class.
-     * @param {number} CD - Drag coefficient value.
-     * @param {number} Mach - Mach number value.
-     */
-    constructor(CD, Mach) {
-        // Assign the provided CD value to the CD property
-        this.CD = CD;
-        // Assign the provided Mach value to the Mach property
-        this.Mach = Mach;
-    }
-
-    /**
-     * Returns a string representation of the DragDataPoint instance.
-     * @returns {string} - String representation of the instance.
-     */
-    toString() {
-        return `DragDataPoint(CD=${this.CD}, Mach=${this.Mach})`;
-    }
-}
 
 // Define the DragModel class
 class DragModel {
@@ -32,8 +10,8 @@ class DragModel {
      * Constructor for DragModel class.
      * @param {number} value - Coefficient value for drag.
      * @param {Array} dragTable - Custom drag table.
-     * @param {number|Weight} weight - Weight value or Weight instance.
-     * @param {number|Distance} diameter - Diameter value or Distance instance.
+     * @param {number|Weight|Object} weight - Weight value or Weight instance.
+     * @param {number|Distance|Object} diameter - Diameter value or Distance instance.
      */
     constructor(value, dragTable, weight, diameter) {
         // Get the length of the dragTable
@@ -125,4 +103,4 @@ function sectionalDensity(weight, diameter) {
 }
 
 
-export { DragDataPoint, DragModel };
+export { DragModel };

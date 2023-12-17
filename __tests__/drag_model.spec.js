@@ -1,5 +1,5 @@
 // Import the classes and functions to be tested
-import {DragDataPoint, DragModel, makeDataPoints, DragTable, calcSettings} from '../src/index.js';
+import {DragModel, DragTable, calcSettings} from '../src/index.js';
 
 // Mock the dependencies
 jest.mock('../src/settings.js');
@@ -7,7 +7,7 @@ jest.mock('../src/settings.js');
 
 describe('DragDataPoint class', () => {
     test('creates a DragDataPoint instance with CD and Mach properties', () => {
-        const dragDataPoint = new DragDataPoint(0.2, 0.5);
+        const dragDataPoint = {CD: 0.2, Mach: 0.5};
         expect(dragDataPoint.CD).toBe(0.2);
         expect(dragDataPoint.Mach).toBe(0.5);
     });
@@ -16,8 +16,7 @@ describe('DragDataPoint class', () => {
 describe('DragModel class', () => {
     test('creates a DragModel instance with valid input', () => {
         // const dragTable = [{ CD: 0.1, Mach: 0.2 }];
-        const dragTable = DragTable.G7;
-        const dragModel = new DragModel(1, dragTable, 10, 5);
+        const dragModel = new DragModel(1, DragTable.G7, 10, 5);
 
         expect(dragModel.value).toBe(1);
         expect(dragModel.weight.in(calcSettings.Units.weight)).toBe(10);
@@ -39,16 +38,5 @@ describe('DragModel class', () => {
         expect(() => new DragModel(0, dragTable, 10, 5)).toThrowError(
             'Drag coefficient must be greater than zero'
         );
-    });
-});
-
-describe('makeDataPoints function', () => {
-    test('creates an array of DragDataPoint instances from dragTable', () => {
-        const dragTable = [{ CD: 0.1, Mach: 0.2 }];
-        const dataPoints = makeDataPoints(dragTable);
-        expect(dataPoints).toHaveLength(1);
-        expect(dataPoints[0]).toBeInstanceOf(DragDataPoint);
-        expect(dataPoints[0].CD).toBe(0.1);
-        expect(dataPoints[0].Mach).toBe(0.2);
     });
 });
