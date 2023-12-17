@@ -9,15 +9,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - run: npm ci
-      - run: npm test
+#  build:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#      - run: npm ci
+#      - run: npm test
 
   publish-github-npm:
     needs: build
@@ -31,8 +31,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Authenticate with GitHub Package Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.TOKEN_GITHUB }}" > ~/.npmrc
+#      - name: Authenticate with GitHub Package Registry
+#        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.TOKEN_GITHUB }}" > ~/.npmrc
+
+    - name: Authenticate with GitHub Package Registry
+      run: npm login --registry=https://npm.pkg.github.com/ --scope=@OWNER --always-auth --authToken=${{ secrets.TOKEN_GITHUB }}
 
       - name: Publish to GitHub Package Registry
         run: npm publish --access public
