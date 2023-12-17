@@ -624,10 +624,7 @@ const Measure = {
  * @throws {TypeError} If the instance is not of the expected class type or 'number'.
  */
 function unitTypeCoerce(instance, expectedClass, defaultUnit) {
-    if (!instance) {
-        // If the instance is falsy, create a new instance using the default unit.
-        return new expectedClass(instance, defaultUnit);
-    } else if (instance instanceof expectedClass) {
+    if (instance instanceof expectedClass) {
         // If the instance is already of the expected class type, return it.
         return instance;
     } else if (typeof instance === 'number') {
@@ -636,7 +633,7 @@ function unitTypeCoerce(instance, expectedClass, defaultUnit) {
     } else {
         // If the instance is not of the expected type, throw a TypeError.
         throw new TypeError(`Instance must be a type of ${
-            Object.getPrototypeOf(instance).constructor.name
+            expectedClass.name
         } or 'number'`);
     }
 }
@@ -656,6 +653,7 @@ const UNew = {
         Foot: (value) => new Distance(value, Unit.Foot),
         Yard: (value) => new Distance(value, Unit.Yard),
         Mile: (value) => new Distance(value, Unit.Mile),
+        NauticalMile: (value) => new Distance(value, Unit.NauticalMile),
         Millimeter: (value) => new Distance(value, Unit.Millimeter),
         Centimeter: (value) => new Distance(value, Unit.Centimeter),
         Meter: (value) => new Distance(value, Unit.Meter),
@@ -698,6 +696,7 @@ UNew[Unit.Inch] = UNew.Inch
 UNew[Unit.Foot] = UNew.Foot
 UNew[Unit.Yard] = UNew.Yard
 UNew[Unit.Mile] = UNew.Mile
+UNew[Unit.NauticalMile] = UNew.NauticalMile
 UNew[Unit.Millimeter] = UNew.Millimeter
 UNew[Unit.Centimeter] = UNew.Centimeter
 UNew[Unit.Meter] = UNew.Meter

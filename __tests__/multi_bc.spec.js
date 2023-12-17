@@ -1,54 +1,53 @@
-import { Atmo, calcSettings, Unit, UNew, MultiBC, MultiBCRow, BCMachRow } from '../src/index.js';
+import { MultiBC, UNew, Ammo, DragTable, DragModel } from '../src/index.js';
 
-describe('MultiBC', () => {
-    const dragTable = [
-        { CD: 0.2, Mach: 1.5 },
-        { CD: 0.3, Mach: 2.0 },
-        { CD: 0.25, Mach: 1.8 },
-        // Add more data points as needed
+test('MBC valid test', () => {
+    // Litz's multi-bc table conversion to CDM, 338LM 285GR HORNADY ELD-M
+    const mbc = new MultiBC(DragTable.G7,
+        UNew.Inch(0.338),
+        UNew.Grain(285),
+        [
+            { BC: 0.417, V: UNew.MPS(745) },
+            { BC: 0.409, V: UNew.MPS(662) },
+            { BC: 0.4, V: UNew.MPS(580) },
+        ]
+    );
+
+    const cdm = mbc.cdm;
+    const cds = Array.from(cdm, (p) => p.CD);
+    const machs = Array.from(cdm, (p) => p.Mach);
+
+    const reference = [
+        [1, 0.3384895315],
+        [2, 0.2573873416],
+        [3, 0.2069547831],
+        [4, 0.1652052415],
+        [5, 0.1381406102],
     ];
 
-    const diameter = UNew.Inch(0.5);
-    const weight = UNew.Pound(1);
-    const mbcTable = [
-        { BC: 0.4, V: 3000 },
-        { BC: 0.35, V: 2800 },
-        // Add more MBC data points as needed
-    ];
-
-    const multiBC = new MultiBC(dragTable, diameter, weight, mbcTable);
-
-    test('Constructor', () => {
-        expect(multiBC.diameter).toEqual(diameter);
-        expect(multiBC.weight).toEqual(weight);
-        expect(multiBC.mbcTable).toEqual(mbcTable);
-        // expect(multiBC.sectionalDensity).toBeCloseTo(0.14285714285714285, 4);
-        // FIXME
-        // expect(multiBC.speedOfSound).toBeCloseTo(340.292, 3); // Adjust the expected value based on your test case
+    reference.forEach(([mach, cd]) => {
+        const idx = machs.indexOf(mach);
+        expect(cds[idx]).toBeCloseTo(cd, 3);
     });
+});
 
-    test('parseMBC', () => {
-        const parsedMBC = multiBC._parseMBC(mbcTable);
-        const expectedParsedMBC = [
-            new MultiBCRow(0.4, 914.4),
-            new MultiBCRow(0.35, 853.44),
-            // Add more expected MBC data points as needed
-        ];
+test('MBC test', () => {
+    const mbc = new MultiBC(
+        DragTable.G7,
+        UNew.Inch(0.308),
+        UNew.Grain(178),
+        [
+            { BC: 0.275, V: 800 },
+            { BC: 0.255, V: 500 },
+            { BC: 0.26, V: 700 },
+        ])
 
-        expect(parsedMBC.CD).toEqual(expectedParsedMBC.CD);
-    });
-
-    // FIXME
-    // test('cdm', () => {
-    //     const cdm = multiBC.cdm;
-    //     // Provide expected values based on your test case
-    //     const expectedCDM = [
-    //         { CD: 0.05, Mach: 1.5 },
-    //         { CD: 0.07, Mach: 2.0 },
-    //         { CD: 0.06, Mach: 1.8 },
-    //         // Add more expected CDM points as needed
-    //     ];
+    const dm = DragModel.fromMbc(mbc);
+    const ammo = new Ammo(dm, 1, 800);
+    // TODO:
+    // const cdm = new TrajectoryCalc({ ammo }).cdm;
+    // expect(cdm).not.toBeNull();
     //
-    //     expect(cdm).toEqual(expectedCDM);
-    // });
+    // const ret = Array.from(cdm);
+    // expect(ret[0]).toEqual({ Mach: 0.0, CD: 0.1259323091692403 });
+    // expect(ret[ret.length - 1]).toEqual({ Mach: 5.0, CD: 0.15771258594668947 });
 });
