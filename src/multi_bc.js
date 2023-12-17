@@ -2,42 +2,14 @@
 import calcSettings from './settings.js';
 import {Atmo} from './conditions.js';
 import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
-import {makeDataPoints} from './drag_model.js';
 
-
-// class MultiBCRow {
-//     /**
-//      * Define the MultiBCRow class
-//      *
-//      * @param {number | Velocity} V
-//      * @param {number} BC
-//      */
-//     constructor(BC, V) {
-//         this.BC = BC;
-//         this.V = unitTypeCoerce(V, Measure.Velocity, calcSettings.Units.velocity);
-//     }
-// }
-
-// Define the BCMachRow class
-class BCMachRow {
-    /**
-     * Define the MultiBCRow class
-     *
-     * @param {number} BC
-     * @param {number} Mach
-     */
-    constructor(BC, Mach) {
-        this.BC = BC;
-        this.Mach = Mach;
-    }
-}
 
 // Define the MultiBC class
 class MultiBC {
     /**
      * Creates instance to calculate custom drag table based on input multi-bc table
      *
-     * @param {{CD: number, Mach: number[]}} dragTable
+     * @param {{CD: number, Mach: number}[]} dragTable
      * @param {number|Distance|Object} diameter
      * @param {number|Weight|Object} weight
      * @param {{BC: number, V: number|Velocity|Object}[]} mbcTable
@@ -53,6 +25,7 @@ class MultiBC {
         const {mach} = atmosphere.getDensityFactorAndMachForAltitude(altitude);
         this.speedOfSound = UNew.FPS(mach).in(Unit.MPS);
 
+        // this.tableData = dragTable.map(p => new DragDataPoint(p.CD, p.Mach));
         this.tableData = dragTable;
         this.bcTable = mbcTable.sort((a, b) => b.BC - a.BC);
     }
@@ -74,9 +47,26 @@ class MultiBC {
     _interpolateBCTable() {
         // Extends input bc table by creating bc value for each point of standard Drag Model
         const bcTable = [...this.bcTable];
-        const bcMach = [new BCMachRow(bcTable[0].BC, this.tableData[this.tableData.length - 1].Mach)];
-        bcMach.push(...bcTable.map(point => new BCMachRow(point.BC, point.V / this.speedOfSound)));
-        bcMach.push(new BCMachRow(bcMach[bcMach.length - 1].BC, this.tableData[0].Mach));
+        const bcMach = [
+            {
+                BC: bcTable[0].BC,
+                Mach: this.tableData[this.tableData.length - 1].Mach
+            }
+        ];
+        bcMach.push(...bcTable.map(point => {
+                return {
+                    BC: point.BC,
+                    Mach: unitTypeCoerce(point.V, Measure.Velocity, calcSettings.Units.velocity)
+                        .in(Unit.MPS) / this.speedOfSound
+                }
+            }
+        ));
+        bcMach.push(
+            {
+                BC: bcMach[bcMach.length - 1].BC,
+                Mach: this.tableData[0].Mach
+            }
+        );
 
         let result = [bcMach[0].BC];
 
@@ -95,7 +85,7 @@ class MultiBC {
     }
 
     cdmGenerator() {
-        const bcExtended = [...this._interpolateBCTable()].reverse();
+        const bcExtended = this._interpolateBCTable().reverse();
         const formFactors = bcExtended.map(bc => this._getFormFactor(bc));
 
         return this.tableData.map((point, i) => {

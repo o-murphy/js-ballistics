@@ -22,7 +22,6 @@ import {
     Ammo
 } from "./munition.js";
 import {
-    DragDataPoint,
     DragModel,
 } from "./drag_model.js";
 import {
@@ -50,7 +49,6 @@ export {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound,
-    DragDataPoint,
     DragModel,
     Weapon,
     Ammo,
