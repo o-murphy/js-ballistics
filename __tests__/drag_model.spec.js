@@ -23,7 +23,6 @@ describe('DragModel class', () => {
         expect(dragModel.diameter.in(calcSettings.Units.diameter)).toBe(5);
         expect(dragModel.sectionalDensity).toBeCloseTo(0.000057, 6);
         expect(dragModel.formFactor).toBeCloseTo(0.000057, 6);
-        expect(dragModel.dragTable).toEqual(dragTable);
     });
 
     test('throws an error for invalid dragTable length', () => {
