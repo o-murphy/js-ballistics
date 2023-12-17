@@ -1,4 +1,4 @@
-import { Unit, Distance, unitTypeCoerce } from './units'; // Adjust the path accordingly
+import { Unit, Measure, unitTypeCoerce } from './unit.js'; // Adjust the path accordingly
 
 class CalcSettings {
     /**
@@ -32,12 +32,12 @@ class CalcSettings {
      * Sets the maximum calculation step size.
      * @param {number | Distance} value - The value of the maximum calculation step size.
      */
-    setMaxCalcStepSize(value) {
+    set maxCalcStepSize(value) {
         console.warn("CalcSettings._MAX_CALC_STEP_SIZE: " +
             "Change this property only if you know what you are doing; " +
             "too big step can corrupt calculation accuracy");
 
-        this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Distance, this.Units.distance);
+        this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Measure.Distance, this.Units.distance);
     }
 }
 

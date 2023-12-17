@@ -3,12 +3,11 @@ import {
     Wind,
     Shot,
     Unit,
+    UNew,
     calcSettings,
-    Distance,
-    Angular,
     cStandardPressure,
     cStandardTemperature
-} from "../src/index";
+} from "../src/index.js";
 
 
 describe('Conditions', () => {
@@ -59,10 +58,10 @@ describe('Conditions', () => {
         test("Shot create check", () => {
             expect(shot).toEqual(
                 {
-                    maxRange: new Distance(1000, calcSettings.Units.distance),
-                    zeroAngle: new Angular(0, calcSettings.Units.angular),
-                    relativeAngle: new Angular(0, calcSettings.Units.angular),
-                    cantAngle: new Angular(0, calcSettings.Units.angular),
+                    maxRange: UNew[calcSettings.Units.distance](1000),
+                    zeroAngle: UNew[calcSettings.Units.angular](0),
+                    relativeAngle: UNew[calcSettings.Units.angular](0),
+                    cantAngle: UNew[calcSettings.Units.angular](0),
                     atmo: atmo,
                     winds: winds
                 }
