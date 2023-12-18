@@ -21,9 +21,9 @@ class TrajectoryData {
      * @param {number|Velocity} velocity
      * @param {number} mach
      * @param {number|Distance} drop
-     * @param {number|Angular} drop_adjustment
+     * @param {number|Angular} dropAdjustment
      * @param {number|Distance} windage
-     * @param {number|Angular} windage_adjustment
+     * @param {number|Angular} windageAdjustment
      * @param {number|Angular} angle
      * @param {number|Energy} energy
      * @param {number|Weight} ogw
@@ -31,8 +31,8 @@ class TrajectoryData {
      */
     constructor(
         time, distance, velocity, mach,
-        drop, drop_adjustment,
-        windage, windage_adjustment,
+        drop, dropAdjustment,
+        windage, windageAdjustment,
         angle, energy, ogw, flag
     ) {
         this.time = time
@@ -40,9 +40,9 @@ class TrajectoryData {
         this.velocity = velocity
         this.mach = mach
         this.drop = drop
-        this.drop_adj = drop_adjustment
+        this.dropAdjustment = dropAdjustment
         this.windage = windage
-        this.windage_adj = windage_adjustment
+        this.windageAdjustment = windageAdjustment
         this.angle = angle
         this.energy = energy
         this.ogw = ogw
@@ -69,9 +69,9 @@ class TrajectoryData {
             _fmt(this.velocity, calcSettings.Units.velocity),
             `${this.mach.toFixed(2)} mach`,
             _fmt(this.drop, calcSettings.Units.drop),
-            _fmt(this.drop_adj, calcSettings.Units.adjustment),
+            _fmt(this.dropAdjustment, calcSettings.Units.adjustment),
             _fmt(this.windage, calcSettings.Units.drop),
-            _fmt(this.windage_adj, calcSettings.Units.adjustment),
+            _fmt(this.windageAdjustment, calcSettings.Units.adjustment),
             _fmt(this.angle, calcSettings.Units.angular),
             _fmt(this.energy, calcSettings.Units.energy),
             _fmt(this.ogw, calcSettings.Units.ogw),
