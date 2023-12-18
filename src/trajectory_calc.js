@@ -670,7 +670,8 @@ function getCorrection(distance, offset) {
  * @return {number}
  */
 function calculateEnergy(bulletWeight, velocity) {
-    return bulletWeight * Math.pow(velocity, 2) / 450400;
+    const en = bulletWeight * Math.pow(velocity, 2) / 450400;
+    return en;
 }
 
 /**
@@ -680,7 +681,8 @@ function calculateEnergy(bulletWeight, velocity) {
  * @return {number}
  */
 function calculateOGW(bulletWeight, velocity) {
-    return Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12;
+    const ogw = Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12;
+    return ogw;
 }
 
 /**

@@ -2,10 +2,9 @@ import {Ammo, Atmo, DragModel, DragTable, Shot, TrajectoryCalc, UNew, Unit, Weap
 
 describe("TrajectoryCalc", () => {
 
-
     function customAssertEqual( a, b, accuracy, name) {
         test(name, () => {
-            expect(Math.abs(a - b)).toBeLessThan(accuracy)
+            expect(a).toBeCloseTo(b, accuracy-1)
         })
     }
 
@@ -80,12 +79,11 @@ describe("TrajectoryCalc", () => {
         const weapon = new Weapon(UNew.Inch(2), UNew.Yard(100))
         const atmosphere = Atmo.icao()
         const shot_info = new Shot(
-            {
-                maxRange: 1000,
-                zeroAngle: UNew.Radian(0.001228),
-                atmo: atmosphere,
-                winds: [new Wind(UNew.MPH(5), UNew.OClock(10.5))]
-            }
+                UNew.Yard(1000),
+                UNew.Radian(0.001228),
+                0, 0,
+                atmosphere,
+                [new Wind(UNew.MPH(5), UNew.OClock(10.5))]
         )
         const calc = new TrajectoryCalc(ammo)
         const data = calc.trajectory(
@@ -122,12 +120,11 @@ describe("TrajectoryCalc", () => {
         const weapon = new Weapon(UNew.Inch(2), UNew.Yard(100), UNew.Inch(11.24))
         const atmosphere = Atmo.icao()
         const shot_info = new Shot(
-            {
-                maxRange: UNew.Yard(1000),
-                zeroAngle: UNew.MOA(4.221),
-                atmo: atmosphere,
-                winds: [new Wind(UNew.MPH(5), -45)]
-            }
+                UNew.Yard(1000),
+                UNew.MOA(4.221),
+                0, 0,
+                atmosphere,
+                [new Wind(UNew.MPH(5), -45)]
         )
         const calc = new TrajectoryCalc(ammo)
         const data = calc.trajectory(
