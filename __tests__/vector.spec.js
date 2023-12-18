@@ -46,10 +46,10 @@ describe('Vector module', () => {
         expect(v2.y).toBe(-2)
         expect(v2.z).toBe(-3)
 
-        let mul = v1.mul_by_vector(v1.copy())
+        let mul = v1.mulByVector(v1.copy())
         expect(mul).toBe(1 + 4 + 9)
 
-        v2 = v1.mul_by_const(3)
+        v2 = v1.mulByConst(3)
         expect(v2.x).toBe(3)
         expect(v2.y).toBe(6)
         expect(v2.z).toBe(9)
