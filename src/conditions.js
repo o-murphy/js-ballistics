@@ -24,7 +24,6 @@ export const cStandardDensity = 0.076474;
 const cIcaoTemperatureDeltaR = cIcaoStandardTemperatureR - cIcaoFreezingPointTemperatureR;
 
 
-
 class Atmo {
     /**
      * Stores atmosphere data for the trajectory calculation.
@@ -98,7 +97,7 @@ class Atmo {
      * Calculates density and Mach number using the current atmosphere conditions.
      */
     calculate() {
-        const { density, mach } = this.calculate0(this._t0, this._p0);
+        const {density, mach} = this.calculate0(this._t0, this._p0);
 
         // Update instance properties with calculated values
         this.density = density;
@@ -129,7 +128,7 @@ class Atmo {
         let mach = Math.sqrt(t + cIcaoFreezingPointTemperatureR) * cSpeedOfSound;
 
         // Return calculated values
-        return { density, mach };
+        return {density, mach};
     }
 
     /**
@@ -148,17 +147,17 @@ class Atmo {
     getDensityFactorAndMachForAltitude(altitude) {
         if (Math.abs(this._a0 - altitude) < 30) {
             // Use pre-calculated values for nearby altitudes
-            return { density: this.density / cStandardDensity, mach: this._mach1 };
+            return {density: this.density / cStandardDensity, mach: this._mach1};
         }
 
         // Calculate new atmosphere conditions for the specified altitude
         const tb = altitude * cTemperatureGradient + cIcaoTemperatureDeltaR;
         const t = this._t0 + this._ta - tb;
         const p = this._p0 * Math.pow(this._t0 / t, cPressureExponent);
-        const { density, mach } = this.calculate0(t, p);
+        const {density, mach} = this.calculate0(t, p);
 
         // Return calculated values
-        return { density: density / cStandardDensity, mach };
+        return {density: density / cStandardDensity, mach};
     }
 }
 
@@ -166,9 +165,9 @@ class Atmo {
 class Wind {
     /**
      * Stores wind data at the desired distance.
-     * @param {number | Velocity} velocity - Wind velocity.
-     * @param {number | Angular} directionFrom - Wind direction in relation to the shooter.
-     * @param {number | Distance} untilDistance - Distance up to which the wind data is applicable.
+     * @param {number | Velocity | Object} velocity - Wind velocity.
+     * @param {number | Angular | Object} directionFrom - Wind direction in relation to the shooter.
+     * @param {number | Distance | Object} untilDistance - Distance up to which the wind data is applicable.
      */
     constructor(
         velocity = UNew.MPS(0),
@@ -187,23 +186,21 @@ class Wind {
 class Shot {
     /**
      * Stores shot parameters for the trajectory calculation.
-     * @param {number | Distance} maxRange - Downrange distance to stop computing trajectory.
-     * @param {number | Angular} zeroAngle - The angle between the barrel and horizontal when zeroed.
-     * @param {number | Angular} relativeAngle - Elevation adjustment added to zero_angle for a particular shot.
-     * @param {number | Angular} cantAngle - Rotation of the gun around the barrel axis, relative to position when zeroed.
+     * @param {number | Distance | Object} maxRange - Downrange distance to stop computing trajectory.
+     * @param {number | Angular | Object} zeroAngle - The angle between the barrel and horizontal when zeroed.
+     * @param {number | Angular | Object} relativeAngle - Elevation adjustment added to zero_angle for a particular shot.
+     * @param {number | Angular | Object} cantAngle - Rotation of the gun around the barrel axis, relative to position when zeroed.
      *                                       (Only relevant when Weapon.sight_height !== 0)
      * @param {Atmo} atmo - Atmosphere conditions for the shot (default: ICAO standard atmosphere).
      * @param {Wind[]} winds - Array of wind conditions affecting the shot (default: no wind).
      */
     constructor(
-        {
-            maxRange = UNew.Yard(1000),
-            zeroAngle = UNew.Degree(0),
-            relativeAngle = UNew.Degree(0),
-            cantAngle = UNew.Degree(0),
-            atmo = Atmo.icao(),
-            winds = [new Wind()]
-        }
+        maxRange = UNew.Yard(1000),
+        zeroAngle = UNew.Degree(0),
+        relativeAngle = UNew.Degree(0),
+        cantAngle = UNew.Degree(0),
+        atmo = Atmo.icao(),
+        winds = [new Wind()]
     ) {
         // Coerce input values to appropriate units
         this.maxRange = unitTypeCoerce(maxRange, Measure.Distance, calcSettings.Units.distance);
@@ -220,4 +217,4 @@ class Shot {
 }
 
 
-export { Atmo, Wind, Shot };
+export {Atmo, Wind, Shot};
