@@ -3,7 +3,7 @@ import {Atmo, Wind} from './conditions.js';
 // Munition module
 import {Ammo, Weapon} from './munition.js';
 // Settings module
-import {calcSettings} from './settings';
+import calcSettings from './settings';
 // TrajectoryData module
 import {TrajectoryData, TrajFlag} from './trajectory_data.js';
 // Unit module
@@ -100,7 +100,7 @@ class TrajectoryCalc {
             weapon.zeroLookAngle.in(Unit.Radian)
         ) * weapon.zeroDistance.in(Unit.Foot);
         const maximumRange = zeroDistance + calcStep;
-        const sightHeight = weapon.sight_height.in(Unit.Foot);
+        const sightHeight = weapon.sightHeight.in(Unit.Foot);
         const mach = atmo.mach.in(Unit.FPS);
         const densityFactor = atmo.densityFactor();
         const muzzleVelocity = ammo.mv.in(Unit.FPS);
@@ -413,9 +413,11 @@ function windToVector(shot, wind) {
     const crossComponent = wind.velocity.in(Unit.FPS) * Math.sin(
         wind.directionFrom.in(Unit.Radian));
     const rangeFactor = -rangeVelocity * sightSine;
-    return Vector(rangeVelocity * sightCosine,
+    return new Vector(
+        rangeVelocity * sightCosine,
         rangeFactor * cantCosine + crossComponent * cantSine,
-        crossComponent * cantCosine - rangeFactor * cantSine);
+        crossComponent * cantCosine - rangeFactor * cantSine
+    );
 }
 
 /**

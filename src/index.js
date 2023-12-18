@@ -29,9 +29,11 @@ import {
 } from "./multi_bc.js"
 import {
     TrajectoryData,
+    TrajFlag,
     DangerSpace,
     HitResult
 } from "./trajectory_data.js"
+import TrajectoryCalc from "./trajectory_calc.js";
 
 export {
     Unit,
@@ -54,6 +56,8 @@ export {
     Ammo,
     MultiBC,
     TrajectoryData,
+    TrajFlag,
     DangerSpace,
-    HitResult
+    HitResult,
+    TrajectoryCalc
 }
