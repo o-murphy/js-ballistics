@@ -211,4 +211,4 @@ class HitResult {
 }
 
 
-export {TrajectoryData, DangerSpace, HitResult}
+export {TrajectoryData, TrajFlag, DangerSpace, HitResult}
