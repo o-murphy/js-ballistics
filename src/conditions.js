@@ -196,12 +196,14 @@ class Shot {
      * @param {Wind[]} winds - Array of wind conditions affecting the shot (default: no wind).
      */
     constructor(
-        maxRange = UNew.Yard(1000),
-        zeroAngle = UNew.Degree(0),
-        relativeAngle = UNew.Degree(0),
-        cantAngle = UNew.Degree(0),
-        atmo = Atmo.icao(),
-        winds = [new Wind()]
+        {
+            maxRange = UNew.Yard(1000),
+            zeroAngle = UNew.Degree(0),
+            relativeAngle = UNew.Degree(0),
+            cantAngle = UNew.Degree(0),
+            atmo = Atmo.icao(),
+            winds = [new Wind()]
+        }
     ) {
         // Coerce input values to appropriate units
         this.maxRange = unitTypeCoerce(maxRange, Measure.Distance, calcSettings.Units.distance);

@@ -9,7 +9,7 @@ class DragModel {
     /**
      * Constructor for DragModel class.
      * @param {number} value - Coefficient value for drag.
-     * @param {Array} dragTable - Custom drag table.
+     * @param {{CD:number, Mach: number}[]} dragTable - Custom drag table.
      * @param {number|Weight|Object} weight - Weight value or Weight instance.
      * @param {number|Distance|Object} diameter - Diameter value or Distance instance.
      */

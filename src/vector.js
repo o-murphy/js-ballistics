@@ -15,11 +15,11 @@ export default class Vector {
         );
     }
 
-    mul_by_const(a) {
+    mulByConst(a) {
         return new Vector(this.x * a, this.y * a, this.z * a);
     }
 
-    mul_by_vector(b) {
+    mulByVector(b) {
         return this.x * b.x + this.y * b.y + this.z * b.z;
     }
 
@@ -40,27 +40,6 @@ export default class Vector {
         if (Math.abs(m) < 1e-10) {
             return new Vector(this.x, this.y, this.z);
         }
-        return this.mul_by_const(1.0 / m);
-    }
-
-    static add(a, b) {
-        return a.add(b);
-    }
-
-    static subtract(a, b) {
-        return a.subtract(b);
-    }
-
-    static multiply(a, b) {
-        if (typeof b === 'number') {
-            return a.mul_by_const(b);
-        } else if (b instanceof Vector) {
-            return a.mul_by_vector(b);
-        }
-        throw new TypeError(b);
-    }
-
-    static negate(a) {
-        return a.negate();
+        return this.mulByConst(1.0 / m);
     }
 }
