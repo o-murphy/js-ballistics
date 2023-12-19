@@ -47,7 +47,7 @@ describe("TrajectoryCalc", () => {
 
     }
 
-    test("test_zero1", () => {
+    describe("test_zero1", () => {
         const dm = new DragModel(0.365, DragTable.G1, 69, 0.223)
         const ammo = new Ammo(dm, 0.9, 2600)
         const weapon = new Weapon(UNew.Inch(3.2), UNew.Yard(100))
@@ -56,12 +56,14 @@ describe("TrajectoryCalc", () => {
 
         const zero_angle = calc.zeroAngle(weapon, atmosphere)
 
-        expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001651, 6)
+        test("check_zero", () => {
+            expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001651, 6)
+        })
 
     })
 
-    test("test_zero2", () => {
-        const dm = new DragModel(0.365, DragTable.G7, 69, 0.223)
+    describe("test_zero2", () => {
+        const dm = new DragModel(0.223, DragTable.G7, 69, 0.223)
         const ammo = new Ammo(dm, 0.9, 2750)
         const weapon = new Weapon(UNew.Inch(2), UNew.Yard(100))
         const atmosphere = Atmo.icao()
@@ -69,7 +71,9 @@ describe("TrajectoryCalc", () => {
 
         const zero_angle = calc.zeroAngle(weapon, atmosphere)
 
-        expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001228, 6)
+        test("check_zero", () => {
+            expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001228, 6)
+        })
 
     })
 

@@ -126,15 +126,17 @@ class TrajectoryCalc {
             while (rangeVector.x <= maximumRange) {
                 if (velocity < cMinimumVelocity || rangeVector.y < cMaximumDrop) break;
 
-                const deltaTime = calcStep / velocityVector.x;
+                let deltaTime = calcStep / velocityVector.x;
 
-                const drag = densityFactor * velocity * this.dragByMach(velocity / mach);
+                let v_in_mach = velocity / mach
+
+                let drag = densityFactor * velocity * this.dragByMach(velocity / mach);
 
                 velocityVector = velocityVector.subtract(
                     velocityVector.mulByConst(drag).subtract(gravityVector).mulByConst(deltaTime)
                 );
 
-                const deltaRangeVector = new Vector(
+                let deltaRangeVector = new Vector(
                     calcStep,
                     velocityVector.y * deltaTime,
                     velocityVector.z * deltaTime
@@ -185,7 +187,8 @@ class TrajectoryCalc {
 
         const maximumRange = shotInfo.maxRange.in(Unit.Foot) + 1;
 
-        const rangesLength = Math.floor(maximumRange / step);
+        // const rangesLength = Math.floor(maximumRange / step);
+        const rangesLength = Math.floor(maximumRange / step) + 1;
         const lenWinds = winds.length;
         let currentWind = 0;
         let currentItem = 0;
@@ -361,176 +364,6 @@ class TrajectoryCalc {
         return ranges;
     }
 
-    // _trajectory(ammo, weapon, atmo, shotInfo,
-    //             winds, distStep, filterFlags) {
-    //     let time = 0;
-    //     const lookAngle = weapon.zeroLookAngle.in(Unit.Radian);
-    //     const twist = weapon.twist.in(Unit.Inch);
-    //     const length = ammo.length.in(Unit.Inch);
-    //     const diameter = ammo.dm.diameter.in(Unit.Inch);
-    //     const weight = ammo.dm.weight.in(Unit.Grain);
-    //
-    //     // step = shot_info.step >> Distance.Foot
-    //     const step = distStep.in(Unit.Foot);
-    //     const calcStep = this.getCalcStep(step);
-    //
-    //     const maximumRange = shotInfo.maxRange.in(Unit.Foot) + 1;
-    //
-    //     const rangesLength = Math.floor(maximumRange / step) + 1;
-    //     const lenWinds = winds.length;
-    //     let currentWind = 0;
-    //     let currentItem = 0;
-    //
-    //     let stabilityCoefficient = 1.0;
-    //     let nextWindRange = 1e7;
-    //
-    //     const barrelElevation = shotInfo.zeroAngle.in(Unit.Radian) +
-    //         shotInfo.relativeAngle.in(Unit.Radian);
-    //     const alt0 = atmo.altitude.in(Unit.Foot);
-    //     const sightHeight = weapon.sightHeight.in(Unit.Foot);
-    //
-    //     let nextRangeDistance = .0;
-    //     const barrelAzimuth = .0;
-    //     let previousMach = .0;
-    //
-    //     const gravityVector = new Vector(.0, cGravityConstant, .0);
-    //     let rangeVector = new Vector(.0, -sightHeight, .0);
-    //
-    //     const ranges = [];
-    //
-    //     let mach = 0
-    //     let windVector, velocity, twistCoefficient, _flag, referenceHeight;
-    //     let windage, deltaRangeVector, velocityAdjusted, deltaTime, drag;
-    //     let densityFactor
-    //
-    //     if (lenWinds < 1) {
-    //         windVector = new Vector(.0, .0, .0);
-    //     } else if (lenWinds > 1) {
-    //         nextWindRange = winds[0].untilDistance.in(Unit.Foot);
-    //         windVector = windToVector(shotInfo, winds[0]);
-    //     }
-    //
-    //     if (calcSettings.USE_POWDER_SENSITIVITY) {
-    //         velocity = ammo.getVelocityForTemp(atmo.temperature).in(Unit.FPS);
-    //     } else {
-    //         velocity = ammo.mv.in(Unit.FPS);
-    //     }
-    //
-    //     // x - distance towards target, y - drop and z - windage
-    //     let velocityVector = new Vector(
-    //         Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
-    //         Math.sin(barrelElevation),
-    //         Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
-    //     ).mulByConst(velocity);
-    //
-    //     if (!(twist === 0) && length && diameter) {
-    //         stabilityCoefficient = calculateStabilityCoefficient(ammo, weapon, atmo);
-    //         twistCoefficient = twist > 0 ? -1 : 1;
-    //     }
-    //
-    //     // With non-zero look_angle, rounding can suggest multiple adjacent zero-crossings
-    //     // Record when we see each zero crossing so we only register one
-    //     let seenZero = TrajFlag.NONE;
-    //     if (rangeVector.y >= 0) {
-    //         // We're starting above zero; we can only go down
-    //         seenZero |= TrajFlag.ZERO_UP;
-    //     } else if ((rangeVector.y < 0) && (barrelElevation < lookAngle)) {
-    //         // We're below and pointing down from look angle; no zeroes!
-    //         seenZero |= TrajFlag.ZERO_DOWN;
-    //     }
-    //
-    //     while (rangeVector.x <= maximumRange + calcStep) {
-    //         _flag = TrajFlag.NONE;
-    //
-    //         if ((velocity < cMinimumVelocity) && (rangeVector.y < cMaximumDrop))
-    //             break;
-    //
-    //         let densityFactorMach = atmo
-    //             .getDensityFactorAndMachForAltitude(alt0 + rangeVector.y);
-    //         densityFactor = densityFactorMach.density
-    //         mach = densityFactorMach.mach
-    //
-    //         if (rangeVector.x >= nextWindRange) {
-    //             currentWind += 1;
-    //             windVector = windToVector(shotInfo, winds[currentWind]);
-    //
-    //             nextWindRange = currentWind === lenWinds - 1 ? 1e7 : winds[currentWind]
-    //                 .untilDistance.in(Unit.Foot);
-    //         }
-    //
-    //
-    //         // Zero-crossing checks
-    //         if (rangeVector.x > 0) {
-    //             // Zero reference line is the sight line defined by look_angle
-    //             referenceHeight = rangeVector.x * Math.tan(lookAngle);
-    //
-    //             // If we haven't seen ZERO_UP, we look for that first
-    //             if (!(seenZero && TrajFlag.ZERO_UP)) {
-    //                 if (rangeVector.y >= referenceHeight) {
-    //                     _flag |= TrajFlag.ZERO_UP;
-    //                     seenZero |= TrajFlag.ZERO_UP;
-    //                 }
-    //
-    //                 // We've crossed above sight line; now look for crossing back through it
-    //             } else if (!(seenZero && TrajFlag.ZERO_DOWN)) {
-    //                 if (rangeVector.y < referenceHeight) {
-    //                     _flag |= TrajFlag.ZERO_DOWN;
-    //                     seenZero |= TrajFlag.ZERO_DOWN;
-    //                 }
-    //             }
-    //
-    //         }
-    //
-    //         // Mach crossing check
-    //         if ((velocity / mach <= 1) && (previousMach > 1)) {
-    //             _flag |= TrajFlag.MACH;
-    //         }
-    //
-    //         // Next range check
-    //         if (rangeVector.x >= nextRangeDistance) {
-    //             _flag |= TrajFlag.RANGE;
-    //             nextRangeDistance += step;
-    //             currentItem += 1;
-    //         }
-    //
-    //         if (_flag && filterFlags) {
-    //             windage = rangeVector.z;
-    //             if (!(twist === 0)) {
-    //                 windage += (1.25 * (stabilityCoefficient + 1.2)
-    //                     * Math.pow(time, 1.83) * twistCoefficient) / 12
-    //             }
-    //
-    //             ranges.push(createTrajectoryRow(
-    //                 time, rangeVector, velocityVector,
-    //                 velocity, mach, windage, weight, _flag
-    //             ));
-    //
-    //             if (currentItem === rangesLength)
-    //                 break;
-    //         }
-    //
-    //         previousMach = velocity / mach;
-    //         velocityAdjusted = velocityVector.subtract(windVector);
-    //         deltaTime = calcStep / velocityVector.x;
-    //         velocity = velocityAdjusted.magnitude();
-    //         drag = densityFactor * velocity * this.dragByMach(velocity / mach);
-    //
-    //         velocityVector = velocityVector.subtract(
-    //             velocityAdjusted.mulByConst(drag).subtract(gravityVector).mulByConst(deltaTime)
-    //         );
-    //         deltaRangeVector = new Vector(
-    //             calcStep,
-    //             velocityVector.y * deltaTime,
-    //             velocityVector.z * deltaTime
-    //         );
-    //         rangeVector = rangeVector.add(deltaRangeVector);
-    //         velocity = velocityVector.magnitude();
-    //         time += deltaRangeVector.magnitude() / velocity;
-    //     }
-    //
-    //     return ranges
-    //
-    // }
 
     /**
      *
@@ -595,7 +428,6 @@ function calculateStabilityCoefficient(ammo, rifle, atmo) {
 }
 
 /**
- *
  * @param {Shot} shot
  * @param {Wind} wind
  * @return {Vector}
@@ -606,9 +438,11 @@ function windToVector(shot, wind) {
     const cantCosine = Math.cos(shot.cantAngle.in(Unit.Radian));
     const cantSine = Math.sin(shot.cantAngle.in(Unit.Radian));
     const rangeVelocity = wind.velocity.in(Unit.FPS) * Math.cos(
-        wind.directionFrom.in(Unit.Radian));
+        wind.directionFrom.in(Unit.Radian)
+    );
     const crossComponent = wind.velocity.in(Unit.FPS) * Math.sin(
-        wind.directionFrom.in(Unit.Radian));
+        wind.directionFrom.in(Unit.Radian)
+    );
     const rangeFactor = -rangeVelocity * sightSine;
     return new Vector(
         rangeVelocity * sightCosine,
@@ -684,57 +518,58 @@ function calculateOGW(bulletWeight, velocity) {
     return Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12;
 }
 
+
 /**
- *
  * @param {Object[]} dataPoints
  * @return {CurvePoint[]}
  */
 function calculateCurve(dataPoints) {
-    let rate = (dataPoints[1].CD - dataPoints[0].CD) / (dataPoints[1].Mach - dataPoints[0].Mach)
-    let curve = [new CurvePoint(
-        0, rate,
-        dataPoints[0].CD - dataPoints[0].Mach * rate)
-    ]
-    const lenDataPoints = dataPoints.length
-    const lenDataRange = lenDataPoints - 1
-    
-    let x1, x2, x3, y1, y2, y3, a, b, c, curvePoint
+    let rate =
+        (dataPoints[1].CD - dataPoints[0].CD) / (dataPoints[1].Mach - dataPoints[0].Mach);
+    let curve = [
+        new CurvePoint(0, rate, dataPoints[0].CD - dataPoints[0].Mach * rate),
+    ];
+    const lenDataPoints = dataPoints.length;
+    const lenDataRange = lenDataPoints - 1;
 
-    for (let i=1; i < lenDataRange; i++) {
-        x1 = dataPoints[i - 1].Mach
-        x2 = dataPoints[i].Mach
-        x3 = dataPoints[i + 1].Mach
-        y1 = dataPoints[i - 1].Mach
-        y2 = dataPoints[i].CD
-        y3 = dataPoints[i + 1].CD
-        a = ((y3 - y1) * (x2 - x1) - (y2 - y1) * (x3 - x1)) / (
-            (x3 * x3 - x1 * x1) * (x2 - x1) - (x2 * x2 - x1 * x1) * (x3 - x1))
-        b = (y2 - y1 - a * (x2 * x2 - x1 * x1)) / (x2 - x1)
-        c = y1 - (a * x1 * x1 + b * x1)
-        curvePoint = new CurvePoint(a, b, c)
-        curve.push(curvePoint)
+    let x1, x2, x3, y1, y2, y3, a, b, c, curvePoint;
+
+    for (let i = 1; i < lenDataRange; i++) {
+        x1 = dataPoints[i - 1].Mach;
+        x2 = dataPoints[i].Mach;
+        x3 = dataPoints[i + 1].Mach;
+        y1 = dataPoints[i - 1].CD;
+        y2 = dataPoints[i].CD;
+        y3 = dataPoints[i + 1].CD;
+        a =
+            ((y3 - y1) * (x2 - x1) - (y2 - y1) * (x3 - x1)) /
+            ((x3 * x3 - x1 * x1) * (x2 - x1) - (x2 * x2 - x1 * x1) * (x3 - x1));
+        b = (y2 - y1 - a * (x2 * x2 - x1 * x1)) / (x2 - x1);
+        c = y1 - (a * x1 * x1 + b * x1);
+        curvePoint = new CurvePoint(a, b, c);
+        curve.push(curvePoint);
     }
 
-    let numPoints = lenDataPoints
-    rate = (dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].CD) /
-           (dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].Mach)
+    let numPoints = lenDataPoints;
+    rate =
+        (dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].CD) /
+        (dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].Mach);
     curvePoint = new CurvePoint(
-        0, rate,
+        0,
+        rate,
         dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].Mach * rate
-    )
-    curve.push(curvePoint)
-    return curve
+    );
+    curve.push(curvePoint);
+    return curve;
 }
 
 /**
- * // returning the calculated drag for a
  * @param {Object[]} data
  * @param {CurvePoint[]} curve
  * @param {number} mach
  * @return {number}
  */
 function calculateByCurve(data, curve, mach) {
-
     let m, mid;
     let mlo = 0;
     let mhi = curve.length - 2;
@@ -755,7 +590,6 @@ function calculateByCurve(data, curve, mach) {
     }
     const curveM = curve[m];
     return curveM.c + mach * (curveM.b + curveM.a * mach);
-
 }
 
 
