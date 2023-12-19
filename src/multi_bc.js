@@ -51,7 +51,7 @@ class MultiBC {
             {
                 BC: bcTable[0].BC,
                 Mach: this.tableData[this.tableData.length - 1].Mach
-            }
+            },
         ];
         bcMach.push(...bcTable.map(point => {
                 return {

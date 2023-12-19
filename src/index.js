@@ -34,6 +34,7 @@ import {
     HitResult
 } from "./trajectory_data.js"
 import TrajectoryCalc from "./trajectory_calc.js";
+import Calculator from "./interface.js";
 
 export {
     Unit,
@@ -59,5 +60,6 @@ export {
     TrajFlag,
     DangerSpace,
     HitResult,
-    TrajectoryCalc
+    TrajectoryCalc,
+    Calculator
 }
