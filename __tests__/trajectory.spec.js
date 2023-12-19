@@ -56,7 +56,7 @@ describe("TrajectoryCalc", () => {
 
         const zero_angle = calc.zeroAngle(weapon, atmosphere)
 
-        expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001651, 5)  // FIXME numDigits: 6
+        expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001651, 6)
 
     })
 
@@ -69,7 +69,7 @@ describe("TrajectoryCalc", () => {
 
         const zero_angle = calc.zeroAngle(weapon, atmosphere)
 
-        expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001228, 4)  // FIXME numDigits: 6
+        expect(zero_angle.in(Unit.Radian)).toBeCloseTo(0.001228, 6)
 
     })
 
@@ -101,9 +101,8 @@ describe("TrajectoryCalc", () => {
             [data[10], 1000, 776.4, 0.695, 224.9, -823.9, -78.7, -87.5, -8.4, 2.495, 20, Unit.MOA]
         ]
 
-        // FIXME
         test_data.forEach(item => {
-            describe.skip(`validateOne ${test_data.indexOf(item)}`, () => {
+            describe(`validateOne ${test_data.indexOf(item)}`, () => {
                     validateOne(
                         ...item
                     )
@@ -142,9 +141,8 @@ describe("TrajectoryCalc", () => {
             [data[10], 1000, 1081.3, 0.968, 442, -401.6, -11.32, -50.98, -1.44, 1.748, 55, Unit.MIL]
         ]
 
-        // FIXME
         test_data.forEach(item => {
-            describe.skip(`validateOne ${test_data.indexOf(item)}`, () => {
+            describe(`validateOne ${test_data.indexOf(item)}`, () => {
                     validateOne(
                         ...item
                     )
