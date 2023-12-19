@@ -41,8 +41,8 @@ class TrajectoryCalc {
         step /= 2;
 
         if (step > maximumStep) {
-            const stepOrder = Math.floor(Math.log10(step));
-            const maximumOrder = Math.floor(Math.log10(maximumStep));
+            const stepOrder = Math.round(Math.log10(step));
+            const maximumOrder = Math.round(Math.log10(maximumStep));
             step /= Math.pow(10, stepOrder - maximumOrder + 1);
         }
 
@@ -188,7 +188,7 @@ class TrajectoryCalc {
         const maximumRange = shotInfo.maxRange.in(Unit.Foot) + 1;
 
         // const rangesLength = Math.floor(maximumRange / step);
-        const rangesLength = Math.floor(maximumRange / step) + 1;
+        const rangesLength = Math.round(maximumRange / step);
         const lenWinds = winds.length;
         let currentWind = 0;
         let currentItem = 0;
@@ -575,7 +575,7 @@ function calculateByCurve(data, curve, mach) {
     let mhi = curve.length - 2;
 
     while (mhi - mlo > 1) {
-        mid = Math.floor((mhi + mlo) / 2.0);
+        mid = Math.round((mhi + mlo) / 2.0);
         if (data[mid].Mach < mach) {
             mlo = mid;
         } else {
