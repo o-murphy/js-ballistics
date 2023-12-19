@@ -537,6 +537,7 @@ class TrajectoryCalc {
      * @param {number} mach
      * @return {number}
      */
+    // FIXME - the mach is not valid
     dragByMach(mach) {
         const cd = calculateByCurve(this._tableData, this._curve, mach);
         return cd * 2.08551e-04 / this._bc;
@@ -670,8 +671,7 @@ function getCorrection(distance, offset) {
  * @return {number}
  */
 function calculateEnergy(bulletWeight, velocity) {
-    const en = bulletWeight * Math.pow(velocity, 2) / 450400;
-    return en;
+    return bulletWeight * Math.pow(velocity, 2) / 450400;
 }
 
 /**
@@ -681,8 +681,7 @@ function calculateEnergy(bulletWeight, velocity) {
  * @return {number}
  */
 function calculateOGW(bulletWeight, velocity) {
-    const ogw = Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12;
-    return ogw;
+    return Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12;
 }
 
 /**
@@ -699,15 +698,15 @@ function calculateCurve(dataPoints) {
     const lenDataPoints = dataPoints.length
     const lenDataRange = lenDataPoints - 1
     
-    let x1, x2, x3, y1, y2, y3, a, b, c
+    let x1, x2, x3, y1, y2, y3, a, b, c, curvePoint
 
     for (let i=1; i < lenDataRange; i++) {
         x1 = dataPoints[i - 1].Mach
         x2 = dataPoints[i].Mach
         x3 = dataPoints[i + 1].Mach
         y1 = dataPoints[i - 1].Mach
-        y2 = dataPoints[i]['CD']
-        y3 = dataPoints[i + 1]['CD']
+        y2 = dataPoints[i].CD
+        y3 = dataPoints[i + 1].CD
         a = ((y3 - y1) * (x2 - x1) - (y2 - y1) * (x3 - x1)) / (
             (x3 * x3 - x1 * x1) * (x2 - x1) - (x2 * x2 - x1 * x1) * (x3 - x1))
         b = (y2 - y1 - a * (x2 * x2 - x1 * x1)) / (x2 - x1)
@@ -719,9 +718,9 @@ function calculateCurve(dataPoints) {
     let numPoints = lenDataPoints
     rate = (dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].CD) /
            (dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].Mach)
-    let curvePoint = new CurvePoint(
+    curvePoint = new CurvePoint(
         0, rate,
-        dataPoints[numPoints - 1]['CD'] - dataPoints[numPoints - 2]['Mach'] * rate
+        dataPoints[numPoints - 1].CD - dataPoints[numPoints - 2].Mach * rate
     )
     curve.push(curvePoint)
     return curve
