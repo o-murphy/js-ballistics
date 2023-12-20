@@ -1,6 +1,7 @@
 // Flags for marking trajectory row if Zero or Mach crossing
 // Also uses to set a filters for a trajectory calculation loop
-import {UnitProps, calcSettings, Unit, UNew, unitTypeCoerce, Measure} from "./index.js";
+import calcSettings from "./settings"
+import {UnitProps, Unit, UNew, unitTypeCoerce, Measure} from "./unit";
 
 const TrajFlag = {
     NONE: 0,
@@ -55,16 +56,16 @@ class TrajectoryData {
     inDefUnits() {
         return [
             this.time,
-            this.distance.in(calcSettings.Units.distance),
-            this.velocity.in(calcSettings.Units.velocity),
+            this.distance.In(calcSettings.Units.distance),
+            this.velocity.In(calcSettings.Units.velocity),
             this.mach,
-            this.drop.in(calcSettings.Units.drop),
-            this.dropAdjustment.in(calcSettings.Units.adjustment),
-            this.windage.in(calcSettings.Units.drop),
-            this.windageAdjustment.in(calcSettings.Units.adjustment),
-            this.angle.in(calcSettings.Units.angular),
-            this.energy.in(calcSettings.Units.energy),
-            this.ogw.in(calcSettings.Units.ogw),
+            this.drop.In(calcSettings.Units.drop),
+            this.dropAdjustment.In(calcSettings.Units.adjustment),
+            this.windage.In(calcSettings.Units.drop),
+            this.windageAdjustment.In(calcSettings.Units.adjustment),
+            this.angle.In(calcSettings.Units.angular),
+            this.energy.In(calcSettings.Units.energy),
+            this.ogw.In(calcSettings.Units.ogw),
             this.flag
         ]
     }
@@ -80,7 +81,7 @@ class TrajectoryData {
          * @return {string} time
          */
         function _fmt(value, unit) {
-            return `${value.in(unit).toFixed(UnitProps[unit].accuracy)}${UnitProps[unit].symbol}`;
+            return `${value.In(unit).toFixed(UnitProps[unit].accuracy)}${UnitProps[unit].symbol}`;
         }
 
         return [
@@ -199,7 +200,7 @@ class HitResult {
         }
 
         const targetHeightHalf = targetHeight.rawValue / 2.0;
-        const tanLookAngle = Math.tan(lookAngle.in(Unit.Radian));
+        const tanLookAngle = Math.tan(lookAngle.In(Unit.Radian));
 
         const findBeginDanger = (rowNum) => {
             const centerRow = this._trajectory[rowNum];

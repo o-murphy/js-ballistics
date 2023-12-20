@@ -1,6 +1,6 @@
 // Import necessary modules and classes
-import calcSettings from './settings.js';
-import {Measure, Unit, unitTypeCoerce} from './unit.js';
+import calcSettings from './settings';
+import {Measure, Unit, unitTypeCoerce} from './unit.ts';
 import DragTable from "./drag_tables.js";
 
 
@@ -73,8 +73,8 @@ class DragModel {
      */
     _getSectionalDensity() {
         // Get weight in grains and diameter in inches
-        const w = this.weight.in(Unit.Grain);
-        const d = this.diameter.in(Unit.Inch);
+        const w = this.weight.In(Unit.Grain);
+        const d = this.diameter.In(Unit.Inch);
         // Call the sectionalDensity function to calculate and return the result
         return sectionalDensity(w, d);
     }

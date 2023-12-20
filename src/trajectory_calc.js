@@ -1,15 +1,15 @@
 // Conditions module
-import {Atmo, Wind} from './conditions.js';
+import {Atmo, Wind} from './conditions';
 // Munition module
-import {Ammo, Weapon} from './munition.js';
+import {Ammo, Weapon} from './munition';
 // Settings module
 import calcSettings from './settings';
 // TrajectoryData module
-import {TrajectoryData, TrajFlag} from './trajectory_data.js';
+import {TrajectoryData, TrajFlag} from './trajectory_data';
 // Unit module
-import {Measure, UNew, Unit, unitTypeCoerce} from './unit.js';
-// Vector module
-import Vector from "./vector.js";
+import {Distance, UNew, Unit, unitTypeCoerce} from './unit';
+// VectorJs module
+import Vector from "./vector";
 
 // Constants
 const cZeroFindingAccuracy = 0.000005;
@@ -37,7 +37,7 @@ class TrajectoryCalc {
     }
 
     getCalcStep(step) {
-        let maximumStep = calcSettings._MAX_CALC_STEP_SIZE;
+        let maximumStep = calcSettings.maxCalcStepSize;
         step /= 2;
 
         if (step > maximumStep) {
@@ -53,7 +53,7 @@ class TrajectoryCalc {
      *
      * @param {Weapon} weapon
      * @param {Atmo} atmo
-     * @return {Angular|Object}
+     * @return {Angular}
      * @public
      */
     zeroAngle(weapon, atmo) {
@@ -64,12 +64,12 @@ class TrajectoryCalc {
      *
      * @param {Weapon} weapon
      * @param {Shot} shotInfo
-     * @param {number|Distance|Object} step
+     * @param {number|Distance} step
      * @param extraData
      * @return {TrajectoryData[]}
      */
     trajectory(weapon, shotInfo, step, extraData = false) {
-        let distStep = unitTypeCoerce(step, Measure.Distance, calcSettings.Units.distance);
+        let distStep = unitTypeCoerce(step, Distance, calcSettings.Units.distance);
         const atmo = shotInfo.atmo;
         const winds = shotInfo.winds;
         let filterFlags = TrajFlag.RANGE;
@@ -92,18 +92,18 @@ class TrajectoryCalc {
      * @private
      */
     _zeroAngle(ammo, weapon, atmo) {
-        const calcStep = this.getCalcStep(weapon.zeroDistance.in(Unit.Foot));
+        const calcStep = this.getCalcStep(weapon.zeroDistance.In(Unit.Foot));
         const zeroDistance = Math.cos(
-            weapon.zeroLookAngle.in(Unit.Radian)
-        ) * weapon.zeroDistance.in(Unit.Foot);
+            weapon.zeroLookAngle.In(Unit.Radian)
+        ) * weapon.zeroDistance.In(Unit.Foot);
         const heightAtZero = Math.sin(
-            weapon.zeroLookAngle.in(Unit.Radian)
-        ) * weapon.zeroDistance.in(Unit.Foot);
+            weapon.zeroLookAngle.In(Unit.Radian)
+        ) * weapon.zeroDistance.In(Unit.Foot);
         const maximumRange = zeroDistance + calcStep;
-        const sightHeight = weapon.sightHeight.in(Unit.Foot);
-        const mach = atmo.mach.in(Unit.FPS);
+        const sightHeight = weapon.sightHeight.In(Unit.Foot);
+        const mach = atmo.mach.In(Unit.FPS);
         const densityFactor = atmo.densityFactor();
-        const muzzleVelocity = ammo.mv.in(Unit.FPS);
+        const muzzleVelocity = ammo.mv.In(Unit.FPS);
         const barrelAzimuth = 0.0;
         let barrelElevation = Math.atan(heightAtZero / zeroDistance);
         let iterationsCount = 0;
@@ -173,17 +173,17 @@ class TrajectoryCalc {
      */
     _trajectory(ammo, weapon, atmo, shotInfo, winds, distStep, filterFlags) {
         let time = 0;
-        const lookAngle = weapon.zeroLookAngle.in(Unit.Radian);
-        const twist = weapon.twist.in(Unit.Inch);
-        const length = ammo.length.in(Unit.Inch);
-        const diameter = ammo.dm.diameter.in(Unit.Inch);
-        const weight = ammo.dm.weight.in(Unit.Grain);
+        const lookAngle = weapon.zeroLookAngle.In(Unit.Radian);
+        const twist = weapon.twist.In(Unit.Inch);
+        const length = ammo.length.In(Unit.Inch);
+        const diameter = ammo.dm.diameter.In(Unit.Inch);
+        const weight = ammo.dm.weight.In(Unit.Grain);
 
         // step = shotInfo.step >> Distance.Foot
-        const step = distStep.in(Unit.Foot);
+        const step = distStep.In(Unit.Foot);
         const calcStep = this.getCalcStep(step);
 
-        const maximumRange = shotInfo.maxRange.in(Unit.Foot) + 1;
+        const maximumRange = shotInfo.maxRange.In(Unit.Foot) + 1;
 
         // const rangesLength = Math.floor(maximumRange / step);
         const rangesLength = Math.round(maximumRange / step);
@@ -195,9 +195,9 @@ class TrajectoryCalc {
         let nextWindRange = 1e7;
 
         const barrelElevation =
-            shotInfo.zeroAngle.in(Unit.Radian) + shotInfo.relativeAngle.in(Unit.Radian);
-        const alt0 = atmo.altitude.in(Unit.Foot);
-        const sightHeight = weapon.sightHeight.in(Unit.Foot);
+            shotInfo.zeroAngle.In(Unit.Radian) + shotInfo.relativeAngle.In(Unit.Radian);
+        const alt0 = atmo.altitude.In(Unit.Foot);
+        const sightHeight = weapon.sightHeight.In(Unit.Foot);
 
         let nextRangeDistance = 0;
         const barrelAzimuth = 0.0;
@@ -225,14 +225,14 @@ class TrajectoryCalc {
         if (lenWinds < 1) {
             windVector = new Vector(0.0, 0.0, 0.0);
         } else if (lenWinds >= 1) {
-            nextWindRange = winds[0].untilDistance.in(Unit.Foot);
+            nextWindRange = winds[0].untilDistance.In(Unit.Foot);
             windVector = windToVector(shotInfo, winds[0]);
         }
 
         if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
-            velocity = ammo.getVelocityForTemp(atmo.temperature).in(Unit.FPS);
+            velocity = ammo.getVelocityForTemp(atmo.temperature).In(Unit.FPS);
         } else {
-            velocity = ammo.mv.in(Unit.FPS);
+            velocity = ammo.mv.In(Unit.FPS);
         }
 
         // x - distance towards target, y - drop, and z - windage
@@ -276,7 +276,7 @@ class TrajectoryCalc {
                 nextWindRange =
                     currentWind === lenWinds - 1
                         ? 1e7
-                        : winds[currentWind].untilDistance.in(Unit.Foot);
+                        : winds[currentWind].untilDistance.In(Unit.Foot);
             }
 
             // Zero-crossing checks
@@ -380,7 +380,7 @@ class TrajectoryCalc {
      * @return {{CD: number, Mach: number}[]}
      */
     get cdm() {
-        return self._cdm();
+        return this._cdm();
     }
 
     /**
@@ -411,13 +411,13 @@ class TrajectoryCalc {
  * @return {number}
  */
 function calculateStabilityCoefficient(ammo, rifle, atmo) {
-    const weight = ammo.dm.weight.in(Unit.Grain);
-    const diameter = ammo.dm.diameter.in(Unit.Inch);
-    const twist = Math.abs(rifle.twist.in(Unit.Inch)) / diameter;
-    const length = ammo.length.in(Unit.Inch) / diameter;
-    const ft = atmo.temperature.in(Unit.Fahrenheit);
-    const mv = ammo.mv.in(Unit.FPS);
-    const pt = atmo.pressure.in(Unit.InHg);
+    const weight = ammo.dm.weight.In(Unit.Grain);
+    const diameter = ammo.dm.diameter.In(Unit.Inch);
+    const twist = Math.abs(rifle.twist.In(Unit.Inch)) / diameter;
+    const length = ammo.length.In(Unit.Inch) / diameter;
+    const ft = atmo.temperature.In(Unit.Fahrenheit);
+    const mv = ammo.mv.In(Unit.FPS);
+    const pt = atmo.pressure.In(Unit.InHg);
     const sd = 30 * weight / (
         Math.pow(twist, 2) * Math.pow(diameter, 3) * length * (1 + Math.pow(length, 2))
     );
@@ -432,15 +432,15 @@ function calculateStabilityCoefficient(ammo, rifle, atmo) {
  * @return {Vector}
  */
 function windToVector(shot, wind) {
-    const sightCosine = Math.cos(shot.zeroAngle.in(Unit.Radian));
-    const sightSine = Math.sin(shot.zeroAngle.in(Unit.Radian));
-    const cantCosine = Math.cos(shot.cantAngle.in(Unit.Radian));
-    const cantSine = Math.sin(shot.cantAngle.in(Unit.Radian));
-    const rangeVelocity = wind.velocity.in(Unit.FPS) * Math.cos(
-        wind.directionFrom.in(Unit.Radian)
+    const sightCosine = Math.cos(shot.zeroAngle.In(Unit.Radian));
+    const sightSine = Math.sin(shot.zeroAngle.In(Unit.Radian));
+    const cantCosine = Math.cos(shot.cantAngle.In(Unit.Radian));
+    const cantSine = Math.sin(shot.cantAngle.In(Unit.Radian));
+    const rangeVelocity = wind.velocity.In(Unit.FPS) * Math.cos(
+        wind.directionFrom.In(Unit.Radian)
     );
-    const crossComponent = wind.velocity.in(Unit.FPS) * Math.sin(
-        wind.directionFrom.in(Unit.Radian)
+    const crossComponent = wind.velocity.In(Unit.FPS) * Math.sin(
+        wind.directionFrom.In(Unit.Radian)
     );
     const rangeFactor = -rangeVelocity * sightSine;
     return new Vector(
