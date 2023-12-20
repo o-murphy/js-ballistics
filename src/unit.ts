@@ -61,7 +61,7 @@ class AbstractUnit {
     _definedUnits: Unit
 
     constructor(value: number, units: Unit) {
-        this["constructor"] = AbstractUnit;
+        // this["constructor"] = this.constructor;
         this._value = this.toRaw(value, units);
         this._definedUnits = units;
     }
@@ -136,7 +136,8 @@ class AbstractUnit {
      */
     to(units: Unit): AbstractUnit {
         const value = this.In(units);
-        return new this.constructor(value, units);
+        const retval = new this.constructor(value, units);
+        return retval
     }
 
     /**
