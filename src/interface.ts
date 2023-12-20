@@ -1,3 +1,4 @@
+// @ts-ignore
 import TrajectoryCalc from "./trajectory_calc.js";
 import {HitResult, TrajectoryData} from "./trajectory_data";
 import {Distance, Angular, unitTypeCoerce} from "./unit";
