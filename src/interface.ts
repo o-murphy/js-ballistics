@@ -1,5 +1,5 @@
 import TrajectoryCalc from "./trajectory_calc.js";
-import {HitResult, TrajectoryData} from "./trajectory_data.js";
+import {HitResult, TrajectoryData} from "./trajectory_data";
 import {Distance, Angular, unitTypeCoerce} from "./unit";
 import calcSettings from "./settings";
 import {Ammo, Weapon} from "./munition";
@@ -7,15 +7,17 @@ import {Atmo, Shot} from "./conditions";
 
 
 export default class Calculator {
+
+    // @ts-ignore
+    protected _elevation: Angular
+    protected _calc: TrajectoryCalc
+
     /**
      * Basic interface for the ballistics calculator
      * @param {Weapon} weapon
      * @param {Ammo} ammo
      * @param _zeroAtmo
      */
-    private _elevation: Angular
-    private _calc: TrajectoryCalc
-
     constructor(
         readonly weapon: Weapon,
         readonly ammo: Ammo,

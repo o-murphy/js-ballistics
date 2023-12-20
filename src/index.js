@@ -4,7 +4,7 @@ import {
     UnitProps,
     Measure,
     unitTypeCoerce,
-} from "./unit.ts";
+} from "./unit";
 import DragTable from "./drag_tables.js";
 import calcSettings from "./settings"
 import {
@@ -16,24 +16,24 @@ import {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound
-} from "./conditions.ts";
+} from "./conditions";
 import {
     Weapon,
     Ammo
-} from "./munition.js";
+} from "./munition";
 import {
     DragModel,
-} from "./drag_model.js";
+} from "./drag_model";
 import {
     MultiBC,
-} from "./multi_bc.js"
+} from "./multi_bc"
 import {
     TrajectoryData,
     TrajFlag,
     DangerSpace,
     HitResult
-} from "./trajectory_data.js"
-import TrajectoryCalc from "./trajectory_calc.js";
+} from "./trajectory_data"
+import TrajectoryCalc from "./trajectory_calc";
 import Calculator from "./interface";
 
 export {
