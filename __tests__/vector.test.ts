@@ -1,6 +1,7 @@
-import Vector from "../src/vector.js";
+import {describe, expect, test} from '@jest/globals';
+import Vector from "../src/vector";
 
-describe('Vector module', () => {
+describe('VectorJs module', () => {
 
     test('Create', () => {
         const v = new Vector(1, 2, 3)
