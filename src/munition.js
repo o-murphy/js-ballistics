@@ -1,8 +1,8 @@
 // Module for Weapon and Ammo properties definitions
 
 // Import necessary units and settings
-import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
-import calcSettings from './settings.js';
+import {Unit, UNew, unitTypeCoerce, Measure} from './unit.ts';
+import calcSettings from './settings';
 import { DragModel } from './drag_model.js';
 
 
@@ -58,10 +58,10 @@ class Ammo {
    * @returns {number} - Temperature modifier.
    */
   calcPowderSens(otherVelocity, otherTemperature) {
-    const v0 = this.mv.in(Unit.MPS);
-    const t0 = this.powderTemp.in(Unit.Celsius);
-    const v1 = unitTypeCoerce(otherVelocity, Measure.Velocity, calcSettings.Units.velocity).in(Unit.MPS);
-    const t1 = unitTypeCoerce(otherTemperature, Measure.Temperature, calcSettings.Units.temperature).in(Unit.Celsius);
+    const v0 = this.mv.In(Unit.MPS);
+    const t0 = this.powderTemp.In(Unit.Celsius);
+    const v1 = unitTypeCoerce(otherVelocity, Measure.Velocity, calcSettings.Units.velocity).In(Unit.MPS);
+    const t1 = unitTypeCoerce(otherTemperature, Measure.Temperature, calcSettings.Units.temperature).In(Unit.Celsius);
 
     const vDelta = Math.abs(v0 - v1);
     const tDelta = Math.abs(t0 - t1);
@@ -87,9 +87,9 @@ class Ammo {
    */
   getVelocityForTemp(currentTemp) {
     const tempModifier = this.tempModifier;
-    const v0 = this.mv.in(Unit.MPS);
-    const t0 = this.powderTemp.in(Unit.Celsius);
-    const t1 = currentTemp.in(Unit.Celsius);
+    const v0 = this.mv.In(Unit.MPS);
+    const t0 = this.powderTemp.In(Unit.Celsius);
+    const t1 = currentTemp.In(Unit.Celsius);
 
     const tDelta = t1 - t0;
     const muzzleVelocity = (tempModifier / (15 / v0)) * tDelta + v0;

@@ -1,7 +1,7 @@
 // Import necessary modules and classes
-import calcSettings from './settings.js';
-import {Atmo} from './conditions.js';
-import {Unit, UNew, unitTypeCoerce, Measure} from './unit.js';
+import calcSettings from './settings';
+import {Atmo} from './conditions.ts';
+import {Unit, UNew, unitTypeCoerce, Measure} from './unit.ts';
 
 
 // Define the MultiBC class
@@ -21,9 +21,9 @@ class MultiBC {
         this.sectionalDensity = this._getSectionalDensity();
 
         const atmosphere = Atmo.icao();
-        const altitude = UNew.Meter(0).in(Unit.Foot);
+        const altitude = UNew.Meter(0).In(Unit.Foot);
         const {mach} = atmosphere.getDensityFactorAndMachForAltitude(altitude);
-        this.speedOfSound = UNew.FPS(mach).in(Unit.MPS);
+        this.speedOfSound = UNew.FPS(mach).In(Unit.MPS);
 
         // this.tableData = dragTable.map(p => new DragDataPoint(p.CD, p.Mach));
         this.tableData = dragTable;
@@ -31,8 +31,8 @@ class MultiBC {
     }
 
     _getSectionalDensity() {
-        const w = this.weight.in(Unit.Grain);
-        const d = this.diameter.in(Unit.Inch);
+        const w = this.weight.In(Unit.Grain);
+        const d = this.diameter.In(Unit.Inch);
         return w / Math.pow(d, 2) / 7000;
     }
 
@@ -57,7 +57,7 @@ class MultiBC {
                 return {
                     BC: point.BC,
                     Mach: unitTypeCoerce(point.V, Measure.Velocity, calcSettings.Units.velocity)
-                        .in(Unit.MPS) / this.speedOfSound
+                        .In(Unit.MPS) / this.speedOfSound
                 }
             }
         ));

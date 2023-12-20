@@ -619,7 +619,7 @@ const Measure = {
  *
  * @param {AbstractUnit|Object} instance - The instance to coerce or create.
  * @param {AbstractUnit|Object|function} expectedClass - The expected class type.
- * @param {Unit} defaultUnit - The default unit for creating a new instance.
+ * @param {Unit|number} defaultUnit - The default unit for creating a new instance.
  * @returns {AbstractUnit|Object} An instance of the expected class type.
  * @throws {TypeError} If the instance is not of the expected class type or 'number'.
  */
@@ -753,6 +753,6 @@ function unitTypeCoerce2(instance, expected) {
 
 
 export {
-    // AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
+    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
     Unit, UnitProps, unitTypeCoerce, unitTypeCoerce2, UNew, Measure
 }
