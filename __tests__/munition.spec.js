@@ -38,8 +38,8 @@ describe('Ammo Class', () => {
         expect(ammo.dm).toBe(dragModel);
         expect(ammo.length.in(calcSettings.Units.length)).toBeCloseTo(2, 4);
         expect(ammo.mv.in(calcSettings.Units.velocity)).toBeCloseTo(2700, 4);
-        expect(ammo.temp_modifier).toBe(0);
-        expect(ammo.powder_temp.in(calcSettings.Units.temperature)).toBeCloseTo(15, 4);
+        expect(ammo.tempModifier).toBe(0);
+        expect(ammo.powderTemp.in(calcSettings.Units.temperature)).toBeCloseTo(15, 4);
     });
 
     test('Custom Constructor', () => {
@@ -54,8 +54,8 @@ describe('Ammo Class', () => {
         expect(ammo.dm).toBe(dragModel);
         expect(ammo.length.in(Unit.Inch)).toBeCloseTo(3, 4);
         expect(ammo.mv.in(Unit.FPS)).toBeCloseTo(3000, 4);
-        expect(ammo.temp_modifier).toBe(customTempModifier);
-        expect(ammo.powder_temp.in(Unit.Celsius)).toBeCloseTo(20, 4);
+        expect(ammo.tempModifier).toBe(customTempModifier);
+        expect(ammo.powderTemp.in(Unit.Celsius)).toBeCloseTo(20, 4);
     });
 
     test('calcPowderSens', () => {
@@ -67,7 +67,7 @@ describe('Ammo Class', () => {
 
         const tempModifier = ammo.calcPowderSens(otherVelocity, otherTemperature);
 
-        expect(ammo.temp_modifier).toBe(tempModifier);
+        expect(ammo.tempModifier).toBe(tempModifier);
     });
 
     test('getVelocityForTemp', () => {

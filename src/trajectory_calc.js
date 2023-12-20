@@ -128,8 +128,6 @@ class TrajectoryCalc {
 
                 let deltaTime = calcStep / velocityVector.x;
 
-                let v_in_mach = velocity / mach
-
                 let drag = densityFactor * velocity * this.dragByMach(velocity / mach);
 
                 velocityVector = velocityVector.subtract(
@@ -210,9 +208,10 @@ class TrajectoryCalc {
 
         const ranges = [];
 
+        let velocity;
+
         let mach = 0;
         let windVector,
-            velocity,
             twistCoefficient,
             _flag,
             referenceHeight;
@@ -230,7 +229,7 @@ class TrajectoryCalc {
             windVector = windToVector(shotInfo, winds[0]);
         }
 
-        if (calcSettings.USE_POWDER_SENSITIVITY) {
+        if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
             velocity = ammo.getVelocityForTemp(atmo.temperature).in(Unit.FPS);
         } else {
             velocity = ammo.mv.in(Unit.FPS);
