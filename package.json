@@ -5,7 +5,9 @@
   "description": "ISC library for small arms ballistic calculations (JavaScript ES6+)",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
