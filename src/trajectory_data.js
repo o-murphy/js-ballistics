@@ -20,13 +20,13 @@ class TrajectoryData {
      * @param {number|Distance} distance
      * @param {number|Velocity} velocity
      * @param {number} mach
-     * @param {number|Distance} drop
-     * @param {number|Angular} dropAdjustment
-     * @param {number|Distance} windage
-     * @param {number|Angular} windageAdjustment
-     * @param {number|Angular} angle
-     * @param {number|Energy} energy
-     * @param {number|Weight} ogw
+     * @param {number|Distance|Object} drop
+     * @param {number|Angular|Object} dropAdjustment
+     * @param {number|Distance|Object} windage
+     * @param {number|Angular|Object} windageAdjustment
+     * @param {number|Angular|Object} angle
+     * @param {number|Energy|Object} energy
+     * @param {number|Weight|Object} ogw
      * @param {number|TrajFlag} flag
      */
     constructor(
@@ -47,6 +47,26 @@ class TrajectoryData {
         this.energy = energy
         this.ogw = ogw
         this.flag = flag
+    }
+
+    /**
+     * matrix of floats of the trajectory in default units
+     */
+    inDefUnits() {
+        return [
+            this.time,
+            this.distance.in(calcSettings.Units.distance),
+            this.velocity.in(calcSettings.Units.velocity),
+            this.mach,
+            this.drop.in(calcSettings.Units.drop),
+            this.dropAdjustment.in(calcSettings.Units.adjustment),
+            this.windage.in(calcSettings.Units.drop),
+            this.windageAdjustment.in(calcSettings.Units.adjustment),
+            this.angle.in(calcSettings.Units.angular),
+            this.energy.in(calcSettings.Units.energy),
+            this.ogw.in(calcSettings.Units.ogw),
+            this.flag
+        ]
     }
 
     /**
@@ -75,7 +95,7 @@ class TrajectoryData {
             _fmt(this.angle, calcSettings.Units.angular),
             _fmt(this.energy, calcSettings.Units.energy),
             _fmt(this.ogw, calcSettings.Units.ogw),
-            this.flag
+            `${this.flag}`
         ]
     }
 }

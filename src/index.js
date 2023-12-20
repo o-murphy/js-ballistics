@@ -61,5 +61,6 @@ export {
     DangerSpace,
     HitResult,
     TrajectoryCalc,
-    Calculator
 }
+
+export default Calculator;

@@ -47,50 +47,54 @@ class Ammo {
     this.dm = dm;
     this.length = unitTypeCoerce(length, Measure.Distance, calcSettings.Units.length);
     this.mv = unitTypeCoerce(mv, Measure.Velocity, calcSettings.Units.velocity);
-    this.temp_modifier = temp_modifier;
-    this.powder_temp = powder_temp;
+    this.tempModifier = temp_modifier;
+    this.powderTemp = powder_temp;
   }
 
   /**
    * Calculates velocity correction by temperature change.
-   * @param {number|Velocity} other_velocity - Other velocity value.
-   * @param {number|Temperature} other_temperature - Other temperature value.
+   * @param {number|Velocity} otherVelocity - Other velocity value.
+   * @param {number|Temperature} otherTemperature - Other temperature value.
    * @returns {number} - Temperature modifier.
    */
-  calcPowderSens(other_velocity, other_temperature) {
+  calcPowderSens(otherVelocity, otherTemperature) {
     const v0 = this.mv.in(Unit.MPS);
-    const t0 = this.powder_temp.in(Unit.Celsius);
-    const v1 = other_velocity.in(Unit.MPS);
-    const t1 = other_temperature.in(Unit.Celsius);
+    const t0 = this.powderTemp.in(Unit.Celsius);
+    const v1 = unitTypeCoerce(otherVelocity, Measure.Velocity, calcSettings.Units.velocity).in(Unit.MPS);
+    const t1 = unitTypeCoerce(otherTemperature, Measure.Temperature, calcSettings.Units.temperature).in(Unit.Celsius);
 
-    const v_delta = Math.abs(v0 - v1);
-    const t_delta = Math.abs(t0 - t1);
-    const v_lower = v1 < v0 ? v1 : v0;
+    const vDelta = Math.abs(v0 - v1);
+    const tDelta = Math.abs(t0 - t1);
+    const vLower = v1 < v0 ? v1 : v0;
 
-    if (v_delta === 0 || t_delta === 0) {
+    if (vDelta === 0 || tDelta === 0) {
       throw new Error("Temperature modifier error, other velocity and temperature can't be the same as default");
     }
 
-    this.temp_modifier = (v_delta / t_delta) * (15 / v_lower) * 100;
+    const tempModifier = (vDelta / tDelta) * (15 / vLower) * 100
+    if (isNaN(tempModifier)) {
+      throw new Error(`tempModifier can't be ${tempModifier}`)
+    }
 
-    return this.temp_modifier;
+    this.tempModifier = tempModifier;
+    return this.tempModifier;
   }
 
   /**
    * Calculates current velocity by temperature correction.
-   * @param {Temperature|Object} current_temp - Current temperature value.
+   * @param {Temperature|Object} currentTemp - Current temperature value.
    * @returns {Velocity|Object} - Velocity corrected for the specified temperature.
    */
-  getVelocityForTemp(current_temp) {
-    const temp_modifier = this.temp_modifier;
+  getVelocityForTemp(currentTemp) {
+    const tempModifier = this.tempModifier;
     const v0 = this.mv.in(Unit.MPS);
-    const t0 = this.powder_temp.in(Unit.Celsius);
-    const t1 = current_temp.in(Unit.Celsius);
+    const t0 = this.powderTemp.in(Unit.Celsius);
+    const t1 = currentTemp.in(Unit.Celsius);
 
-    const t_delta = t1 - t0;
-    const muzzle_velocity = (temp_modifier / (15 / v0)) * t_delta + v0;
+    const tDelta = t1 - t0;
+    const muzzleVelocity = (tempModifier / (15 / v0)) * tDelta + v0;
 
-    return UNew.MPS(muzzle_velocity);
+    return UNew.MPS(muzzleVelocity);
   }
 }
 
