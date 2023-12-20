@@ -6,20 +6,20 @@ describe('Settings', () => {
 
     test('should initialize with default values', () => {
         expect(calcSettings.USE_POWDER_SENSITIVITY).toBe(false);
-        expect(calcSettings.maxStepSize).toBe(1);
+        expect(calcSettings.maxCalcStepSize).toBe(1);
         // Add more assertions for default unit values if needed
     });
 
     test('should set MAX_CALC_STEP_SIZE', () => {
         calcSettings.maxCalcStepSize = UNew.Meter(100);
         // Adjust the expectation based on the calculation in your implementation
-        expect(calcSettings.maxStepSize).toEqual(UNew.Meter(100));
+        expect(calcSettings.maxCalcStepSize).toEqual(UNew.Meter(100));
     });
 
     test('should set MAX_CALC_STEP_SIZE', () => {
         calcSettings.maxCalcStepSize = 100;
         // Adjust the expectation based on the calculation in your implementation
-        expect(calcSettings.maxStepSize).toEqual(UNew[calcSettings.Units.distance](100));
+        expect(calcSettings.maxCalcStepSize).toEqual(UNew[calcSettings.Units.distance](100));
     });
 
     test('should modify USE_POWDER_SENSITIVITY', () => {

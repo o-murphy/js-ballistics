@@ -6,7 +6,6 @@ import {
     Unit,
     UNew,
     unitTypeCoerce,
-    Measure,
     Angular,
     Distance,
     Velocity,
@@ -202,9 +201,9 @@ class HitResult {
                 lookAngle : (number|Angular)= UNew.Degree(0)) {
         this._checkExtra();
 
-        const _atRange: Distance = unitTypeCoerce(atRange, Measure.Distance, calcSettings.Units.distance);
-        const _targetHeight: Distance = unitTypeCoerce(targetHeight, Measure.Distance, calcSettings.Units.drop);
-        const _lookAngle: Angular = unitTypeCoerce(lookAngle, Measure.Angular, calcSettings.Units.angular);
+        const _atRange: Distance = unitTypeCoerce(atRange, Distance, calcSettings.Units.distance);
+        const _targetHeight: Distance = unitTypeCoerce(targetHeight, Distance, calcSettings.Units.drop);
+        const _lookAngle: Angular = unitTypeCoerce(lookAngle, Angular, calcSettings.Units.angular);
 
         let i
 
