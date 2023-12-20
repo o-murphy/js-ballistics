@@ -2,6 +2,7 @@
 import calcSettings from './settings';
 import {Atmo} from './conditions';
 import {Unit, UNew, unitTypeCoerce, Distance, Weight, Velocity} from './unit';
+import { DragDataPoint } from "./drag_model";
 
 
 interface MbcTable {
@@ -15,13 +16,13 @@ class MultiBC {
     /**
      * Creates instance to calculate custom drag table based on input multi-bc table
      *
-     * @param {{CD: number, Mach: number}[]} dragTable
+     * @param {DragDataPoint[]} dragTable
      * @param {number|Distance|Object} diameter
      * @param {number|Weight|Object} weight
      * @param {{BC: number, V: number|Velocity|Object}[]} mbcTable
      */
 
-    readonly tableData: { CD: number, Mach: number }[];
+    readonly tableData: DragDataPoint[];
     readonly diameter: Distance;
     readonly weight: Weight;
     readonly bcTable: MbcTable[];
@@ -29,7 +30,7 @@ class MultiBC {
     readonly speedOfSound: number;
 
     constructor(
-        dragTable: { CD: number, Mach: number }[],
+        dragTable: DragDataPoint[],
         diameter: (number | Distance),
         weight: (number | Weight),
         mbcTable: MbcTable[]
@@ -103,11 +104,11 @@ class MultiBC {
         return result;
     }
 
-    cdmGenerator() {
+    cdmGenerator(): DragDataPoint[] {
         const bcExtended = this._interpolateBCTable().reverse();
         const formFactors = bcExtended.map(bc => this._getFormFactor(bc));
 
-        return this.tableData.map((point, i) => {
+        return this.tableData.map((point: DragDataPoint, i: number) => {
             const cd = formFactors[i] * point.CD;
             return {CD: cd, Mach: point.Mach};
         });
