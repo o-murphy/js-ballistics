@@ -1,11 +1,11 @@
 // Conditions module
 import {Atmo, Wind} from './conditions.ts';
 // Munition module
-import {Ammo, Weapon} from './munition.js';
+import {Ammo, Weapon} from './munition.ts';
 // Settings module
 import calcSettings from './settings';
 // TrajectoryData module
-import {TrajectoryData, TrajFlag} from './trajectory_data.js';
+import {TrajectoryData, TrajFlag} from './trajectory_data.ts';
 // Unit module
 import {Measure, UNew, Unit, unitTypeCoerce} from './unit.ts';
 // VectorJs module
@@ -229,7 +229,7 @@ class TrajectoryCalc {
             windVector = windToVector(shotInfo, winds[0]);
         }
 
-        if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
+        if (calcSettings.USE_POWDER_SENSITIVITY && ammo._tempModifier) {
             velocity = ammo.getVelocityForTemp(atmo.temperature).In(Unit.FPS);
         } else {
             velocity = ammo.mv.In(Unit.FPS);
@@ -380,7 +380,7 @@ class TrajectoryCalc {
      * @return {{CD: number, Mach: number}[]}
      */
     get cdm() {
-        return self._cdm();
+        return this._cdm();
     }
 
     /**

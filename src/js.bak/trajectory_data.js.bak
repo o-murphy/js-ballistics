@@ -1,7 +1,7 @@
 // Flags for marking trajectory row if Zero or Mach crossing
 // Also uses to set a filters for a trajectory calculation loop
 import calcSettings from "./settings"
-import {UnitProps, Unit, UNew, unitTypeCoerce, Measure} from "./unit.ts";
+import {UnitProps, Unit, UNew, unitTypeCoerce, Measure} from "./unit";
 
 const TrajFlag = {
     NONE: 0,

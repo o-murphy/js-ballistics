@@ -1,3 +1,4 @@
+import {describe, expect, test} from '@jest/globals';
 import { DragTable } from "../src/index.js";
 
 describe("Drag Tables", () => {

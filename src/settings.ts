@@ -1,4 +1,4 @@
-import {Unit, Measure, unitTypeCoerce, Distance} from './unit'; // Adjust the path accordingly
+import {Unit, unitTypeCoerce, Distance} from './unit'; // Adjust the path accordingly
 
 interface DefinedUnits {
     sight_height: Unit,
@@ -59,7 +59,7 @@ class CalcSettings {
             "Change this property only if you know what you are doing; " +
             "too big step can corrupt calculation accuracy");
 
-        this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Measure.Distance, this.Units.distance);
+        this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Distance, this.Units.distance);
     }
 
     get maxStepSize(): (number|Distance) {

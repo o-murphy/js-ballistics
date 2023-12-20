@@ -1,5 +1,5 @@
 import TrajectoryCalc from "./trajectory_calc.js";
-import {HitResult} from "./trajectory_data.js";
+import {HitResult} from "./trajectory_data.ts";
 import {Measure, unitTypeCoerce} from "./unit.ts";
 import calcSettings from "./settings.js";
 
