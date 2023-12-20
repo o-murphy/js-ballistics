@@ -1,15 +1,15 @@
 // Conditions module
-import {Atmo, Wind} from './conditions.ts';
+import {Atmo, Wind} from './conditions';
 // Munition module
-import {Ammo, Weapon} from './munition.ts';
+import {Ammo, Weapon} from './munition';
 // Settings module
 import calcSettings from './settings';
 // TrajectoryData module
-import {TrajectoryData, TrajFlag} from './trajectory_data.ts';
+import {TrajectoryData, TrajFlag} from './trajectory_data';
 // Unit module
-import {Measure, UNew, Unit, unitTypeCoerce} from './unit.ts';
+import {Measure, UNew, Unit, unitTypeCoerce} from './unit';
 // VectorJs module
-import Vector from "./vector.ts";
+import Vector from "./vector";
 
 // Constants
 const cZeroFindingAccuracy = 0.000005;

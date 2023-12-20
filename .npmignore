@@ -1,3 +1,6 @@
+.github/
+.idea/
+*js.src.bak/
 src/
 tsconfig.json
 *.ts

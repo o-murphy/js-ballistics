@@ -11,6 +11,7 @@ export default class Calculator {
 
     // @ts-ignore
     protected _elevation: Angular
+    // @ts-ignore
     protected _calc: TrajectoryCalc
 
     /**
