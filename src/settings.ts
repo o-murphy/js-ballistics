@@ -62,7 +62,7 @@ class CalcSettings {
         this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Distance, this.Units.distance);
     }
 
-    get maxStepSize(): (number|Distance) {
+    get maxCalcStepSize(): (number|Distance) {
         return this._MAX_CALC_STEP_SIZE
     }
 }

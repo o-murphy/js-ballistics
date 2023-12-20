@@ -7,7 +7,7 @@ import calcSettings from './settings';
 // TrajectoryData module
 import {TrajectoryData, TrajFlag} from './trajectory_data';
 // Unit module
-import {Measure, UNew, Unit, unitTypeCoerce} from './unit';
+import {Distance, UNew, Unit, unitTypeCoerce} from './unit';
 // VectorJs module
 import Vector from "./vector";
 
@@ -37,7 +37,7 @@ class TrajectoryCalc {
     }
 
     getCalcStep(step) {
-        let maximumStep = calcSettings._MAX_CALC_STEP_SIZE;
+        let maximumStep = calcSettings.maxCalcStepSize;
         step /= 2;
 
         if (step > maximumStep) {
@@ -53,7 +53,7 @@ class TrajectoryCalc {
      *
      * @param {Weapon} weapon
      * @param {Atmo} atmo
-     * @return {Angular|Object}
+     * @return {Angular}
      * @public
      */
     zeroAngle(weapon, atmo) {
@@ -64,12 +64,12 @@ class TrajectoryCalc {
      *
      * @param {Weapon} weapon
      * @param {Shot} shotInfo
-     * @param {number|Distance|Object} step
+     * @param {number|Distance} step
      * @param extraData
      * @return {TrajectoryData[]}
      */
     trajectory(weapon, shotInfo, step, extraData = false) {
-        let distStep = unitTypeCoerce(step, Measure.Distance, calcSettings.Units.distance);
+        let distStep = unitTypeCoerce(step, Distance, calcSettings.Units.distance);
         const atmo = shotInfo.atmo;
         const winds = shotInfo.winds;
         let filterFlags = TrajFlag.RANGE;
@@ -229,7 +229,7 @@ class TrajectoryCalc {
             windVector = windToVector(shotInfo, winds[0]);
         }
 
-        if (calcSettings.USE_POWDER_SENSITIVITY && ammo._tempModifier) {
+        if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
             velocity = ammo.getVelocityForTemp(atmo.temperature).In(Unit.FPS);
         } else {
             velocity = ammo.mv.In(Unit.FPS);

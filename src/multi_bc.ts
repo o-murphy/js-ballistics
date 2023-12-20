@@ -1,7 +1,7 @@
 // Import necessary modules and classes
 import calcSettings from './settings';
 import {Atmo} from './conditions';
-import {Unit, UNew, unitTypeCoerce, Measure, Distance, Weight, Velocity} from './unit';
+import {Unit, UNew, unitTypeCoerce, Distance, Weight, Velocity} from './unit';
 
 
 interface MbcTable {
@@ -35,8 +35,8 @@ class MultiBC {
         mbcTable: MbcTable[]
     ) {
         // this.mbcTable = mbcTable;
-        this.weight = unitTypeCoerce(weight, Measure.Weight, calcSettings.Units.weight);
-        this.diameter = unitTypeCoerce(diameter, Measure.Distance, calcSettings.Units.diameter);
+        this.weight = unitTypeCoerce(weight, Weight, calcSettings.Units.weight);
+        this.diameter = unitTypeCoerce(diameter, Distance, calcSettings.Units.diameter);
         this.sectionalDensity = this._getSectionalDensity();
 
         const atmosphere = Atmo.icao();
@@ -75,7 +75,7 @@ class MultiBC {
         bcMach.push(...bcTable.map(point => {
                 return {
                     BC: point.BC,
-                    Mach: unitTypeCoerce(point.V, Measure.Velocity, calcSettings.Units.velocity)
+                    Mach: unitTypeCoerce(point.V, Velocity, calcSettings.Units.velocity)
                         .In(Unit.MPS) / this.speedOfSound
                 }
             }
