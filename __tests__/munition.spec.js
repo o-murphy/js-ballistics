@@ -8,10 +8,10 @@ describe('Weapon Class', () => {
     test('Default Constructor', () => {
         const weapon = new Weapon();
 
-        expect(weapon.sightHeight.in(calcSettings.Units.sight_height)).toBeCloseTo(2, 4);
-        expect(weapon.zeroDistance.in(calcSettings.Units.distance)).toBeCloseTo(100, 4);
-        expect(weapon.twist.in(calcSettings.Units.twist)).toBeCloseTo(0, 4);
-        expect(weapon.zeroLookAngle.in(calcSettings.Units.angular)).toBeCloseTo(0, 4);
+        expect(weapon.sightHeight.In(calcSettings.Units.sight_height)).toBeCloseTo(2, 4);
+        expect(weapon.zeroDistance.In(calcSettings.Units.distance)).toBeCloseTo(100, 4);
+        expect(weapon.twist.In(calcSettings.Units.twist)).toBeCloseTo(0, 4);
+        expect(weapon.zeroLookAngle.In(calcSettings.Units.angular)).toBeCloseTo(0, 4);
     });
 
     test('Custom Constructor', () => {
@@ -22,10 +22,10 @@ describe('Weapon Class', () => {
 
         const weapon = new Weapon(customSightHeight, customZeroDistance, customTwist, customZeroLookAngle);
 
-        expect(weapon.sightHeight.in(Unit.Inch)).toBeCloseTo(3, 4);
-        expect(weapon.zeroDistance.in(Unit.Yard)).toBeCloseTo(200, 4);
-        expect(weapon.twist.in(Unit.Inch)).toBeCloseTo(3, 4);
-        expect(weapon.zeroLookAngle.in(Unit.MIL)).toBeCloseTo(2, 4);
+        expect(weapon.sightHeight.In(Unit.Inch)).toBeCloseTo(3, 4);
+        expect(weapon.zeroDistance.In(Unit.Yard)).toBeCloseTo(200, 4);
+        expect(weapon.twist.In(Unit.Inch)).toBeCloseTo(3, 4);
+        expect(weapon.zeroLookAngle.In(Unit.MIL)).toBeCloseTo(2, 4);
     });
 });
 
@@ -36,10 +36,10 @@ describe('Ammo Class', () => {
         const ammo = new Ammo(dragModel);
 
         expect(ammo.dm).toBe(dragModel);
-        expect(ammo.length.in(calcSettings.Units.length)).toBeCloseTo(2, 4);
-        expect(ammo.mv.in(calcSettings.Units.velocity)).toBeCloseTo(2700, 4);
+        expect(ammo.length.In(calcSettings.Units.length)).toBeCloseTo(2, 4);
+        expect(ammo.mv.In(calcSettings.Units.velocity)).toBeCloseTo(2700, 4);
         expect(ammo.tempModifier).toBe(0);
-        expect(ammo.powderTemp.in(calcSettings.Units.temperature)).toBeCloseTo(15, 4);
+        expect(ammo.powderTemp.In(calcSettings.Units.temperature)).toBeCloseTo(15, 4);
     });
 
     test('Custom Constructor', () => {
@@ -52,10 +52,10 @@ describe('Ammo Class', () => {
         const ammo = new Ammo(dragModel, customLength, customVelocity, customTempModifier, customPowderTemp);
 
         expect(ammo.dm).toBe(dragModel);
-        expect(ammo.length.in(Unit.Inch)).toBeCloseTo(3, 4);
-        expect(ammo.mv.in(Unit.FPS)).toBeCloseTo(3000, 4);
+        expect(ammo.length.In(Unit.Inch)).toBeCloseTo(3, 4);
+        expect(ammo.mv.In(Unit.FPS)).toBeCloseTo(3000, 4);
         expect(ammo.tempModifier).toBe(customTempModifier);
-        expect(ammo.powderTemp.in(Unit.Celsius)).toBeCloseTo(20, 4);
+        expect(ammo.powderTemp.In(Unit.Celsius)).toBeCloseTo(20, 4);
     });
 
     test('calcPowderSens', () => {
@@ -78,6 +78,6 @@ describe('Ammo Class', () => {
 
         const correctedVelocity = ammo.getVelocityForTemp(currentTemp);
 
-        expect(correctedVelocity.in(calcSettings.Units.velocity)).toBeCloseTo(2700, 4);
+        expect(correctedVelocity.In(calcSettings.Units.velocity)).toBeCloseTo(2700, 4);
     });
 });

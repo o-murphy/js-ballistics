@@ -1,7 +1,7 @@
 // Classes to define zeroing or current environment conditions
 
-import calcSettings from './settings.js';
-import {Unit, unitTypeCoerce, UNew, Measure} from './unit.js';
+import calcSettings from './settings';
+import {Unit, unitTypeCoerce, UNew, Measure} from './unit.ts';
 
 // Constants for standard atmospheric conditions
 export const cIcaoStandardTemperatureR = 518.67;

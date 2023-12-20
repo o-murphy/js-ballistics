@@ -4,9 +4,9 @@ import {
     UnitProps,
     Measure,
     unitTypeCoerce,
-} from "./unit.js";
+} from "./unit.ts";
 import DragTable from "./drag_tables.js";
-import calcSettings from "./settings.js"
+import calcSettings from "./settings"
 import {
     Atmo,
     Wind,
@@ -16,7 +16,7 @@ import {
     cStandardPressure,
     cIcaoStandardHumidity,
     cSpeedOfSound
-} from "./conditions.js";
+} from "./conditions.ts";
 import {
     Weapon,
     Ammo
@@ -34,7 +34,7 @@ import {
     HitResult
 } from "./trajectory_data.js"
 import TrajectoryCalc from "./trajectory_calc.js";
-import Calculator from "./interface.js";
+import Calculator from "./interface";
 
 export {
     Unit,

@@ -2,7 +2,7 @@
 import {DragModel, DragTable, calcSettings} from '../src/index.js';
 
 // Mock the dependencies
-jest.mock('../src/settings.js');
+jest.mock('../src/settings');
 
 
 describe('DragDataPoint class', () => {
@@ -19,8 +19,8 @@ describe('DragModel class', () => {
         const dragModel = new DragModel(1, DragTable.G7, 10, 5);
 
         expect(dragModel.value).toBe(1);
-        expect(dragModel.weight.in(calcSettings.Units.weight)).toBe(10);
-        expect(dragModel.diameter.in(calcSettings.Units.diameter)).toBe(5);
+        expect(dragModel.weight.In(calcSettings.Units.weight)).toBe(10);
+        expect(dragModel.diameter.In(calcSettings.Units.diameter)).toBe(5);
         expect(dragModel.sectionalDensity).toBeCloseTo(0.000057, 6);
         expect(dragModel.formFactor).toBeCloseTo(0.000057, 6);
     });
