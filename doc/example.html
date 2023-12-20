@@ -10,16 +10,15 @@
 <script type="module">
 
     // Link via CDN you want to use unpkg or jsdelivr
-    import * as JSBallisics from 'https://unpkg.com/js-ballistics@latest/src/index.js';
-    // import * as JSBallisics from 'https://cdn.jsdelivr.net/npm/js-ballistics@latest/src/index.js';
+    import * as JSBallisics from 'https://unpkg.com/js-ballistics@latest';
 
     // Make all exports available globally
     Object.assign(window, JSBallisics);
 
     // Create a Measure object (example)
     const exampleMeasure = window.UNew.Meter(10);
-    const exampleMeasureFoot = exampleMeasure.to(Unit.Foot);
-    const exampleValueFoot = exampleMeasure.In(Unit.Foot);
+    const exampleMeasureFoot = exampleMeasure.to(window.Unit.Foot);
+    const exampleValueFoot = exampleMeasure.In(window.Unit.Foot);
 
     // Log the Measure object to the console
     console.log('Example Measure in meter:', `${exampleMeasure}`);
