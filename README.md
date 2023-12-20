@@ -29,6 +29,7 @@ npm i js-ballistics@latest
 ## Usage
 
 ### Link to your HTML
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -51,7 +52,7 @@ npm i js-ballistics@latest
     // Create a Measure object (example)
     const exampleMeasure = window.UNew.Meter(10);
     const exampleMeasureFoot = exampleMeasure.to(Unit.Foot);
-    const exampleValueFoot = exampleMeasure.in(Unit.Foot);
+    const exampleValueFoot = exampleMeasure.In(Unit.Foot);
 
     // Log the Measure object to the console
     console.log('Example Measure in meter:', `${exampleMeasure}`);
