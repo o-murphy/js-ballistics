@@ -13,6 +13,10 @@ describe("Unit back'n'forth", () => {
       test(`Read back failed for ${UnitProps[units].name}`, () => {
           expect(v).toBeCloseTo(value, 7)
       })
+
+      test(`Conversion ${UnitProps[units].name}`, () => {
+          expect(u.to(units).rawValue).toBeCloseTo(u.rawValue, 7)
+      })
   }
 
   function backAndForthAll(unitList) {
@@ -116,6 +120,7 @@ describe("Unit coercion", () => {
   });
 
   test("As undefined", () => {
+      //@ts-ignore
     expect(() => unitTypeCoerce(undefined, Measure.Distance, Unit.Yard))
       .toThrowError(`Instance must be a type of ${
         Measure.Distance.name
