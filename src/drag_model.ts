@@ -5,18 +5,24 @@ import {Distance, Unit, unitTypeCoerce, Weight} from './unit';
 import DragTable from './drag_tables.js'
 
 
+interface DragDataPoint {
+    CD: number,
+    Mach: number
+}
+
+
 // Define the DragModel class
 class DragModel {
     /**
      * Constructor for DragModel class.
      * @param {number} value - Coefficient value for drag.
-     * @param {{CD:number, Mach: number}[]} dragTable - Custom drag table.
+     * @param {DragDataPoint[]} dragTable - Custom drag table.
      * @param {number|Weight|Object} weight - Weight value or Weight instance.
      * @param {number|Distance|Object} diameter - Diameter value or Distance instance.
      */
 
     readonly value: number;
-    readonly dragTable: {CD: number, Mach: number}[];
+    readonly dragTable: DragDataPoint[];
     readonly weight: Weight;
     readonly diameter: Distance;
 
@@ -24,7 +30,7 @@ class DragModel {
     protected formFactor: number;
 
     constructor(value: number,
-                dragTable: {CD: number, Mach: number}[],
+                dragTable: DragDataPoint[],
                 weight: (number|Weight),
                 diameter: (number|Distance)) {
         // Get the length of the dragTable
@@ -117,4 +123,5 @@ function sectionalDensity(weight: number, diameter: number) {
 }
 
 
-export { DragModel };
+export { DragDataPoint };
+export default DragModel;
