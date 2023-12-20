@@ -8,8 +8,8 @@ import calcSettings from './settings';
 import {TrajectoryData, TrajFlag} from './trajectory_data.js';
 // Unit module
 import {Measure, UNew, Unit, unitTypeCoerce} from './unit.js';
-// Vector module
-import Vector from "./vector.js";
+// VectorJs module
+import Vector from "./vector.ts";
 
 // Constants
 const cZeroFindingAccuracy = 0.000005;
