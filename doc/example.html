@@ -4,8 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your HTML Page</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/darkly/bootstrap.min.css"/>
 </head>
 <body>
+
+<div class="container">
+    <nav class="navbar bg-dark " style="margin-bottom: 1rem; ">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white" href="#">js-ballistics</a>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent"></div>
+        </div>
+    </nav>
+
+    <div class="container text-left">
+        <div class="row align-items-start">
+            <div class="col">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body">
+                        <h5 class="card-title">Define units</h5>
+                        <div id="unitTypes"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col  align-items-right">
+                <div class="row" >
+                    <div class="card" style="width: 20rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">Bullet props</h5>
+                            <div id="bulletProps"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" >
+                    <div class="card" style="width: 20rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">Ammo props</h5>
+                            <div id="ammoProps"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src=https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
 
 <script type="module">
 
@@ -20,15 +66,72 @@
     const exampleMeasureFoot = exampleMeasure.to(window.Unit.Foot);
     const exampleValueFoot = exampleMeasure.In(window.Unit.Foot);
 
-    // Log the Measure object to the console
-    console.log('Example Measure in meter:', `${exampleMeasure}`);
-    console.log('Example Conversion meter to foot:', `${exampleMeasureFoot}`);
-    console.log('Example Conversion meter to number in foot:', `${exampleValueFoot}`);
+    const get_unit_list = (unit) => Object.keys(unit).map((key) => {
+        return {label: UnitProps[unit[key]].name, value: unit[key]}
+    })
 
-    // Display the Measure value in the HTML body
-    document.body.innerHTML += `<p>Example Measure Value: ${exampleMeasure}</p>`;
-    document.body.innerHTML += `<p>Example Conversion meter to foot: ${exampleMeasureFoot}</p>`;
-    document.body.innerHTML += `<p>Example Conversion meterto number in foot: ${exampleValueFoot}</p>`;
+    const init_unit_list = [
+        {label: "Distance", list: get_unit_list(Measure.Distance), def: Unit.Meter},
+        {label: "Drop", list: get_unit_list(Measure.Distance), def: Unit.Meter},
+        {label: "Velocity", list: get_unit_list(Measure.Velocity), def: Unit.MPS},
+        {label: "Angular", list: get_unit_list(Measure.Angular), def: Unit.Mil},
+        {label: "Path", list: get_unit_list(Measure.Angular), def: Unit.Mil},
+        {label: "Weight", list: get_unit_list(Measure.Weight), def: Unit.Grain},
+        {label: "Temperature", list: get_unit_list(Measure.Temperature), def: Unit.Celsius},
+        {label: "Pressure", list: get_unit_list(Measure.Pressure), def: Unit.hPa},
+        {label: "Energy", list: get_unit_list(Measure.Energy), def: Unit.Joule},
+        {label: "OGW", list: get_unit_list(Measure.Weight), def: Unit.Kilogram},
+    ]
+
+    const bullet_props_list = [
+        {id: "bc", label: "BC", step: 0.1, min: 1, max: 1000, decimals: 1},
+        {id: "weight", label: "Weight", step: 0.1, min: 1, max: 1000, decimals: 1},
+        {id: "length", label: "Length", step: 0.1, min: 1, max: 1000, decimals: 1},
+    ]
+
+    init_unit_list.forEach((item) => {
+        const opts = item.list.map(o => `<option ${o.value === item.def ? "selected" : ""} value="${o.value}">${o.label}</option>`)
+        const uSelect = `<div class="mb-2">
+                            <label class="form-label">${item.label}</label>
+                            <select class="form-select" id=${item.label} aria-label="Default select example">${opts}</select>
+                        </div>`;
+        document.getElementById("unitTypes").innerHTML += uSelect
+    })
+
+    const wp = () => {
+
+        const tags = bullet_props_list.map(item => {
+            console.log(item)
+
+        const tag = `<div class="mb-2">
+                        <label for="${item.id}" class="form-label">${item.label}</label>
+                        <input type="number" value="1" step="${item.step}" class="form-control"
+                        id="${item.id}" min="${item.min}" max="${item.max}" >
+                      </div>`
+
+        document.getElementById("bulletProps").innerHTML += tag
+        let myInput = document.getElementById(item.id);
+        function rndInput(){
+            let regexp = new RegExp(`(\\.\\d{${item.decimals}})\\d+`, 'g');
+            myInput.value = myInput.value.replace(regexp, '$1');
+            myInput.value = myInput.value <= item.max ? myInput.value : item.max
+        }
+        myInput.addEventListener("onchange", rndInput);
+        myInput.addEventListener("keyup", rndInput);
+        })
+
+        document.getElementById("bulletProps").innerHTML += `<div class="mb-2">
+                            <label class="form-label">Drag Model</label>
+                            <select class="form-select" id="Dm" aria-label="Default select example">
+                                <option selected value="Table.G7">G7</option>
+                                <option value="${Table.G1}">G1</option>
+                            </select>
+                        </div>`
+
+    };
+    wp()
+
+
 </script>
 
 </body>
