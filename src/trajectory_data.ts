@@ -18,13 +18,13 @@ import {Shot} from "./conditions";
 
 enum TrajFlag {
     NONE = 0,
-    ZERO_UP = 1,
-    ZERO_DOWN = 2,
-    MACH = 4,
-    RANGE = 8,
-    DANGER = 16,
-    ZERO = 1 | 2,
-    ALL = 1 | 2 | 4 | 8 | 16
+    ZERO_UP = 1 << 0,
+    ZERO_DOWN = 1 << 1,
+    MACH = 1 << 2,
+    RANGE = 1 << 3,
+    DANGER = 1 << 4,
+    ZERO = ZERO_UP | ZERO_DOWN,
+    ALL = ZERO | MACH | RANGE | DANGER
 }
 
 class TrajectoryData {

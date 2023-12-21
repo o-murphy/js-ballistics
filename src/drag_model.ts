@@ -2,7 +2,7 @@
 import calcSettings from './settings';
 import {Distance, Unit, unitTypeCoerce, Weight} from './unit';
 // @ts-ignore
-import DragTable from './drag_tables.js'
+import Table from './drag_tables.js'
 
 
 type DragDataPoint = {
@@ -11,18 +11,21 @@ type DragDataPoint = {
 }
 
 
+type DragTable = DragDataPoint[]
+
+
 // Define the DragModel class
 class DragModel {
     /**
      * Constructor for DragModel class.
      * @param {number} value - Coefficient value for drag.
-     * @param {DragDataPoint[]} dragTable - Custom drag table.
+     * @param {DragTable} dragTable - Custom drag table.
      * @param {number|Weight|Object} weight - Weight value or Weight instance.
      * @param {number|Distance|Object} diameter - Diameter value or Distance instance.
      */
 
     readonly value: number;
-    readonly dragTable: DragDataPoint[];
+    readonly dragTable: DragTable;
     readonly weight: Weight;
     readonly diameter: Distance;
 
@@ -30,7 +33,7 @@ class DragModel {
     protected formFactor: number;
 
     constructor(value: number,
-                dragTable: DragDataPoint[],
+                dragTable: DragTable,
                 weight: (number|Weight),
                 diameter: (number|Distance)) {
         // Get the length of the dragTable
@@ -51,8 +54,8 @@ class DragModel {
             throw new Error(error);
         }
 
-        // Check if the dragTable is in the DragTable enum
-        if (Object.values(DragTable).includes(dragTable)) {
+        // Check if the dragTable is in the Table enum
+        if (Object.values(Table).includes(dragTable)) {
             this.value = value;
         } else if (tableLen > 0) {
             // Set a default value if the dragTable is not in the enum
@@ -123,5 +126,5 @@ function sectionalDensity(weight: number, diameter: number) {
 }
 
 
-export type { DragDataPoint };
+export type { DragDataPoint, DragTable };
 export default DragModel;

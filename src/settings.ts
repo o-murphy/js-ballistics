@@ -25,7 +25,7 @@ class CalcSettings {
      */
     public Units: DefinedUnits
     public USE_POWDER_SENSITIVITY: boolean
-    private _MAX_CALC_STEP_SIZE: (number | Distance)
+    private _MAX_CALC_STEP_SIZE: Distance
 
     constructor() {
         this.Units = {
@@ -46,7 +46,7 @@ class CalcSettings {
             target_height: Unit.Inch
         };
 
-        this._MAX_CALC_STEP_SIZE = 1;
+        this._MAX_CALC_STEP_SIZE = unitTypeCoerce(1, Distance, Unit.Foot);
         this.USE_POWDER_SENSITIVITY = false;
     }
 
@@ -62,8 +62,8 @@ class CalcSettings {
         this._MAX_CALC_STEP_SIZE = unitTypeCoerce(value, Distance, this.Units.distance);
     }
 
-    get maxCalcStepSize(): (number|Distance) {
-        return this._MAX_CALC_STEP_SIZE
+    get maxCalcStepSize(): Distance {
+        return this._MAX_CALC_STEP_SIZE;
     }
 }
 

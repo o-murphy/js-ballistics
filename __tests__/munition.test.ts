@@ -1,7 +1,7 @@
 import {describe, expect, test} from '@jest/globals';
 import {
     calcSettings, Weapon, Ammo,
-    UNew, Unit, DragTable, DragModel
+    UNew, Unit, Table, DragModel
 } from '../src/index.js'; // Import necessary modules and classes
 
 
@@ -33,7 +33,7 @@ describe('Weapon Class', () => {
 
 describe('Ammo Class', () => {
     test('Default Constructor', () => {
-        const dragModel = new DragModel(0.5, DragTable.G7, 100, 0.01);
+        const dragModel = new DragModel(0.5, Table.G7, 100, 0.01);
         const ammo = new Ammo(dragModel);
 
         expect(ammo.dm).toBe(dragModel);
@@ -49,7 +49,7 @@ describe('Ammo Class', () => {
         const customTempModifier = 10;
         const customPowderTemp = UNew.Celsius(20);
 
-        const dragModel = new DragModel(0.6, DragTable.G7, 150, 0.02);
+        const dragModel = new DragModel(0.6, Table.G7, 150, 0.02);
         const ammo = new Ammo(dragModel, customLength, customVelocity, customTempModifier, customPowderTemp);
 
         expect(ammo.dm).toBe(dragModel);
@@ -60,7 +60,7 @@ describe('Ammo Class', () => {
     });
 
     test('calcPowderSens', () => {
-        const dragModel = new DragModel(0.5, DragTable.G7, 100, 0.01);
+        const dragModel = new DragModel(0.5, Table.G7, 100, 0.01);
         const ammo = new Ammo(dragModel);
 
         const otherVelocity = UNew.FPS(2800);
@@ -72,7 +72,7 @@ describe('Ammo Class', () => {
     });
 
     test('getVelocityForTemp', () => {
-        const dragModel = new DragModel(0.5, DragTable.G7, 100, 0.01);
+        const dragModel = new DragModel(0.5, Table.G7, 100, 0.01);
         const ammo = new Ammo(dragModel);
 
         const currentTemp = UNew.Celsius(25);

@@ -5,7 +5,7 @@ import {
     Measure,
     unitTypeCoerce,
 } from "./unit";
-import DragTable from "./drag_tables.js";
+import Table from "./drag_tables.js";
 import calcSettings from "./settings"
 import {
     Atmo,
@@ -22,9 +22,7 @@ import {
     Ammo
 } from "./munition";
 import DragModel from "./drag_model";
-import {
-    MultiBC,
-} from "./multi_bc"
+import MultiBC  from "./multi_bc"
 import {
     TrajectoryData,
     TrajFlag,
@@ -38,7 +36,7 @@ export {
     Unit,
     UnitProps,
     UNew,
-    DragTable,
+    Table,
     calcSettings,
     Measure,
     unitTypeCoerce,
