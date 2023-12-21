@@ -163,20 +163,20 @@ class Atmo {
      * @param {number} altitude - Altitude above sea level.
      * @return {{density: number, mach: number}} - Density factor and Mach number for the specified altitude.
      */
-    getDensityFactorAndMachForAltitude(altitude: number): { density: number, mach: number } {
+    getDensityFactorAndMachForAltitude(altitude: number): [density: number, mach: number] {
         if (Math.abs(this._a0 - altitude) < 30) {
             // Use pre-calculated values for nearby altitudes
-            return {density: this.density / cStandardDensity, mach: this._mach1};
+            return [this.density / cStandardDensity, this._mach1];
         }
 
         // Calculate new atmosphere conditions for the specified altitude
-        const tb = altitude * cTemperatureGradient + cIcaoTemperatureDeltaR;
-        const t = this._t0 + this._ta - tb;
-        const p = this._p0 * Math.pow(this._t0 / t, cPressureExponent);
+        const tb: number = altitude * cTemperatureGradient + cIcaoTemperatureDeltaR;
+        const t: number = this._t0 + this._ta - tb;
+        const p: number = this._p0 * Math.pow(this._t0 / t, cPressureExponent);
         const {density, mach} = this.calculate0(t, p);
 
         // Return calculated values
-        return {density: density / cStandardDensity, mach};
+        return [density / cStandardDensity, mach];
     }
 }
 

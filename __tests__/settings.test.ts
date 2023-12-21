@@ -1,12 +1,13 @@
 import {describe, expect, test} from '@jest/globals';
-import { calcSettings, UNew } from '../src/index.js';
+import calcSettings from '../src/settings';
+import {UNew, Unit} from '../src/unit';
 
 
 describe('Settings', () => {
 
     test('should initialize with default values', () => {
         expect(calcSettings.USE_POWDER_SENSITIVITY).toBe(false);
-        expect(calcSettings.maxCalcStepSize).toBe(1);
+        expect(calcSettings.maxCalcStepSize.In(Unit.Foot)).toBe(1);
         // Add more assertions for default unit values if needed
     });
 

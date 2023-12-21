@@ -2,57 +2,64 @@
 import calcSettings from './settings';
 import {Atmo} from './conditions';
 import {Unit, UNew, unitTypeCoerce, Distance, Weight, Velocity} from './unit';
-import type { DragDataPoint } from "./drag_model";
+import type {DragDataPoint, DragTable} from "./drag_model";
 
 
-type MbcTable = {
+type MbcPoint = {
     BC: number;
     V: (number | Velocity);
 }
 
+
+type BcMachPoint = {
+    BC: number;
+    Mach: number;
+}
+
+type MbcTable = MbcPoint[]
+type MbcMachTable = BcMachPoint[]
 
 // Define the MultiBC class
 class MultiBC {
     /**
      * Creates instance to calculate custom drag table based on input multi-bc table
      *
-     * @param {DragDataPoint[]} dragTable
+     * @param {DragTable} dragTable
      * @param {number|Distance|Object} diameter
      * @param {number|Weight|Object} weight
      * @param {{BC: number, V: number|Velocity|Object}[]} mbcTable
      */
 
-    readonly tableData: DragDataPoint[];
+    readonly tableData: DragTable;
     readonly diameter: Distance;
     readonly weight: Weight;
-    readonly bcTable: MbcTable[];
+    readonly bcTable: MbcTable;
     readonly sectionalDensity: number;
     readonly speedOfSound: number;
 
     constructor(
-        dragTable: DragDataPoint[],
+        dragTable: DragTable,
         diameter: (number | Distance),
         weight: (number | Weight),
-        mbcTable: MbcTable[]
+        mbcTable: MbcTable
     ) {
         // this.mbcTable = mbcTable;
         this.weight = unitTypeCoerce(weight, Weight, calcSettings.Units.weight);
         this.diameter = unitTypeCoerce(diameter, Distance, calcSettings.Units.diameter);
         this.sectionalDensity = this._getSectionalDensity();
 
-        const atmosphere = Atmo.icao();
-        const altitude = UNew.Meter(0).In(Unit.Foot);
-        const {mach} = atmosphere.getDensityFactorAndMachForAltitude(altitude);
+        const atmosphere: Atmo = Atmo.icao();
+        const altitude: number = UNew.Meter(0).In(Unit.Foot);
+        const mach: number = atmosphere.getDensityFactorAndMachForAltitude(altitude)[1];
         this.speedOfSound = UNew.FPS(mach).In(Unit.MPS);
 
-        // this.tableData = dragTable.map(p => new DragDataPoint(p.CD, p.Mach));
         this.tableData = dragTable;
-        this.bcTable = mbcTable.sort((a, b) => b.BC - a.BC);
+        this.bcTable = mbcTable.sort((a: MbcPoint, b: MbcPoint) => b.BC - a.BC);
     }
 
     _getSectionalDensity(): number {
-        const w = this.weight.In(Unit.Grain);
-        const d = this.diameter.In(Unit.Inch);
+        const w: number = this.weight.In(Unit.Grain);
+        const d: number = this.diameter.In(Unit.Inch);
         return w / Math.pow(d, 2) / 7000;
     }
 
@@ -66,14 +73,14 @@ class MultiBC {
 
     _interpolateBCTable(): number[] {
         // Extends input bc table by creating bc value for each point of standard Drag Model
-        const bcTable = [...this.bcTable];
-        const bcMach = [
+        const bcTable: MbcTable = [...this.bcTable];
+        const bcMach: MbcMachTable = [
             {
                 BC: bcTable[0].BC,
                 Mach: this.tableData[this.tableData.length - 1].Mach
             },
         ];
-        bcMach.push(...bcTable.map(point => {
+        bcMach.push(...bcTable.map((point: MbcPoint): BcMachPoint => {
                 return {
                     BC: point.BC,
                     Mach: unitTypeCoerce(point.V, Velocity, calcSettings.Units.velocity)
@@ -88,15 +95,17 @@ class MultiBC {
             }
         );
 
-        let result = [bcMach[0].BC];
+        let result: number[] = [bcMach[0].BC];
 
-        for (let i = 0; i < bcMach.length - 1; i++) {
-            const bcMax = bcMach[i];
-            const bcMin = bcMach[i + 1];
-            const dfPart = this.tableData.filter(point => bcMax.Mach > point.Mach && point.Mach >= bcMin.Mach);
-            const ddf = dfPart.length;
-            const bcDelta = (bcMax.BC - bcMin.BC) / ddf;
-            for (let j = 0; j < ddf; j++) {
+        for (let i: number = 0; i < bcMach.length - 1; i++) {
+            const bcMax: BcMachPoint = bcMach[i];
+            const bcMin: BcMachPoint = bcMach[i + 1];
+            const dfPart: DragTable = this.tableData.filter(
+                (point: DragDataPoint) => ((bcMax.Mach > point.Mach) && (point.Mach >= bcMin.Mach))
+            );
+            const ddf: number = dfPart.length;
+            const bcDelta: number = (bcMax.BC - bcMin.BC) / ddf;
+            for (let j: number = 0; j < ddf; j++) {
                 result.push(bcMax.BC - bcDelta * j);
             }
         }
@@ -104,19 +113,19 @@ class MultiBC {
         return result;
     }
 
-    cdmGenerator(): DragDataPoint[] {
-        const bcExtended = this._interpolateBCTable().reverse();
-        const formFactors = bcExtended.map(bc => this._getFormFactor(bc));
+    cdmGenerator(): DragTable {
+        const bcExtended: number[] = this._interpolateBCTable().reverse();
+        const formFactors: number[] = bcExtended.map((bc: number) => this._getFormFactor(bc));
 
-        return this.tableData.map((point: DragDataPoint, i: number) => {
-            const cd = formFactors[i] * point.CD;
+        return this.tableData.map((point: DragDataPoint, i: number): DragDataPoint => {
+            const cd: number = formFactors[i] * point.CD;
             return {CD: cd, Mach: point.Mach};
         });
     }
 
-    get cdm() {
+    get cdm(): DragTable {
         return [...this.cdmGenerator()];
     }
 }
 
-export {MultiBC};
+export default MultiBC;

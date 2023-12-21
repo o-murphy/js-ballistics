@@ -1,5 +1,5 @@
 // @ts-ignore
-import TrajectoryCalc from "./trajectory_calc.js";
+import TrajectoryCalc from "./trajectory_calc";
 import {HitResult, TrajectoryData} from "./trajectory_data";
 import {Distance, Angular, unitTypeCoerce} from "./unit";
 import calcSettings from "./settings";
