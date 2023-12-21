@@ -5,7 +5,7 @@ import {Distance, Unit, unitTypeCoerce, Weight} from './unit';
 import DragTable from './drag_tables.js'
 
 
-interface DragDataPoint {
+type DragDataPoint = {
     CD: number,
     Mach: number
 }

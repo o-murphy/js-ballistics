@@ -6,30 +6,24 @@
 ### Table of contents
 * **[Installation](#installation)**
 <!--   * [Latest stable](#latest-stable-release-from-pypi)
-  * [From sources](#installing-from-sources)
-  * [Clone and build](#clone-and-build) -->
-* **[Link to your HTML](#link-to-your-html)**
 
-<!-- * **[Usage](#usage)**
+* **[Usage](#usage)**
   * [Units of measure](#unit-manipulation-syntax)
   * [An example of calculations](#an-example-of-calculations)
   * [Output example](#example-of-the-formatted-output)
-* **[Older versions]()**
-  * [v1.0.x](https://github.com/o-murphy/py_ballisticcalc/tree/v1.0.12)
 * **[Contributors](#contributors)**
 * **[Sister projects](#sister-projects)** -->
 * **[About project](#about-project)**
 
 
 ## Installation
+
+### Via NPM
 ```shell
 npm i js-ballistics@latest
 ```
 
-## Usage
-
-### Link to your HTML
-
+### Load dynamically
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -42,9 +36,8 @@ npm i js-ballistics@latest
 
 <script type="module">
 
-    // Link via CDN you want to use unpkg or jsdelivr
-    import * as JSBallisics from 'https://unpkg.com/js-ballistics@latest/src/index.js';
-    // import * as JSBallisics from 'https://cdn.jsdelivr.net/npm/js-ballistics@latest/src/index.js';
+    // Link via unpkg.com CDN
+    import * as JSBallisics from 'https://unpkg.com/js-ballistics@latest';
 
     // Make all exports available globally
     Object.assign(window, JSBallisics);
