@@ -123,5 +123,5 @@ function sectionalDensity(weight: number, diameter: number) {
 }
 
 
-export { DragDataPoint };
+export type { DragDataPoint };
 export default DragModel;
