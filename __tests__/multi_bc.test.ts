@@ -1,10 +1,11 @@
 import {describe, expect, test} from '@jest/globals';
-import { MultiBC, UNew, Ammo, DragTable, DragModel, TrajectoryCalc } from '../src/index.js';
+import { MultiBC, UNew, Ammo, Table, DragModel, TrajectoryCalc } from '../src/index.js';
+
 
 describe("Multiple BC", () => {
-    test('MBC valid test', () => {
+    describe('MBC valid test', () => {
         // Litz's multi-bc table conversion to CDM, 338LM 285GR HORNADY ELD-M
-        const mbc = new MultiBC(DragTable.G7,
+        const mbc = new MultiBC(Table.G7,
             UNew.Inch(0.338),
             UNew.Grain(285),
             [
@@ -27,14 +28,17 @@ describe("Multiple BC", () => {
         ];
 
         reference.forEach(([mach, cd]) => {
-            const idx = machs.indexOf(mach);
-            expect(cds[idx]).toBeCloseTo(cd, 3);
+            let idx = machs.indexOf(mach);
+            test(`${mach} ${idx}`, () => {
+                expect(cds[idx]).toBeCloseTo(cd, 3);
+            })
+
         });
     });
 
     test('MBC test', () => {
         const mbc = new MultiBC(
-            DragTable.G7,
+            Table.G7,
             UNew.Inch(0.308),
             UNew.Grain(178),
             [
@@ -49,7 +53,7 @@ describe("Multiple BC", () => {
         const cdm = new TrajectoryCalc(ammo).cdm;
         expect(cdm).not.toBeNull();
 
-        const ret = Array.from(cdm);
+        const ret = cdm;
         expect(ret[0]).toEqual({ Mach: 0.0, CD: 0.1259323091692403 });
         expect(ret[ret.length - 1]).toEqual({ Mach: 5.0, CD: 0.15771258594668947 });
     });

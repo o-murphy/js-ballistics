@@ -1,4 +1,4 @@
-const DragTable = {
+const Table = {
   G1: [
     {
       Mach: 0.00,
@@ -2589,4 +2589,4 @@ const DragTable = {
   ]
 }
 
-export default DragTable
+export default Table

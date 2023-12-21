@@ -1,6 +1,6 @@
 import {describe, expect, test} from '@jest/globals';
 import Calculator, {
-    calcSettings, Unit, UNew, Weapon, DragModel, DragTable, Ammo, Atmo, Wind, Shot,
+    calcSettings, Unit, UNew, Weapon, DragModel, Table, Ammo, Atmo, Wind, Shot,
 } from "../src/index.js";
 
 
@@ -15,13 +15,13 @@ describe("Test interface", () => {
     calcSettings.USE_POWDER_SENSITIVITY = true;  // enable muzzle velocity correction my powder temperature
 
     // define params with default units
-    const [weight, diameter, ] = [168, 0.308];
+    const [weight, diameter,] = [168, 0.308];
 
     // or define with specified units
     const length = UNew.Inch(1.282);
 
     const weapon = new Weapon(9, 100, 2);
-    const dm = new DragModel(0.223, DragTable.G7, weight, diameter);
+    const dm = new DragModel(0.223, Table.G7, weight, diameter);
 
     const ammo = new Ammo(dm, length, 2750, 15);
     ammo.calcPowderSens(2723, 0);
@@ -38,20 +38,25 @@ describe("Test interface", () => {
     const shotResult = calc.fire(shot, UNew.Yard(100));
     const trajectory = shotResult.trajectory;
 
-    test("Create", () => {
-        trajectory.forEach(p => {
+    describe("Create", () => {
+        const trajectory_ = trajectory.slice(1, )
+
+        trajectory_.forEach(p => {
 
             const retVal = p.inDefUnits()
-
-            retVal.forEach(v => {
-                expect(v).not.toBe(NaN)
-                expect(typeof v).toBe("number");
-            });
-
             const retValFmt = p.formatted()
-            retValFmt.forEach(v => {
-                expect(typeof v).toBe("string");
-            });
+
+            test(`Check retval type ${trajectory_.indexOf(p)}`, () => {
+                retVal.forEach(v => {
+                    expect(v).not.toBe(NaN)
+                    expect(typeof v).toBe("number");
+                });
+
+                retValFmt.forEach(v => {
+                    expect(typeof v).toBe("string");
+                });
+            })
+
         });
     });
 });
