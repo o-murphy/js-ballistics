@@ -21,9 +21,7 @@ import {
     Weapon,
     Ammo
 } from "./munition";
-import DragModel, {
-    DragDataPoint,
-} from "./drag_model";
+import DragModel from "./drag_model";
 import {
     MultiBC,
 } from "./multi_bc"
@@ -53,7 +51,6 @@ export {
     cIcaoStandardHumidity,
     cSpeedOfSound,
     DragModel,
-    DragDataPoint,
     Weapon,
     Ammo,
     MultiBC,

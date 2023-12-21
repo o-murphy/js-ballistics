@@ -2,7 +2,7 @@
 import calcSettings from './settings';
 import {Atmo} from './conditions';
 import {Unit, UNew, unitTypeCoerce, Distance, Weight, Velocity} from './unit';
-import { DragDataPoint } from "./drag_model";
+import type { DragDataPoint } from "./drag_model";
 
 
 type MbcTable = {
