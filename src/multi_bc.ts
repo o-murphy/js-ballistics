@@ -5,7 +5,7 @@ import {Unit, UNew, unitTypeCoerce, Distance, Weight, Velocity} from './unit';
 import { DragDataPoint } from "./drag_model";
 
 
-interface MbcTable {
+type MbcTable = {
     BC: number;
     V: (number | Velocity);
 }
