@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "js-ballistics",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "ISC library for small arms ballistic calculations (JavaScript ES6+)",
   "main": "dist/index.js",
   "scripts": {
@@ -10,7 +10,8 @@
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist/**/*.js", "dist/**/*.d.ts"
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
   ],
   "repository": {
     "type": "git",
