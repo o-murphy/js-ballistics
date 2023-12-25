@@ -9,6 +9,9 @@
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist/**/*.js", "dist/**/*.d.ts"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/o-murphy/js-ballistics.git"
