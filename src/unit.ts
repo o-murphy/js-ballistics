@@ -747,7 +747,7 @@ function unitTypeCoerce(
     instance: (number|AbstractUnit),
     expectedClass: (typeof AbstractUnit | any),
     defaultUnit: Unit
-): (AbstractUnit|number) {
+): any {
     if (instance instanceof expectedClass) {
         // If the instance is already of the expected class type, return it.
         return instance;
