@@ -4,7 +4,7 @@ import {Measure, UNew, Unit, UnitProps, unitTypeCoerce} from '../src/index';
 describe("Unit back'n'forth", () => {
 
 
-  function backAndForth(value, units) {
+  function backAndForth(value: number, units: Unit): void {
       const u = UNew[units](value);
       const v = u.In(units);
 
@@ -19,7 +19,7 @@ describe("Unit back'n'forth", () => {
       })
   }
 
-  function backAndForthAll(unitList) {
+  function backAndForthAll(unitList: Unit[]): void {
       unitList.forEach((unit) => {
           backAndForth(3, unit);
       });
