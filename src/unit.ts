@@ -92,7 +92,7 @@ class AbstractUnit {
      * @throws {TypeError} When the provided units are not of the expected type.
      * @throws {Error} When the provided units are not supported.
      */
-    protected _unit_support_error(value: number, units: any) {
+    protected _unit_support_error(value: number, units: any): number {
 
         if (!(units instanceof this.constructor)) {
             const err_msg = `Type expected: ${this.constructor.name}, ${typeof units} found: ${units} (${value})`;
@@ -135,9 +135,8 @@ class AbstractUnit {
      * @return {AbstractUnit} New unit instance in specified units.
      */
     to(units: Unit): AbstractUnit {
-        const value = this.In(units);
-        const retval = new this.constructor(value, units);
-        return retval
+        const value: number = this.In(units);
+        return new this.constructor(value, units);
     }
 
     /**
@@ -741,14 +740,14 @@ const UNew = {
  * @param {AbstractUnit|Object} instance - The instance to coerce or create.
  * @param {AbstractUnit|Object|function} expectedClass - The expected class type.
  * @param {Unit|number} defaultUnit - The default unit for creating a new instance.
- * @returns {AbstractUnit|Object} An instance of the expected class type.
+ * @returns {AbstractUnit} An instance of the expected class type.
  * @throws {TypeError} If the instance is not of the expected class type or 'number'.
  */
 function unitTypeCoerce(
     instance: (number|AbstractUnit),
     expectedClass: (typeof AbstractUnit | any),
     defaultUnit: Unit
-) {
+): (AbstractUnit|number) {
     if (instance instanceof expectedClass) {
         // If the instance is already of the expected class type, return it.
         return instance;

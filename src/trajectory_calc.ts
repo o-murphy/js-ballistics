@@ -223,40 +223,13 @@ class TrajectoryCalc {
         const ranges: TrajectoryData[] = [];
 
         let velocityVector: Vector;
-        let windVector: Vector;
+        let windVector: Vector = new Vector(.0, .0, .0);
         let deltaRangeVector: Vector;
         let velocity: number;
         let twistCoefficient: number = 0.0;
 
-        if (lenWinds < 1) {
-            windVector = new Vector(0.0, 0.0, 0.0);
-        } else {
-            if (lenWinds > 1) {
-                nextWindRange = winds[0].untilDistance.In(Unit.Foot);
-            }
-            windVector = windToVector(shotInfo, winds[0]);
-        }
-
-        if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
-            velocity = ammo.getVelocityForTemp(atmo.temperature).In(Unit.FPS);
-        } else {
-            velocity = ammo.mv.In(Unit.FPS);
-        }
-
-        // x - distance towards target, y - drop, and z - windage
-        velocityVector = new Vector(
-            Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
-            Math.sin(barrelElevation),
-            Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
-        ).mulByConst(velocity);
-
-        if ((twist !== 0) && length && diameter) {
-            stabilityCoefficient = calculateStabilityCoefficient(ammo, weapon, atmo);
-            twistCoefficient = twist > 0 ? -1 : 1;
-        }
-
-
-        let _flag: TrajFlag;
+        let _flag: TrajFlag = TrajFlag.NONE;
+        let seenZero: TrajFlag = TrajFlag.NONE;
         let mach: number = 0.0;
         let referenceHeight,
             windage,
@@ -265,27 +238,56 @@ class TrajectoryCalc {
             drag,
             densityFactor: number;
 
-
-        // With non-zero lookAngle, rounding can suggest multiple adjacent zero-crossings
-        // Record when we see each zero crossing, so we only register one
-        let seenZero: TrajFlag = TrajFlag.NONE;
-        if (rangeVector.y >= 0) {
-            // We're starting above zero; we can only go down
-            seenZero |= TrajFlag.ZERO_UP;
-        } else if ((rangeVector.y < 0) && (barrelElevation < lookAngle)) {
-            // We're below and pointing down from lookAngle; no zeroes!
-            seenZero |= TrajFlag.ZERO_DOWN;
+        const getInitialWind = (): void => {
+            if (lenWinds < 1) {
+                windVector = new Vector(0.0, 0.0, 0.0);
+            } else {
+                if (lenWinds > 1) {
+                    nextWindRange = winds[0].untilDistance.In(Unit.Foot);
+                }
+                windVector = windToVector(shotInfo, winds[0]);
+            }
         }
 
-        while (rangeVector.x <= (maximumRange + calcStep)) {
-            _flag = TrajFlag.NONE;
+        const accurate_velocity_to_temperature = (): number => {
+            if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
+                return ammo.getVelocityForTemp(atmo.temperature).In(Unit.FPS);
+            } else {
+                return ammo.mv.In(Unit.FPS);
+            }
+        }
 
-            if ((velocity < cMinimumVelocity) || (rangeVector.y < cMaximumDrop)) break;
+        const get_initial_velocity_vector = (): Vector => {
+            // x - distance towards target, y - drop, and z - windage
+            return  new Vector(
+                Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
+                Math.sin(barrelElevation),
+                Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
+            ).mulByConst(velocity);
+        }
 
-            [densityFactor, mach] = atmo.getDensityFactorAndMachForAltitude(
-                alt0 + rangeVector.y
-            );
+        const accurateToTwist = (): void => {
+            if ((twist !== 0) && length && diameter) {
+                stabilityCoefficient = calculateStabilityCoefficient(ammo, weapon, atmo);
+                twistCoefficient = twist > 0 ? -1 : 1;
+            }
+        }
 
+        const lookForSeenZero = (): void => {
+            // With non-zero lookAngle, rounding can suggest multiple adjacent zero-crossings
+            // Record when we see each zero crossing, so we only register one
+            seenZero = TrajFlag.NONE;
+            if (rangeVector.y >= 0) {
+                // We're starting above zero; we can only go down
+                seenZero |= TrajFlag.ZERO_UP;
+            } else if ((rangeVector.y < 0) && (barrelElevation < lookAngle)) {
+                // We're below and pointing down from lookAngle; no zeroes!
+                seenZero |= TrajFlag.ZERO_DOWN;
+            }
+        }
+
+        /** NOTE: bellow the functions to calculate trajectory over the loop **/
+        const getNextWind = (): void => {
             if (rangeVector.x >= nextWindRange) {
                 currentWind++;
                 windVector = windToVector(shotInfo, winds[currentWind]);
@@ -295,7 +297,9 @@ class TrajectoryCalc {
                         ? 1e7
                         : winds[currentWind].untilDistance.In(Unit.Foot);
             }
+        }
 
+        const lookForZeroCrossing = (): void => {
             // Zero-crossing checks
             if (rangeVector.x > 0) {
                 // Zero reference line is the sight line defined by lookAngle
@@ -316,43 +320,47 @@ class TrajectoryCalc {
                     }
                 }
             }
+        }
 
+        const lookForMachCrossing = () => {
             // Mach crossing check
             if ((velocity / mach <= 1) && (previousMach > 1)) {
                 _flag |= TrajFlag.MACH;
             }
+        }
 
+        const lookForNextRange = (): void => {
             // Next range check
             if (rangeVector.x >= nextRangeDistance) {
                 _flag |= TrajFlag.RANGE;
                 nextRangeDistance += step;
                 currentItem += 1;
             }
+        }
 
-            if (_flag & filterFlags) {
-                windage = rangeVector.z;
-                if (!(twist === 0)) {
-                    windage +=
-                        (1.25 * (stabilityCoefficient + 1.2) *
-                            Math.pow(time, 1.83) * twistCoefficient) / 12;
-                }
-
-                ranges.push(
-                    createTrajectoryRow(
-                        time,
-                        rangeVector,
-                        velocityVector,
-                        velocity,
-                        mach,
-                        windage,
-                        weight,
-                        _flag
-                    )
-                );
-
-                if (currentItem === rangesLength) break;
+        const registerTrajectoryPoint = () => {
+            windage = rangeVector.z;
+            if (!(twist === 0)) {
+                windage +=
+                    (1.25 * (stabilityCoefficient + 1.2) *
+                        Math.pow(time, 1.83) * twistCoefficient) / 12;
             }
 
+            ranges.push(
+                createTrajectoryRow(
+                    time,
+                    rangeVector,
+                    velocityVector,
+                    velocity,
+                    mach,
+                    windage,
+                    weight,
+                    _flag
+                )
+            );
+        }
+
+        const initNextRangeData = () => {
             previousMach = velocity / mach;
             velocityAdjusted = velocityVector.subtract(windVector);
             deltaTime = calcStep / velocityVector.x;
@@ -375,6 +383,35 @@ class TrajectoryCalc {
             time += deltaRangeVector.magnitude() / velocity;
         }
 
+        /** prepare initial data **/
+        getInitialWind()
+        velocity = accurate_velocity_to_temperature()
+        velocityVector = get_initial_velocity_vector()
+        accurateToTwist()
+        lookForSeenZero()
+
+        while (rangeVector.x <= (maximumRange + calcStep)) {
+            _flag = TrajFlag.NONE;
+
+            if ((velocity < cMinimumVelocity) || (rangeVector.y < cMaximumDrop)) break;
+
+            [densityFactor, mach] = atmo.getDensityFactorAndMachForAltitude(
+                alt0 + rangeVector.y
+            );
+
+            getNextWind()
+            lookForZeroCrossing()
+            lookForMachCrossing()
+            lookForNextRange()
+
+            if (_flag & filterFlags) {
+                registerTrajectoryPoint()
+                if (currentItem === rangesLength) break;
+            }
+            initNextRangeData()
+
+        }
+
         return ranges;
     }
 
@@ -391,19 +428,10 @@ class TrajectoryCalc {
     }
 
     /**
-     *
+     * Returns custom drag function based on input data
      * @return {{CD: number, Mach: number}[]}
      */
     get cdm(): DragTable {
-        return this._cdm();
-    }
-
-    /**
-     * Returns custom drag function based on input data
-     * @return {{CD: number, Mach: number}[]}
-     * @private
-     */
-    _cdm(): DragTable {
         const dragTable = this.ammo.dm.dragTable;
         const bc = this.ammo.dm.value;
         let output: DragTable = []
