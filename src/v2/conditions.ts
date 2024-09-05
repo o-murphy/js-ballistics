@@ -84,10 +84,9 @@ class Atmo {
         this._p0 = this.pressure.In(Unit.InHg);
         this._a0 = this.altitude.In(Unit.Foot);
         this._ta = this._a0 * cLapseRateImperial + cStandardTemperatureF;
-
+        this.densityRatio = this.calculateDensity(this._t0, this._p0) / cStandardDensity
         this._mach1 = Atmo.machF(this._t0);
         this.mach = UNew.FPS(this._mach1)
-
     }
 
     static standardTemperature(altitude: Distance): Temperature {
@@ -100,7 +99,7 @@ class Atmo {
         return UNew.InHg(0.02953 * Math.pow(3.73145 - 2.56555e-05 * altitude.In(Distance.Foot), cPressureExponent))
     }
 
-    static standard(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null) {
+    static standard(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null): Atmo {
         // Creates standard ICAO atmosphere at given altitude. If temperature not specified uses standard temperature.
         return Atmo.icao(altitude, temperature)
     }
@@ -108,7 +107,7 @@ class Atmo {
     static icao(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null): Atmo {
         // Creates standard ICAO atmosphere at given altitude. If temperature not specified uses standard temperature.
         const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, calcSettings.Units.distance)
-        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Distance, calcSettings.Units.distance)
+        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Temperature, calcSettings.Units.temperature)
         const _pressure: Pressure = Atmo.standardPressure(_altitude)
         return new Atmo(
             _altitude.In(calcSettings.Units.distance),
@@ -125,7 +124,7 @@ class Atmo {
 
     static machC(celsius: number): number {
         // Mach 1 in m/s for Celsius temperature
-        return Math.sqrt(1 + celsius / cDegreesCtoK)
+        return Math.sqrt(1 + celsius / cDegreesCtoK) * cSpeedOfSoundMetric
     }
 
     static airDensity(t: Temperature, p: Pressure, humidity: number): number {
