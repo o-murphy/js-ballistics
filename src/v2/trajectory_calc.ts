@@ -85,8 +85,8 @@ interface TrajectoryIntf {
 class TrajectoryCalc {
 
     readonly ammo: Ammo
-    readonly barrel_azimuth: number;
-    readonly barrel_elevation: number;
+    readonly barrelAzimuth: number;
+    readonly barrelElevation: number;
     readonly twist: number;
 
     protected _bc: number;
