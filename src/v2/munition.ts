@@ -33,9 +33,8 @@ class Ammo {
     /**
      * Creates Ammo and Projectile properties.
      * @param {DragModel} dm - Drag model instance.
-     * @param {number|Distance|null} length - Length value.
      * @param {number|Velocity|null} mv - Velocity value.
-     * @param {number} temp_modifier - Temperature modifier value.
+     * @param {number} tempModifier - Temperature modifier value.
      * @param {number|Temperature|null} powder_temp - Powder temperature value.
      */
     readonly dm: DragModel;
@@ -64,14 +63,14 @@ class Ammo {
         const v1 = unitTypeCoerce(otherVelocity, Temperature, calcSettings.Units.temperature)
         const t1 = unitTypeCoerce(otherTemperature, Temperature, calcSettings.Units.temperature)
 
-        const v_delta = Math.abs(v0 - v1)
-        const t_delta = Math.abs(t0 - t1)
-        const v_lower = v1 < v0 ? v1 : v0
+        const vDelta = Math.abs(v0 - v1)
+        const tDelta = Math.abs(t0 - t1)
+        const vLower = v1 < v0 ? v1 : v0
 
-        if ((v_delta === 0) || (t_delta === 0)) {
+        if ((vDelta === 0) || (tDelta === 0)) {
             throw new Error("Temperature modifier error, other velocity and temperature can't be same as default")
         }
-        this._tempModifier = v_delta / t_delta * (15 / v_lower)  // * 100
+        this._tempModifier = vDelta / tDelta * (15 / vLower)  // * 100
         return this._tempModifier 
     }
 
@@ -80,8 +79,8 @@ class Ammo {
         const v0 = this.mv.In(Velocity.MPS)
         const t0 = this.powderTemp.In(Temperature.Celsius)
         const t1 = unitTypeCoerce(currentTemp, Temperature, calcSettings.Units.temperature)
-        const t_delta = t1 - t0
-        const muzzleVelocity = this._tempModifier / (15 / v0) * t_delta + v0
+        const tDelta = t1 - t0
+        const muzzleVelocity = this._tempModifier / (15 / v0) * tDelta + v0
         return UNew.MPS(muzzleVelocity)
     }
 }
