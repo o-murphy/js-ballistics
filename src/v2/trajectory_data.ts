@@ -1,10 +1,9 @@
 // Flags for marking trajectory row if Zero or Mach crossing
 // Also uses to set a filters for a trajectory calculation loop
-import calcSettings from "../settings"
 import {
     UnitProps,
     Unit,
-    UNew,
+    preferredUnits,
     unitTypeCoerce,
     Angular,
     Distance,
@@ -12,9 +11,9 @@ import {
     Energy,
     Weight,
     AbstractUnit
-} from "../unit";
-import {Weapon} from "./munition";
-import {Shot} from "./conditions";
+} from "./unit";
+import { Weapon } from "./munition";
+import { Shot } from "./conditions";
 
 enum TrajFlag {
     NONE = 0,
@@ -74,19 +73,19 @@ class TrajectoryData {
     inDefUnits(): number[] {
         return [
             this.time,
-            this.distance.In(calcSettings.Units.distance),
-            this.velocity.In(calcSettings.Units.velocity),
+            this.distance.In(preferredUnits.distance),
+            this.velocity.In(preferredUnits.velocity),
             this.mach,
-            this.targetDrop.In(calcSettings.Units.drop),
-            this.dropAdjustment.In(calcSettings.Units.adjustment),
-            this.windage.In(calcSettings.Units.drop),
-            this.windageAdjustment.In(calcSettings.Units.adjustment),
-            this.lookDistance.In(calcSettings.Units.distance),
-            this.angle.In(calcSettings.Units.angular),
+            this.targetDrop.In(preferredUnits.drop),
+            this.dropAdjustment.In(preferredUnits.adjustment),
+            this.windage.In(preferredUnits.drop),
+            this.windageAdjustment.In(preferredUnits.adjustment),
+            this.lookDistance.In(preferredUnits.distance),
+            this.angle.In(preferredUnits.angular),
             this.densityFactor,
             this.drag,
-            this.energy.In(calcSettings.Units.energy),
-            this.ogw.In(calcSettings.Units.ogw),
+            this.energy.In(preferredUnits.energy),
+            this.ogw.In(preferredUnits.ogw),
             this.flag
         ]
     }
@@ -107,20 +106,20 @@ class TrajectoryData {
 
         return [
             `${this.time.toFixed(2)} s`,
-            _fmt(this.distance, calcSettings.Units.distance),
-            _fmt(this.velocity, calcSettings.Units.velocity),
+            _fmt(this.distance, preferredUnits.distance),
+            _fmt(this.velocity, preferredUnits.velocity),
             `${this.mach.toFixed(2)} mach`,
-            _fmt(this.height, calcSettings.Units.distance),
-            _fmt(this.targetDrop, calcSettings.Units.drop),
-            _fmt(this.dropAdjustment, calcSettings.Units.adjustment),
-            _fmt(this.windage, calcSettings.Units.drop),
-            _fmt(this.windageAdjustment, calcSettings.Units.adjustment),
-            _fmt(this.lookDistance, calcSettings.Units.distance),
-            _fmt(this.angle, calcSettings.Units.angular),
+            _fmt(this.height, preferredUnits.distance),
+            _fmt(this.targetDrop, preferredUnits.drop),
+            _fmt(this.dropAdjustment, preferredUnits.adjustment),
+            _fmt(this.windage, preferredUnits.drop),
+            _fmt(this.windageAdjustment, preferredUnits.adjustment),
+            _fmt(this.lookDistance, preferredUnits.distance),
+            _fmt(this.angle, preferredUnits.angular),
             `${this.densityFactor.toFixed(3)}`,
             `${this.drag.toFixed(3)}`,
-            _fmt(this.energy, calcSettings.Units.energy),
-            _fmt(this.ogw, calcSettings.Units.ogw),
+            _fmt(this.energy, preferredUnits.energy),
+            _fmt(this.ogw, preferredUnits.ogw),
             `${this.flag}`
         ]
     }
@@ -147,10 +146,10 @@ class DangerSpace {
     }
 
     toString(): string {
-        return `Danger space at ${this.atRange.distance.to(calcSettings.Units.distance)} ` +
-            `for ${this.targetHeight.to(calcSettings.Units.drop)} tall target ` +
-            `ranges from ${this.begin.distance.to(calcSettings.Units.distance)} ` +
-            `to ${this.end.distance.to(calcSettings.Units.distance)}`;
+        return `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
+            `for ${this.targetHeight.to(preferredUnits.drop)} tall target ` +
+            `ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
+            `to ${this.end.distance.to(preferredUnits.distance)}`;
     }
 }
 
@@ -169,7 +168,7 @@ class HitResult {
         readonly shot: Shot,
         readonly _trajectory: TrajectoryData[],
         readonly _extra: boolean = false,
-    ) {}
+    ) { }
 
     toArray(): Array<TrajectoryData> {
         return [...this._trajectory];
@@ -206,7 +205,7 @@ class HitResult {
 
     indexAtDistance(d: Distance): number {
         // Get index of the first trajectory point where distance >= d
-        return this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance >= d) !== -1 
+        return this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance >= d) !== -1
             ? this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance >= d)
             : -1;
     }
@@ -225,18 +224,18 @@ class HitResult {
      * @param {number|Angular|null} lookAngle
      * @return {DangerSpace} - danger space for target height and look angle
      */
-    dangerSpace(atRange:(number|Distance),
-                targetHeight: (number|Distance),
-                lookAngle : (number|Angular|null)= null) {
+    dangerSpace(atRange: (number | Distance),
+        targetHeight: (number | Distance),
+        lookAngle: (number | Angular | null) = null) {
         this._checkExtra();
 
-        const _atRange: Distance = unitTypeCoerce(atRange, Distance, calcSettings.Units.distance);
-        
-        const _targetHeight: Distance = unitTypeCoerce(targetHeight, Distance, calcSettings.Units.drop);
-        const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
-        let _lookAngle: Angular = unitTypeCoerce(lookAngle ?? 0, Angular, calcSettings.Units.angular);
+        const _atRange: Distance = unitTypeCoerce(atRange, Distance, preferredUnits.distance);
 
-        _lookAngle = _lookAngle ? this.shot.lookAngle : unitTypeCoerce(_lookAngle, Angular, calcSettings.Units.angular)
+        const _targetHeight: Distance = unitTypeCoerce(targetHeight, Distance, preferredUnits.drop);
+        const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
+        let _lookAngle: Angular = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
+
+        _lookAngle = _lookAngle ? this.shot.lookAngle : unitTypeCoerce(_lookAngle, Angular, preferredUnits.angular)
 
         // Get index of first trajectory point with distance >= at_range
         const index = this.indexAtDistance(_atRange)
@@ -254,14 +253,14 @@ class HitResult {
              * @return {TrajectoryData} - Distance marking the beginning of danger space
              */
             const centerRow = this.trajectory[rowNum];
-            
+
             for (let i = rowNum - 1; i >= 0; i--) {
                 const primeRow = this.trajectory[i];
                 if ((primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue) >= _targetHeightHalf) {
                     return primeRow;
                 }
             }
-            
+
             return this.trajectory[0];
         };
 
@@ -273,22 +272,22 @@ class HitResult {
              * @return {TrajectoryData} - Distance marking the end of danger space
              */
             const centerRow = this.trajectory[rowNum];
-            
+
             for (let i = rowNum + 1; i < this.trajectory.length; i++) {
                 const primeRow = this.trajectory[i];
                 if ((centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue) >= _targetHeightHalf) {
                     return primeRow;
                 }
             }
-            
+
             return this.trajectory[this.trajectory.length - 1];
         };
 
         return new DangerSpace(
-            this._trajectory[index], 
-            _targetHeight, 
-            findBeginDanger(index), 
-            findEndDanger(index), 
+            this._trajectory[index],
+            _targetHeight,
+            findBeginDanger(index),
+            findEndDanger(index),
             _lookAngle
         );
     }
@@ -296,4 +295,4 @@ class HitResult {
 }
 
 
-export {TrajectoryData, TrajFlag, DangerSpace, HitResult}
+export { TrajectoryData, TrajFlag, DangerSpace, HitResult }
