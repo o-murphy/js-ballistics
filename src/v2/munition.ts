@@ -2,7 +2,7 @@
 
 // Import necessary units and settings
 import { UNew, unitTypeCoerce, Distance, Angular, Temperature, Velocity, preferredUnits } from './unit';
-import DragModel from "../drag_model.js";
+import DragModel from "./drag_model.js";
 
 
 class Weapon {

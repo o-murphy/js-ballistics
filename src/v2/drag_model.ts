@@ -219,5 +219,5 @@ function linearInterpolation(
     return y;
 }
 
-export type { DragDataPoint, DragTable, BCPoint, DragModelMultiBC };
+export type { Table, DragDataPoint, DragTable, BCPoint, DragModelMultiBC };
 export default DragModel;
