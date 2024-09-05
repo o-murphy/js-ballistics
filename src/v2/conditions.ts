@@ -1,11 +1,11 @@
 // Classes to define zeroing or current environment conditions
 
 import { Ammo, Weapon } from './munition';
-import calcSettings from '../settings';
 import {
     Unit, unitTypeCoerce, UNew,
-    Distance, Pressure, Temperature, Velocity, Angular
-} from '../unit';
+    Distance, Pressure, Temperature, Velocity, Angular,
+    preferredUnits
+} from './unit';
 
 // Constants for standard atmospheric conditions
 export const cStandardHumidity: number = 0.0  // Relative Humidity
@@ -75,9 +75,9 @@ class Atmo {
         }
 
         // Coerce input values to appropriate units
-        this.altitude = unitTypeCoerce(altitude ?? 0, Distance, calcSettings.Units.distance);
-        this.pressure = unitTypeCoerce(pressure ?? Atmo.standardPressure(this.altitude), Pressure, calcSettings.Units.pressure);
-        this.temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(this.altitude), Temperature, calcSettings.Units.temperature);
+        this.altitude = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance);
+        this.pressure = unitTypeCoerce(pressure ?? Atmo.standardPressure(this.altitude), Pressure, preferredUnits.pressure);
+        this.temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(this.altitude), Temperature, preferredUnits.temperature);
 
         // Constants and initializations
         this._t0 = this.temperature.In(Unit.Fahrenheit);
@@ -106,13 +106,13 @@ class Atmo {
 
     static icao(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null): Atmo {
         // Creates standard ICAO atmosphere at given altitude. If temperature not specified uses standard temperature.
-        const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, calcSettings.Units.distance)
-        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Temperature, calcSettings.Units.temperature)
+        const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance)
+        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Temperature, preferredUnits.temperature)
         const _pressure: Pressure = Atmo.standardPressure(_altitude)
         return new Atmo(
-            _altitude.In(calcSettings.Units.distance),
-            _pressure.In(calcSettings.Units.pressure),
-            _temperature.In(calcSettings.Units.temperature),
+            _altitude.In(preferredUnits.distance),
+            _pressure.In(preferredUnits.pressure),
+            _temperature.In(preferredUnits.temperature),
             cStandardHumidity
         )
     }
@@ -211,9 +211,9 @@ class Wind {
     ) {
         // Coerce input values to appropriate units
         this.MAX_DISTANCE_FEET = maxDistanceFeet ?? 1e8
-        this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, calcSettings.Units.velocity);
-        this.directionFrom = unitTypeCoerce(directionFrom ?? 0, Angular, calcSettings.Units.angular);
-        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(this.MAX_DISTANCE_FEET), Distance, calcSettings.Units.distance);
+        this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);
+        this.directionFrom = unitTypeCoerce(directionFrom ?? 0, Angular, preferredUnits.angular);
+        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(this.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
     }
 
 }
@@ -242,9 +242,9 @@ class Shot {
         atmo: (Atmo | null) = null,
         winds: (Wind[] | null) = null
     ) {
-        this.lookAngle = unitTypeCoerce(lookAngle ?? 0, Angular, calcSettings.Units.angular);
-        this.relativeAngle = unitTypeCoerce(relativeAngle ?? 0, Angular, calcSettings.Units.angular);
-        this.cantAngle = unitTypeCoerce(cantAngle ?? 0, Angular, calcSettings.Units.angular);
+        this.lookAngle = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
+        this.relativeAngle = unitTypeCoerce(relativeAngle ?? 0, Angular, preferredUnits.angular);
+        this.cantAngle = unitTypeCoerce(cantAngle ?? 0, Angular, preferredUnits.angular);
         this.weapon = weapon
         this.ammo = ammo;
         this.atmo = atmo ?? Atmo.icao()

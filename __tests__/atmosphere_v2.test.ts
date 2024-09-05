@@ -1,5 +1,5 @@
 import { Atmo } from "../src/v2/conditions"; // Adjust the import path based on your project structure
-import { Distance, Temperature, Pressure, Velocity, UNew } from "../src/unit";
+import { Temperature, Pressure, Velocity, UNew } from "../src/v2/unit";
 
 describe('Atmo Class Tests', () => {
     let standard: Atmo;
