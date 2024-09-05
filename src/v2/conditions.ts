@@ -1,6 +1,6 @@
 // Classes to define zeroing or current environment conditions
 
-import { Ammo, Weapon } from '../munition';
+import { Ammo, Weapon } from './munition';
 import calcSettings from '../settings';
 import {
     Unit, unitTypeCoerce, UNew,
@@ -107,13 +107,13 @@ class Atmo {
 
     static icao(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null): Atmo {
         // Creates standard ICAO atmosphere at given altitude. If temperature not specified uses standard temperature.
-        const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, calcSettings.distance)
-        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(altitude))
-        const _pressure: Pressure = Atmo.standardPressure(altitude)
+        const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, calcSettings.Units.distance)
+        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Distance, calcSettings.Units.distance)
+        const _pressure: Pressure = Atmo.standardPressure(_altitude)
         return new Atmo(
-            _altitude.In(calcSettings.distance),
-            _pressure.In(calcSettings.pressure),
-            _temperature.In(calcSettings.temperature),
+            _altitude.In(calcSettings.Units.distance),
+            _pressure.In(calcSettings.Units.pressure),
+            _temperature.In(calcSettings.Units.temperature),
             cStandardHumidity
         )
     }
@@ -255,16 +255,20 @@ class Shot {
     // Other methods and properties can be added here
     get barrelElevation(): Angular {
         // Barrel elevation in vertical plane from horizontal
-        return Angular.Radian(
-            this.lookAngle.In(Angular.Radian) + Math.cos(this.cantAngle.In(Angular.Radian))
-        ) * (this.weapon.zeroElevation.In(Angular.Radian) + this.relativeAngle.In(Angular.Radian))
+        return UNew.Radian(
+            this.lookAngle.In(Angular.Radian) + Math.cos(this.cantAngle.In(Angular.Radian)) * (
+                this.weapon.zeroElevation.In(Angular.Radian) + this.relativeAngle.In(Angular.Radian)
+            )
+        )
     }
 
     get barrelAzimuth(): Angular {
         // Horizontal angle of barrel relative to sight line
-        return Angular.Radian(
-            Math.sin(this.cantAngle.In(Angular.Radian))
-        ) * (this.weapon.zeroElevation.In(Angular.Radian) + this.relativeAngle.In(Angular.Radian))
+        return UNew.Radian(
+            Math.sin(this.cantAngle.In(Angular.Radian)) * (
+                this.weapon.zeroElevation.In(Angular.Radian) + this.relativeAngle.In(Angular.Radian)
+            )
+        )
     }
 }
 
