@@ -201,7 +201,7 @@ class Wind {
     readonly velocity: Velocity
     readonly directionFrom: Angular
     readonly untilDistance: Distance
-    MAX_DISTANCE_FEET: number = 1e8
+    public static MAX_DISTANCE_FEET: number = 1e8
 
     constructor(
         velocity: (number | Velocity | null) = null,
@@ -210,12 +210,11 @@ class Wind {
         maxDistanceFeet: (number | null) = 1e8
     ) {
         // Coerce input values to appropriate units
-        this.MAX_DISTANCE_FEET = maxDistanceFeet ?? 1e8
+        Wind.MAX_DISTANCE_FEET = maxDistanceFeet ?? 1e8
         this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);
         this.directionFrom = unitTypeCoerce(directionFrom ?? 0, Angular, preferredUnits.angular);
-        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(this.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
+        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(Wind.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
     }
-
 }
 
 

@@ -93,7 +93,7 @@ class TrajectoryCalc {
     protected _tableData: DragTable;
     protected _curve: Curve;
     protected _gravityVector: Vector
-    protected _trajectory_intf: TrajectoryIntf
+    protected _tIntf: TrajectoryIntf
 
     constructor(ammo: Ammo) {
         this.ammo = ammo;
@@ -121,7 +121,7 @@ class TrajectoryCalc {
         return Math.min(step, preferredStep) / 2.0;
     }
 
-    trajectory(shotInfo: Shot, maxRange: Distance, distStep: Distance, extraData: boolean = false): TrajectoryData[] {
+    public trajectory(shotInfo: Shot, maxRange: Distance, distStep: Distance, extraData: boolean = false): TrajectoryData[] {
         let _distStep: Distance = unitTypeCoerce(distStep, Distance, preferredUnits.distance);
         let filterFlags = TrajFlag.RANGE
 
@@ -135,12 +135,12 @@ class TrajectoryCalc {
         return this._trajectory(shotInfo, maxRange.In(Distance.Foot), distStep.In(Distance.Foot), filterFlags);
     }
 
-    zeroAngle(shotInfo: Shot, distance: Distance) {
+    public zeroAngle(shotInfo: Shot, distance: Distance) {
         this._initTrajectory(shotInfo)
 
-        let zeroDistance = Math.cos(this._trajectory_intf.lookAngle) * distance.In(Distance.Foot)
-        let heightAtZero = Math.sin(this._trajectory_intf.lookAngle) * distance.In(Distance.Foot)
-        let maximumRange = zeroDistance - 1.5 * this._trajectory_intf.calcStep
+        let zeroDistance = Math.cos(this._tIntf.lookAngle) * distance.In(Distance.Foot)
+        let heightAtZero = Math.sin(this._tIntf.lookAngle) * distance.In(Distance.Foot)
+        const maximumRange = zeroDistance - 1.5 * this._tIntf.calcStep
 
         let iterationsCount = 0
         let zeroFindingError = cZeroFindingAccuracy * 2
@@ -150,7 +150,7 @@ class TrajectoryCalc {
             let height = t.height.In(Distance.Foot)
             let zeroFindingError = Math.abs(height - heightAtZero)
             if (zeroFindingError > cZeroFindingAccuracy) {
-                this._trajectory_intf.barrelElevation -= (height - heightAtZero) / zeroDistance
+                this._tIntf.barrelElevation -= (height - heightAtZero) / zeroDistance
             } else {
                 break
             }
@@ -161,11 +161,141 @@ class TrajectoryCalc {
             throw new Error(`Zero vertical error ${zeroFindingError} feet, after ${iterationsCount} iterations.`)
         }
 
-        return UNew.Radian(this._trajectory_intf.barrelElevation)
+        return UNew.Radian(this._tIntf.barrelElevation)
+    }
+
+    _trajectory(shotInfo: Shot, maxRange: number, distStep: number, filterFlags: TrajFlag): TrajectoryData[] {
+        let ranges: TrajectoryData[] = [];
+        const rangesLength: number = Math.floor(maxRange / distStep) + 1;
+        let time: number = .0;
+        let previousMach: number = .0;
+        let drag: number = .0;
+
+        let mach: number = .0
+        let densityFactor: number = .0
+
+        const lenWinds: number = shotInfo.winds.length;
+        let currentWind: number = .0;
+        let currentItem: number = .0;
+        let nextRangeDistance: number = .0;
+        let nextWindRange: number = Wind.MAX_DISTANCE_FEET;
+
+        let windVector: Vector
+        if (lenWinds < 1) {
+            windVector = new Vector(.0, .0, .0)
+        } else {
+            windVector = windToVector(shotInfo.winds[0])
+            nextWindRange = shotInfo.winds[0].untilDistance.In(Distance.Foot)
+        }
+
+        let velocity: number = this._tIntf.muzzleVelocity
+        let rangeVector: Vector = new Vector(
+            .0, 
+            -this._tIntf.cantCosine * this._tIntf.sightHeight,
+            -this._tIntf.cantSine * this._tIntf.sightHeight
+        )
+        let velocityVector: Vector = new Vector(
+            Math.cos(this._tIntf.barrelElevation) * Math.cos(this._tIntf.barrelElevation),
+            Math.sin(this._tIntf.barrelElevation),
+            Math.cos(this._tIntf.barrelElevation) * Math.sin(this._tIntf.barrelElevation)
+        )
+
+        let seenZero = TrajFlag.NONE
+
+        if (rangeVector.y >= 0) {
+            seenZero |= TrajFlag.ZERO_UP
+        } else if (rangeVector.x <= maxRange + this._tIntf.calcStep) {
+            seenZero |= TrajFlag.ZERO_DOWN
+        }
+
+        let _flag = TrajFlag.NONE
+
+        while (rangeVector.x <= maxRange + this._tIntf.calcStep) {
+            _flag = TrajFlag.NONE
+
+            if (rangeVector.x >= nextWindRange) {
+                currentWind += 1
+                if (currentWind >= lenWinds) {
+                    windVector = new Vector(.0, .0, .0)
+                    nextWindRange = Wind.MAX_DISTANCE_FEET
+                } else {
+                    windVector = windToVector(shotInfo.winds[currentWind])
+                    nextWindRange = shotInfo.winds[currentWind].untilDistance.In(Distance.Foot)
+                }
+            }
+
+            [densityFactor, mach] = shotInfo.atmo.getDensityFactorAndMachForAltitude(this._tIntf.alt0 + rangeVector.y)
+
+            if (filterFlags) {
+                if (rangeVector.x > 0) {
+                    let referenceHeight = rangeVector.x + Math.tan(this._tIntf.lookAngle)
+
+                    if (!(seenZero & TrajFlag.ZERO_UP)) {
+                        if (rangeVector.y >= referenceHeight) {
+                            _flag |= TrajFlag.ZERO_UP
+                            seenZero |= TrajFlag.ZERO_UP
+                        }
+                    } else if (!(seenZero & TrajFlag.ZERO_DOWN)) {
+                        if (rangeVector.y < referenceHeight) {
+                            _flag |= TrajFlag.ZERO_DOWN
+                            seenZero |= TrajFlag.ZERO_DOWN
+                        }
+                    }
+                }
+
+                if (previousMach > 1 && 1 >= velocity / mach) {
+                    _flag |= TrajFlag.MACH
+                }
+
+                if (rangeVector.x >= nextWindRange) {
+                    _flag |= TrajFlag.RANGE
+                    nextRangeDistance += distStep
+                    currentItem += 1
+                }
+
+                if (_flag & filterFlags) {
+                    ranges.push(createTrajectoryRow(
+                        time, rangeVector, velocityVector,
+                        velocity, mach, this.spinDrift(time), this._tIntf.lookAngle,
+                        densityFactor, drag, this._tIntf.weight, _flag
+                    ))
+                }
+            }
+
+            previousMach = velocity / mach
+
+            const deltaTime: number = this._tIntf.calcStep / velocityVector.x;
+            const velocityAdjusted: Vector = velocityVector.subtract(windVector)
+            velocity = velocityAdjusted.magnitude()
+            drag = densityFactor * velocity * this.dragByMach(velocity / mach)
+            velocityVector = velocityVector.subtract(velocityAdjusted.mulByConst(drag).subtract(this._gravityVector).mulByConst(deltaTime))
+            const deltaRangeVector: Vector = new Vector(
+                this._tIntf.calcStep,
+                velocityVector.y * deltaTime,
+                velocityVector.z * deltaTime
+            )
+            rangeVector = rangeVector.add(deltaRangeVector)
+            velocity = velocityVector.magnitude()
+            time += deltaRangeVector.magnitude() / velocity
+
+            if (velocity < cMinimumVelocity || rangeVector.y < cMaximumDrop) {
+                break
+            }
+        }
+
+        if (!filterFlags) {
+            ranges.push(createTrajectoryRow(
+                time, rangeVector, velocityVector,
+                velocity, mach, this.spinDrift(time), this._tIntf.lookAngle,
+                densityFactor, drag, this._tIntf.weight, _flag
+            ))
+        }
+
+        return ranges
     }
 
     _initTrajectory(shotInfo: Shot) {
-        this._trajectory_intf = {
+        this._tIntf = {
             lookAngle: shotInfo.lookAngle.In(Angular.Radian),
             twist: shotInfo.weapon.twist.In(Distance.Inch),
             length: shotInfo.ammo.dm.length.In(Distance.Inch),
@@ -203,7 +333,7 @@ class TrajectoryCalc {
     public spinDrift(time: number): number {
         if (this.twist !== 0) {
             const sign = this.twist > 0 ? 1 : -1;
-            return sign * (1.25 * (this._trajectory_intf.stabilityCoefficient + 1.2) * Math.pow(time, 1.83)) / 12;
+            return sign * (1.25 * (this._tIntf.stabilityCoefficient + 1.2) * Math.pow(time, 1.83)) / 12;
         }
         return 0;
     }
@@ -214,17 +344,17 @@ class TrajectoryCalc {
      * @returns Stability coefficient
      */
     public calcStabilityCoefficient(atmo: Atmo): number {
-        if (this.twist && this._trajectory_intf.length && this._trajectory_intf.diameter) {
-            const twistRate = Math.abs(this.twist) / this._trajectory_intf.diameter;
-            const lengthRatio = this._trajectory_intf.length / this._trajectory_intf.diameter;
+        if (this.twist && this._tIntf.length && this._tIntf.diameter) {
+            const twistRate = Math.abs(this.twist) / this._tIntf.diameter;
+            const lengthRatio = this._tIntf.length / this._tIntf.diameter;
 
             // Miller stability formula
-            const sd = 30 * this._trajectory_intf.weight / (
-                Math.pow(twistRate, 2) * Math.pow(this._trajectory_intf.diameter, 3) * lengthRatio * (1 + Math.pow(lengthRatio, 2))
+            const sd = 30 * this._tIntf.weight / (
+                Math.pow(twistRate, 2) * Math.pow(this._tIntf.diameter, 3) * lengthRatio * (1 + Math.pow(lengthRatio, 2))
             );
 
             // Velocity correction factor
-            const fv = Math.pow(this._trajectory_intf.muzzleVelocity / 2800, 1.0 / 3.0);
+            const fv = Math.pow(this._tIntf.muzzleVelocity / 2800, 1.0 / 3.0);
 
             // Atmospheric correction
             const ft = atmo.temperature.In(Temperature.Fahrenheit); // Assuming a method to convert to Fahrenheit
@@ -236,6 +366,71 @@ class TrajectoryCalc {
         return 0;
     }
 
+}
+
+
+function windToVector(wind: Wind): Vector {
+    const rangeComponent = wind.velocity.In(Velocity.FPS) * Math.cos(wind.directionFrom.In(Angular.Radian))
+    const crossComponent = wind.velocity.In(Velocity.FPS) * Math.sin(wind.directionFrom.In(Angular.Radian))
+    return new Vector(rangeComponent, .0, crossComponent)
+}
+
+
+function createTrajectoryRow(
+    time: number,
+    rangeVector: Vector,
+    velocityVector: Vector,
+    velocity: number,
+    mach: number,
+    spinDrift: number,
+    lookAngle: number,
+    densityFactor: number,
+    drag: number,
+    weight: number,
+    flag: number
+) {
+    const windage = rangeVector.z + spinDrift
+    const dropAdjustment = getCorrection(rangeVector.x, rangeVector.y)
+    const windageAdjustment = getCorrection(rangeVector.x, windage)
+    const trajectoryAngle = Math.atan(velocityVector.y / velocityVector.x)
+
+    return new TrajectoryData(
+        time,
+        UNew.Foot(rangeVector.x),
+        UNew.FPS(velocity),
+        velocity / mach,
+        UNew.Foot(rangeVector.y),
+        UNew.Foot((rangeVector.y - rangeVector.x * Math.tan(lookAngle)) * Math.cos(lookAngle)),
+        UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
+        UNew.Foot(windage),
+        UNew.Radian(windageAdjustment),
+        UNew.Foot(rangeVector.x / Math.cos(lookAngle)),
+        UNew.Radian(trajectoryAngle),
+        densityFactor - 1,
+        drag,
+        UNew.FootPound(calculateEnergy(weight, velocity)),
+        UNew.Pound(calculateOGW(weight, velocity)),
+        flag
+    )
+}
+
+
+function getCorrection(distance: number, offset: number): number {
+    // Sight adjustment in radians
+    if (distance != 0) {
+        return Math.atan(offset / distance)
+    }
+    return 0
+}
+
+function calculateEnergy(bulletWeight: number, velocity: number): number {
+    // energy in ft-lbs
+    return bulletWeight * Math.pow(velocity, 2) / 450400
+}
+
+function calculateOGW(bulletWeight: number, velocity: number): number {
+    // Optimal Game Weight in pounds
+    return Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12
 }
 
 
@@ -316,3 +511,10 @@ function calculateByCurve(data: DragTable, curve: CurvePoint[], mach: number): n
 
 // Export the classes and constants
 export default TrajectoryCalc;
+export {
+    getGlobalMaxCalcStepSize,
+    getGlobalUsePowderSensitivity,
+    setGlobalMaxCalcStepSize,
+    setGlobalUsePowderSensitivity,
+    resetGlobals
+}
