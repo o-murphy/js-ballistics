@@ -59,11 +59,17 @@ class Atmo {
     protected _p0: number
     protected _ta: number
 
-    constructor(
-        altitude: (number | Distance | null) = null,
-        pressure: (number | Pressure | null) = null,
-        temperature: (number | Temperature | null) = null,
+    constructor({
+        altitude = null,
+        pressure = null,
+        temperature = null,
         humidity = 0.0
+    }: {
+        altitude?: (number | Distance | null);
+        pressure?: (number | Pressure | null);
+        temperature?: (number | Temperature | null);
+        humidity?: number
+    }
     ) {
         // Ensure humidity is within the valid range [0, 1]
         this.humidity = humidity || 0.0;
@@ -84,7 +90,10 @@ class Atmo {
         this._p0 = this.pressure.In(Unit.InHg);
         this._a0 = this.altitude.In(Unit.Foot);
         this._ta = this._a0 * cLapseRateImperial + cStandardTemperatureF;
-        this.densityRatio = this.calculateDensity(this._t0, this._p0) / cStandardDensity
+        this.densityRatio = this.calculateDensity({
+            t: this._t0, 
+            p: this._p0
+        }) / cStandardDensity
         this._mach1 = Atmo.machF(this._t0);
         this.mach = UNew.FPS(this._mach1)
     }
@@ -99,21 +108,34 @@ class Atmo {
         return UNew.InHg(0.02953 * Math.pow(3.73145 - 2.56555e-05 * altitude.In(Distance.Foot), cPressureExponent))
     }
 
-    static standard(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null): Atmo {
+    static standard({
+        altitude = null,
+        temperature = null
+    }: {
+        altitude?: (number | Distance | null);
+        temperature?: (number | Temperature | null)
+    }): Atmo {
         // Creates standard ICAO atmosphere at given altitude. If temperature not specified uses standard temperature.
-        return Atmo.icao(altitude, temperature)
+        return Atmo.icao({ altitude: altitude, temperature: temperature })
     }
 
-    static icao(altitude: (number | Distance | null) = null, temperature: (number | Temperature | null) = null): Atmo {
+    static icao({
+        altitude = null,
+        temperature = null
+    }: {
+        altitude?: (number | Distance | null);
+        temperature?: (number | Temperature | null)
+    }): Atmo {
         // Creates standard ICAO atmosphere at given altitude. If temperature not specified uses standard temperature.
         const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance)
         const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Temperature, preferredUnits.temperature)
         const _pressure: Pressure = Atmo.standardPressure(_altitude)
-        return new Atmo(
-            _altitude.In(preferredUnits.distance),
-            _pressure.In(preferredUnits.pressure),
-            _temperature.In(preferredUnits.temperature),
-            cStandardHumidity
+        return new Atmo({
+            altitude: _altitude.In(preferredUnits.distance),
+            pressure: _pressure.In(preferredUnits.pressure),
+            temperature: _temperature.In(preferredUnits.temperature),
+            humidity: cStandardHumidity
+        }
         )
     }
 
@@ -127,7 +149,15 @@ class Atmo {
         return Math.sqrt(1 + celsius / cDegreesCtoK) * cSpeedOfSoundMetric
     }
 
-    static airDensity(t: Temperature, p: Pressure, humidity: number): number {
+    static airDensity({
+        t,
+        p,
+        humidity
+    }: {
+        t: Temperature,
+        p: Pressure,
+        humidity: number
+    }): number {
         // Source: https://en.wikipedia.org/wiki/Density_of_air#Humid_air
         // Density in Imperial units (lb/ft^3)
         const tC = t.In(Temperature.Celsius)
@@ -159,7 +189,7 @@ class Atmo {
         return (altitude - this._a0) * cLapseRateImperial + this._t0
     }
 
-    calculateDensity(t: number, p: number): number {
+    calculateDensity({ t, p }: { t: number, p: number }): number {
         // temperature in °F
         // pressure in inHg
         // density with specified atmosphere
@@ -204,12 +234,17 @@ class Wind {
     readonly untilDistance: Distance
     public static MAX_DISTANCE_FEET: number = 1e8
 
-    constructor(
-        velocity: (number | Velocity | null) = null,
-        directionFrom: (number | Angular | null) = null,
-        untilDistance: (number | Distance | null) = null,
-        maxDistanceFeet: (number | null) = 1e8
-    ) {
+    constructor({
+        velocity = null,
+        directionFrom = null,
+        untilDistance = null,
+        maxDistanceFeet = 1e8
+    }: {
+        velocity?: (number | Velocity | null);
+        directionFrom?: (number | Angular | null);
+        untilDistance?: (number | Distance | null);
+        maxDistanceFeet?: (number | null)
+    }) {
         // Coerce input values to appropriate units
         Wind.MAX_DISTANCE_FEET = maxDistanceFeet ?? 1e8
         this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);
@@ -224,31 +259,38 @@ class Shot {
      * Stores shot parameters for the trajectory calculation.
      */
 
-    lookAngle: Angular
-    relativeAngle: Angular
-    cantAngle: Angular
-    weapon: Weapon
-    ammo: Ammo
-    atmo: Atmo
-    winds: Wind[]
+    weapon: Weapon;
+    ammo: Ammo;
+    lookAngle: Angular;
+    relativeAngle: Angular;
+    cantAngle: Angular;
+    atmo: Atmo;
+    winds: Wind[];
 
-    constructor(
-        weapon: Weapon,
-        ammo: Ammo,
-        lookAngle: (number | Angular | null) = null,
-        relativeAngle: (number | Angular | null) = null,
-        cantAngle: (number | Angular | null) = null,
-
-        atmo: (Atmo | null) = null,
-        winds: (Wind[] | null) = null
-    ) {
+    constructor({
+        weapon,
+        ammo,
+        lookAngle = null,
+        relativeAngle = null,
+        cantAngle = null,
+        atmo = null,
+        winds = null
+    }: {
+        weapon?: Weapon;
+        ammo?: Ammo;
+        lookAngle?: number | Angular | null;
+        relativeAngle?: number | Angular | null;
+        cantAngle?: number | Angular | null;
+        atmo?: Atmo | null;
+        winds?: Wind[] | null;
+    }) {
         this.lookAngle = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
         this.relativeAngle = unitTypeCoerce(relativeAngle ?? 0, Angular, preferredUnits.angular);
         this.cantAngle = unitTypeCoerce(cantAngle ?? 0, Angular, preferredUnits.angular);
         this.weapon = weapon
         this.ammo = ammo;
-        this.atmo = atmo ?? Atmo.icao()
-        this.winds = (winds ?? [new Wind()]).sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
+        this.atmo = atmo ?? Atmo.icao({})
+        this.winds = (winds ?? [new Wind({})]).sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
     }
 
     // Other methods and properties can be added here

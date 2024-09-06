@@ -16,10 +16,15 @@ class Weapon {
     readonly twist: Distance;
     public zeroElevation: Angular;
 
-    constructor(
-        sightHeight: (number | Distance | null) = null,
-        twist: (number | Distance | null) = null,
-        zeroElevation: (number | Angular | null) = null
+    constructor({
+        sightHeight = null,
+        twist = null,
+        zeroElevation = null
+    }: {
+        sightHeight?: number | Distance | null;
+        twist?: number | Distance | null;
+        zeroElevation?: number | Angular | null;
+    }
     ) {
         this.sightHeight = unitTypeCoerce(sightHeight ?? 0, Distance, preferredUnits.sight_height)
         this.twist = unitTypeCoerce(twist ?? 0, Distance, preferredUnits.twist)
@@ -41,11 +46,17 @@ class Ammo {
     readonly powderTemp: Temperature;
     protected _tempModifier: number;
 
-    constructor(dm: DragModel,
-        mv: (number | Velocity),
-        powderTemp: (number | Temperature | null) = null,
-        tempModifier: number = 0
-    ) {
+    constructor({
+        dm,
+        mv,
+        powderTemp = null,
+        tempModifier = 0
+    }: {
+        dm: DragModel;
+        mv: number | Velocity;
+        powderTemp?: number | Temperature | null;
+        tempModifier?: number
+    }) {
         if (!dm) {
             throw new Error("'dm' have to be an instance of 'DragModel'")
         }
@@ -59,8 +70,8 @@ class Ammo {
         // Calculates velocity correction by temperature change; assigns to self.temp_modifier
         const v0 = this.mv.In(Velocity.MPS)
         const t0 = this.powderTemp.In(Temperature.Celsius)
-        const v1 = unitTypeCoerce(otherVelocity, Temperature, preferredUnits.temperature)
-        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature)
+        const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).In(Velocity.MPS)
+        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature).In(Temperature.Celsius)
 
         const vDelta = Math.abs(v0 - v1)
         const tDelta = Math.abs(t0 - t1)

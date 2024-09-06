@@ -7,14 +7,14 @@ describe('Atmo Class Tests', () => {
     let custom: Atmo;
 
     beforeEach(() => {
-        standard = Atmo.standard();
-        highICAO = Atmo.standard(UNew.Foot(10000));
-        highISA = Atmo.standard(UNew.Meter(1000));
-        custom = new Atmo(
-            null,
-            UNew.InHg(31),
-            UNew.Fahrenheit(30),
-            0.5,
+        standard = Atmo.standard({});
+        highICAO = Atmo.standard({altitude: UNew.Foot(10000)});
+        highISA = Atmo.standard({altitude: UNew.Meter(1000)});
+        custom = new Atmo({
+                pressure: UNew.InHg(31),
+                temperature: UNew.Fahrenheit(30),
+                humidity: 0.5
+            }
         );
     });
 

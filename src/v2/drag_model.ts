@@ -62,11 +62,19 @@ class DragModel {
     protected sectionalDensity: number;
     protected formFactor: number;
 
-    constructor(bc: number,
+    constructor({
+        bc,
+        dragTable,
+        weight = 0,
+        diameter = 0,
+        length = 0
+    }: {
+        bc: number,
         dragTable: DragTableDataType,
-        weight: (number | Weight) = 0,
-        diameter: (number | Distance) = 0,
-        length: (number | Distance) = 0
+        weight?: (number | Weight),
+        diameter?: (number | Distance),
+        length?: (number | Distance)
+    }
     ) {
         // Get the length of the dragTable
         const tableLen = dragTable.length;
@@ -143,12 +151,19 @@ function sectionalDensity(weight: number, diameter: number) {
 }
 
 
-function DragModelMultiBC(
-    bcPoints: BCPoint[],
-    dragTable: DragTableDataType,
-    weight: (number | Weight) = 0,
-    diameter: (number | Distance) = 0,
-    length: (number | Distance) = 0): DragModel {
+function DragModelMultiBC({
+    bcPoints,
+    dragTable,
+    weight = 0,
+    diameter = 0,
+    length = 0
+}: {
+    bcPoints: BCPoint[];
+    dragTable: DragTableDataType;
+    weight: (number | Weight);
+    diameter: (number | Distance);
+    length: (number | Distance)
+}): DragModel {
 
     let bc
     const _weight = unitTypeCoerce(weight ?? 0, Weight, preferredUnits.weight);
@@ -171,7 +186,7 @@ function DragModelMultiBC(
         _dragTable[i].CD = _dragTable[i].CD / bcInterp[i];
     }
 
-    return new DragModel(bc, _dragTable, weight, diameter, length);
+    return new DragModel({ bc: bc, dragTable: _dragTable, weight: weight, diameter: diameter, length: length });
 }
 
 
