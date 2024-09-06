@@ -5,11 +5,10 @@ import { Ammo, Weapon } from './munition';
 // TrajectoryData module
 import { TrajectoryData, TrajFlag } from './trajectory_data';
 // Unit module
-import { Angular, Distance, UNew, Weight, Temperature, unitTypeCoerce, preferredUnits } from './unit';
+import { Angular, Distance, UNew, Weight, Pressure, Velocity, Temperature, unitTypeCoerce, preferredUnits } from './unit';
 // Vector module
 import Vector from "./vector";
 import type { DragTable } from "./drag_model";
-import { Pressure, Velocity } from './unit';
 
 
 // Constants
