@@ -5,7 +5,7 @@ import { HitResult } from "./trajectory_data";
 import { UNew, Unit, Angular, Distance, unitTypeCoerce, preferredUnits } from "./unit";
 
 
-class Calculator {
+export default class Calculator {
 
     protected _calc: TrajectoryCalc
 
