@@ -83,16 +83,13 @@ interface TrajectoryIntf {
 
 class TrajectoryCalc {
 
-    readonly ammo: Ammo
-    readonly barrelAzimuth: number;
-    readonly barrelElevation: number;
-    readonly twist: number;
+    readonly ammo: Ammo;
 
     protected _bc: number;
     protected _tableData: DragTable;
     protected _curve: Curve;
-    protected _gravityVector: Vector
-    protected _tIntf: TrajectoryIntf
+    protected _gravityVector: Vector;
+    protected _tIntf: TrajectoryIntf;
 
     constructor(ammo: Ammo) {
         this.ammo = ammo;
@@ -194,17 +191,17 @@ class TrajectoryCalc {
             -this._tIntf.cantSine * this._tIntf.sightHeight
         )
         let velocityVector: Vector = new Vector(
-            Math.cos(this._tIntf.barrelElevation) * Math.cos(this._tIntf.barrelElevation),
+            Math.cos(this._tIntf.barrelElevation) * Math.cos(this._tIntf.barrelAzimuth),
             Math.sin(this._tIntf.barrelElevation),
-            Math.cos(this._tIntf.barrelElevation) * Math.sin(this._tIntf.barrelElevation)
-        )
+            Math.cos(this._tIntf.barrelElevation) * Math.sin(this._tIntf.barrelAzimuth)
+        ).mulByConst(velocity)
 
         let seenZero = TrajFlag.NONE
 
         if (rangeVector.y >= 0) {
-            seenZero |= TrajFlag.ZERO_UP
-        } else if (rangeVector.x <= maxRange + this._tIntf.calcStep) {
-            seenZero |= TrajFlag.ZERO_DOWN
+            seenZero |= TrajFlag.ZERO_UP;
+        } else if (rangeVector.y < 0 && this._tIntf.barrelElevation < this._tIntf.lookAngle) {
+            seenZero |= TrajFlag.ZERO_DOWN;
         }
 
         let _flag = TrajFlag.NONE
@@ -227,7 +224,7 @@ class TrajectoryCalc {
 
             if (filterFlags) {
                 if (rangeVector.x > 0) {
-                    let referenceHeight = rangeVector.x + Math.tan(this._tIntf.lookAngle)
+                    let referenceHeight = rangeVector.x * Math.tan(this._tIntf.lookAngle)
 
                     if (!(seenZero & TrajFlag.ZERO_UP)) {
                         if (rangeVector.y >= referenceHeight) {
@@ -246,7 +243,7 @@ class TrajectoryCalc {
                     _flag |= TrajFlag.MACH
                 }
 
-                if (rangeVector.x >= nextWindRange) {
+                if (rangeVector.x >= nextRangeDistance) {
                     _flag |= TrajFlag.RANGE
                     nextRangeDistance += distStep
                     currentItem += 1
@@ -258,17 +255,20 @@ class TrajectoryCalc {
                         velocity, mach, this.spinDrift(time), this._tIntf.lookAngle,
                         densityFactor, drag, this._tIntf.weight, _flag
                     ))
+                    if (currentItem === rangesLength) {
+                        break
+                    }
                 }
             }
 
             previousMach = velocity / mach
 
-            const deltaTime: number = this._tIntf.calcStep / velocityVector.x;
-            const velocityAdjusted: Vector = velocityVector.subtract(windVector)
+            let deltaTime: number = this._tIntf.calcStep / velocityVector.x;
+            let velocityAdjusted: Vector = velocityVector.subtract(windVector)
             velocity = velocityAdjusted.magnitude()
             drag = densityFactor * velocity * this.dragByMach(velocity / mach)
             velocityVector = velocityVector.subtract(velocityAdjusted.mulByConst(drag).subtract(this._gravityVector).mulByConst(deltaTime))
-            const deltaRangeVector: Vector = new Vector(
+            let deltaRangeVector: Vector = new Vector(
                 this._tIntf.calcStep,
                 velocityVector.y * deltaTime,
                 velocityVector.z * deltaTime
@@ -310,8 +310,9 @@ class TrajectoryCalc {
             muzzleVelocity: (_globalUsePowderSensitivity ?
                 shotInfo.ammo.getVelocityForTemp(shotInfo.atmo.temperature.In(Velocity.FPS)) :
                 shotInfo.ammo.mv).In(Velocity.FPS),
-            stabilityCoefficient: this.calcStabilityCoefficient(shotInfo.atmo)
+            stabilityCoefficient: 0
         }
+        this._tIntf.stabilityCoefficient = this.calcStabilityCoefficient(shotInfo.atmo)
     }
 
     /**
@@ -330,8 +331,8 @@ class TrajectoryCalc {
      * @returns Windage due to spin drift, in feet
      */
     public spinDrift(time: number): number {
-        if (this.twist !== 0) {
-            const sign = this.twist > 0 ? 1 : -1;
+        if (this._tIntf.twist !== 0) {
+            const sign = this._tIntf.twist > 0 ? 1 : -1;
             return sign * (1.25 * (this._tIntf.stabilityCoefficient + 1.2) * Math.pow(time, 1.83)) / 12;
         }
         return 0;
@@ -343,8 +344,8 @@ class TrajectoryCalc {
      * @returns Stability coefficient
      */
     public calcStabilityCoefficient(atmo: Atmo): number {
-        if (this.twist && this._tIntf.length && this._tIntf.diameter) {
-            const twistRate = Math.abs(this.twist) / this._tIntf.diameter;
+        if (this._tIntf.twist && this._tIntf.length && this._tIntf.diameter) {
+            const twistRate = Math.abs(this._tIntf.twist) / this._tIntf.diameter;
             const lengthRatio = this._tIntf.length / this._tIntf.diameter;
 
             // Miller stability formula

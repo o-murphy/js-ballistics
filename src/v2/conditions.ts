@@ -176,6 +176,7 @@ class Atmo {
 
     getDensityFactorAndMachForAltitude(altitude: number): [number, number] {
         // Within 30 feet of the current altitude, return current values
+
         if (Math.abs(this._a0 - altitude) < 30) {
             return [this.densityRatio, this._mach1];
         } else {

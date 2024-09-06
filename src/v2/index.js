@@ -5,6 +5,8 @@ import {
 
 import Table from "./drag_tables.js";
 
+import Vector from "./vector";
+
 import {
     Atmo,
     Wind,

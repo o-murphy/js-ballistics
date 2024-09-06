@@ -81,6 +81,7 @@ class DragModel {
 
         this.dragTable = makeDataPoints(dragTable)
 
+        this.bc = bc
         this.weight = unitTypeCoerce(weight ?? 0, Weight, preferredUnits.weight);
         this.diameter = unitTypeCoerce(diameter ?? 0, Distance, preferredUnits.diameter);
         this.length = unitTypeCoerce(length ?? 0, Distance, preferredUnits.length);

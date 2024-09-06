@@ -21,7 +21,7 @@ class Weapon {
         twist: (number | Distance | null) = null,
         zeroElevation: (number | Angular | null) = null
     ) {
-        this.sightHeight = unitTypeCoerce(sightHeight ?? 0, Distance, preferredUnits.distance)
+        this.sightHeight = unitTypeCoerce(sightHeight ?? 0, Distance, preferredUnits.sight_height)
         this.twist = unitTypeCoerce(twist ?? 0, Distance, preferredUnits.twist)
         this.zeroElevation = unitTypeCoerce(zeroElevation ?? 0, Angular, preferredUnits.angular)
     }

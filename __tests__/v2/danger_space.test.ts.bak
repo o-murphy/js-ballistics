@@ -1,0 +1,53 @@
+import Calculator, { Ammo, Angular, UNew, DragModel, Shot, Table, UnitProps, Distance, Weapon, Wind } from '../../src/v2';
+import { expect, describe, test, beforeEach } from '@jest/globals';
+
+describe('TestDangerSpace', () => {
+    let lookAngle: Angular;
+    let shotResult: any;
+
+    beforeEach(() => {
+        // Setup for each test
+        lookAngle = UNew.Degree(0);
+        const weight = 168;
+        const diameter = 0.308;
+        const length = UNew.Inch(1.282);
+        const dragModel = new DragModel(0.223, Table.G7, weight, diameter, length);
+        const ammo = new Ammo(dragModel, UNew.FPS(2750), UNew.Celsius(15));
+        ammo.calcPowderSens(2723, 0);
+
+        const currentWinds = [new Wind(2, 90)];
+        const shot = new Shot(new Weapon(), ammo, null, null, null, null, currentWinds);
+        const calc = new Calculator();
+        calc.setWeaponZero(shot, UNew.Foot(300));
+
+        shotResult = calc.fire(shot, UNew.Yard(1000), UNew.Yard(100), true); // true for extraData
+    });
+
+    test('test danger space with meters', () => {
+        const dangerSpace = shotResult.dangerSpace(
+            UNew.Yard(500), UNew.Meter(1.5), lookAngle
+        );
+
+        expect(
+            Math.round(dangerSpace.begin.distance >> Distance.Yard)
+        ).toBeCloseTo(393.6, UnitProps[Distance.Yard].accuracy);
+
+        expect(
+            Math.round(dangerSpace.end.distance >> Distance.Yard)
+        ).toBeCloseTo(579.0, UnitProps[Distance.Yard].accuracy);
+    });
+
+    test('test danger space with inches', () => {
+        const dangerSpace = shotResult.dangerSpace(
+            UNew.Yard(500), UNew.Inch(10), lookAngle
+        );
+
+        expect(
+            Math.round(dangerSpace.begin.distance >> Distance.Yard)
+        ).toBeCloseTo(484.5, UnitProps[Distance.Yard].accuracy);
+
+        expect(
+            Math.round(dangerSpace.end.distance >> Distance.Yard)
+        ).toBeCloseTo(514.8, UnitProps[Distance.Yard].accuracy);
+    });
+});

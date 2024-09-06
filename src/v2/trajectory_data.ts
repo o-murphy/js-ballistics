@@ -31,20 +31,21 @@ class TrajectoryData {
      * Constructor for TrajectoryData class.
      * ! DATACLASS, USES AS RETURNED VALUE ONLY
      * @param {number} time
-     * @param {number|Distance} distance
-     * @param {number|Velocity} velocity
+     * @param {Distance} distance
+     * @param {Velocity} velocity
      * @param {number} mach
-     * @param {number|Distance|null} drop
-     * @param {number|Angular|null} dropAdjustment
-     * @param {number|Distance|null} windage
-     * @param {number|Angular|null} windageAdjustment
-     * @param {number|Distance|null} lookDistance
-     * @param {number|Angular|null} angle
+     * @param {Distance} height
+     * @param {Distance} drop
+     * @param {Angular} dropAdjustment
+     * @param {Distance} windage
+     * @param {Angular} windageAdjustment
+     * @param {Distance} lookDistance
+     * @param {Angular} angle
      * @param {number} densityFactor
      * @param {number} drag
-     * @param {number|Energy|null} energy
-     * @param {number|Weight|null} ogw
-     * @param {number|TrajFlag} flag
+     * @param {Energy} energy
+     * @param {Weight} ogw
+     * @param {TrajFlag} flag
      */
     constructor(
         readonly time: number,
@@ -64,6 +65,22 @@ class TrajectoryData {
         readonly ogw: Weight,
         readonly flag: TrajFlag
     ) {
+        this.time = time;
+        this.distance = distance;
+        this.velocity = velocity;
+        this.mach = mach;
+        this.height = height;
+        this.targetDrop = targetDrop;
+        this.dropAdjustment = dropAdjustment;
+        this.windage = windage;
+        this.windageAdjustment = windageAdjustment;
+        this.lookDistance = lookDistance;
+        this.angle = angle;
+        this.densityFactor = densityFactor;
+        this.drag = drag;
+        this.energy = energy;
+        this.ogw = ogw;
+        this.flag = flag;
     }
 
     /**
@@ -76,6 +93,7 @@ class TrajectoryData {
             this.distance.In(preferredUnits.distance),
             this.velocity.In(preferredUnits.velocity),
             this.mach,
+            this.height.In(preferredUnits.distance),
             this.targetDrop.In(preferredUnits.drop),
             this.dropAdjustment.In(preferredUnits.adjustment),
             this.windage.In(preferredUnits.drop),
