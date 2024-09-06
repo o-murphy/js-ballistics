@@ -14,7 +14,7 @@ class Weapon {
 
     readonly sightHeight: Distance;
     readonly twist: Distance;
-    readonly zeroElevation: Angular;
+    public zeroElevation: Angular;
 
     constructor(
         sightHeight: (number | Distance | null) = null,

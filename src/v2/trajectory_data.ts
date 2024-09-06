@@ -157,14 +157,12 @@ class DangerSpace {
 class HitResult {
     /** Results of the shot
      * ! DATACLASS, USES AS RETURNED VALUE ONLY
-     * @param {Weapon} weapon
      * @param {Shot} shot
      * @param {TrajectoryData[]} _trajectory
      * @param {boolean} _extra
      */
 
     constructor(
-        readonly weapon: Weapon,
         readonly shot: Shot,
         readonly _trajectory: TrajectoryData[],
         readonly _extra: boolean = false,
