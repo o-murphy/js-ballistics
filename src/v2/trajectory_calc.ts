@@ -136,15 +136,17 @@ class TrajectoryCalc {
 
         let zeroDistance = Math.cos(this._tIntf.lookAngle) * distance.In(Distance.Foot)
         let heightAtZero = Math.sin(this._tIntf.lookAngle) * distance.In(Distance.Foot)
-        const maximumRange = zeroDistance - 1.5 * this._tIntf.calcStep
+        let maximumRange = zeroDistance - (1.5 * this._tIntf.calcStep)
 
         let iterationsCount = 0
         let zeroFindingError = cZeroFindingAccuracy * 2
+        let height: number
+        let t: TrajectoryData
 
         while (zeroFindingError > cZeroFindingAccuracy && iterationsCount < cMaxIterations) {
-            let t = this._trajectory(shotInfo, maximumRange, zeroDistance, TrajFlag.NONE)[0]
-            let height = t.height.In(Distance.Foot)
-            let zeroFindingError = Math.abs(height - heightAtZero)
+            t = this._trajectory(shotInfo, maximumRange, zeroDistance, TrajFlag.NONE)[0]
+            height = t.height.In(Distance.Foot)
+            zeroFindingError = Math.abs(height - heightAtZero)
             if (zeroFindingError > cZeroFindingAccuracy) {
                 this._tIntf.barrelElevation -= (height - heightAtZero) / zeroDistance
             } else {

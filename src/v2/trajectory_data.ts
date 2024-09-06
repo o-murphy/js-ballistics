@@ -247,11 +247,10 @@ class HitResult {
 
         const _atRange: Distance = unitTypeCoerce(atRange, Distance, preferredUnits.distance);
 
-        const _targetHeight: Distance = unitTypeCoerce(targetHeight, Distance, preferredUnits.drop);
+        const _targetHeight: Distance = unitTypeCoerce(targetHeight, Distance, preferredUnits.distance);
         const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
-        let _lookAngle: Angular = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
 
-        _lookAngle = _lookAngle ? this.shot.lookAngle : unitTypeCoerce(_lookAngle, Angular, preferredUnits.angular)
+        const _lookAngle = lookAngle ? this.shot.lookAngle : unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular)
 
         // Get index of first trajectory point with distance >= at_range
         const index = this.indexAtDistance(_atRange)

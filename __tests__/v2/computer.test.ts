@@ -503,7 +503,7 @@ describe('TestComputer', () => {
         );
         
         // Restore the previous global powder sensitivity setting
-        // setGlobalUsePowderSensitivity(previous);
+        setGlobalUsePowderSensitivity(previous);
     });
 
     // end region Ammo
