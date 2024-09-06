@@ -468,72 +468,71 @@ describe('TestComputer', () => {
         );
     });
 
-    // test('powder_sensitivity', () => {
-    //     // Store the previous global powder sensitivity setting
-    //     const previous = getGlobalUsePowderSensitivity();
+    test('powder_sensitivity', () => {
+        // Store the previous global powder sensitivity setting
+        const previous = getGlobalUsePowderSensitivity();
         
-    //     // Set global powder sensitivity to true
-    //     setGlobalUsePowderSensitivity(true);
+        // Set global powder sensitivity to true
+        setGlobalUsePowderSensitivity(true);
         
-    //     // Adjust the ammo's powder sensitivity
-    //     ammo.calcPowderSens(UNew.FPS(2550), UNew.Celsius(0));
+        // Adjust the ammo's powder sensitivity
+        ammo.calcPowderSens(UNew.FPS(2550), UNew.Celsius(0));
         
-    //     // Create a new atmosphere with reduced temperature
-    //     const coldAtmo = new Atmo({
-    //         temperature: UNew.Celsius(-5)
-    //     });
+        // Create a new atmosphere with reduced temperature
+        const coldAtmo = new Atmo({
+            temperature: UNew.Celsius(-5)
+        });
         
-    //     // Create a new shot with the cold atmosphere
-    //     const coldShot = new Shot({
-    //         weapon: weapon,
-    //         ammo: ammo,
-    //         atmo: coldAtmo
-    //     });
+        // Create a new shot with the cold atmosphere
+        const coldShot = new Shot({
+            weapon: weapon,
+            ammo: ammo,
+            atmo: coldAtmo
+        });
         
-    //     // Calculate the trajectory for the shot
-    //     const trajectoryWithCold = calc.fire({
-    //         shot: coldShot,
-    //         trajectoryRange: range,
-    //         trajectoryStep: step
-    //     });
+        // Calculate the trajectory for the shot
+        const trajectoryWithCold = calc.fire({
+            shot: coldShot,
+            trajectoryRange: range,
+            trajectoryStep: step
+        });
         
-    //     // Assert that the velocity at index 0 is less than the baseline velocity
-    //     expect(trajectoryWithCold.trajectory[0].velocity.rawValue).toBeLessThan(
-    //         baselineTrajectory.trajectory[0].velocity.rawValue
-    //     );
+        // Assert that the velocity at index 0 is less than the baseline velocity
+        expect(trajectoryWithCold.trajectory[0].velocity.rawValue).toBeLessThan(
+            baselineTrajectory.trajectory[0].velocity.rawValue
+        );
         
-    //     // Restore the previous global powder sensitivity setting
-    //     setGlobalUsePowderSensitivity(previous);
-    // });
+        // Restore the previous global powder sensitivity setting
+        // setGlobalUsePowderSensitivity(previous);
+    });
 
     // end region Ammo
 
     // region Shot
-    // test('winds_sort', () => {
-    //     // Create an array of Wind instances with varying distances
-    //     const winds = [
-    //         new Wind({velocity: UNew.MPS(0), directionFrom: UNew.Degree(90), untilDistance: UNew.Meter(100)}),
-    //         new Wind({velocity: UNew.MPS(1), directionFrom: UNew.Degree(60), untilDistance: UNew.Meter(300)}),
-    //         new Wind({velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(200)}),
-    //         new Wind({velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(50)})
-    //     ];
+    test('winds_sort', () => {
+        // Create an array of Wind instances with varying distances
+        const winds = [
+            new Wind({velocity: UNew.MPS(0), directionFrom: UNew.Degree(90), untilDistance: UNew.Meter(100)}),
+            new Wind({velocity: UNew.MPS(1), directionFrom: UNew.Degree(60), untilDistance: UNew.Meter(300)}),
+            new Wind({velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(200)}),
+            new Wind({velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(50)})
+        ];
     
-    //     // Create a Shot instance with the winds array
-    //     const shot = new Shot({
-    //         lookAngle: 0,
-    //         relativeAngle: 0,
-    //         cantAngle: 0,
-    //         winds: winds
-    //     });
+        // Create a Shot instance with the winds array
+        const shot = new Shot({
+            weapon: null,
+            ammo: null,
+            lookAngle: 0,
+            relativeAngle: 0,
+            cantAngle: 0,
+            winds: winds
+        });
     
-    //     // Sort the winds based on distance
-    //     const sortedWinds = shot.winds.sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
-    
-    //     // Assert the order of the sorted winds
-    //     expect(sortedWinds[0]).toBe(winds[3]);
-    //     expect(sortedWinds[1]).toBe(winds[0]);
-    //     expect(sortedWinds[2]).toBe(winds[2]);
-    //     expect(sortedWinds[3]).toBe(winds[1]);
-    // });
+        // Assert the order of the sorted winds
+        expect(shot.winds[0]).toBe(winds[3]);
+        expect(shot.winds[1]).toBe(winds[0]);
+        expect(shot.winds[2]).toBe(winds[2]);
+        expect(shot.winds[3]).toBe(winds[1]);
+    });
     // end region Shot
 });

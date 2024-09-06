@@ -308,7 +308,7 @@ class TrajectoryCalc {
             alt0: shotInfo.atmo.altitude.In(Distance.Foot),
             calcStep: TrajectoryCalc.getCalcStep(),
             muzzleVelocity: (_globalUsePowderSensitivity ?
-                shotInfo.ammo.getVelocityForTemp(shotInfo.atmo.temperature.In(Velocity.FPS)) :
+                shotInfo.ammo.getVelocityForTemp(shotInfo.atmo.temperature) :
                 shotInfo.ammo.mv).In(Velocity.FPS),
             stabilityCoefficient: 0
         }

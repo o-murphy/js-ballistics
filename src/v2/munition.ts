@@ -88,7 +88,7 @@ class Ammo {
         // Calculates muzzle velocity at temperature, based on temp_modifier
         const v0 = this.mv.In(Velocity.MPS)
         const t0 = this.powderTemp.In(Temperature.Celsius)
-        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature)
+        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(Temperature.Celsius)
         const tDelta = t1 - t0
         const muzzleVelocity = this._tempModifier / (15 / v0) * tDelta + v0
         return UNew.MPS(muzzleVelocity)

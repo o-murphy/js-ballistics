@@ -91,7 +91,7 @@ class Atmo {
         this._a0 = this.altitude.In(Unit.Foot);
         this._ta = this._a0 * cLapseRateImperial + cStandardTemperatureF;
         this.densityRatio = this.calculateDensity({
-            t: this._t0, 
+            t: this._t0,
             p: this._p0
         }) / cStandardDensity
         this._mach1 = Atmo.machF(this._t0);
@@ -276,8 +276,8 @@ class Shot {
         atmo = null,
         winds = null
     }: {
-        weapon?: Weapon;
-        ammo?: Ammo;
+        weapon: Weapon;
+        ammo: Ammo;
         lookAngle?: number | Angular | null;
         relativeAngle?: number | Angular | null;
         cantAngle?: number | Angular | null;
@@ -290,7 +290,9 @@ class Shot {
         this.weapon = weapon
         this.ammo = ammo;
         this.atmo = atmo ?? Atmo.icao({})
-        this.winds = (winds ?? [new Wind({})]).sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
+        this.winds = (winds ?? [new Wind({})])
+            .slice()  // Create a copy of the array
+            .sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
     }
 
     // Other methods and properties can be added here
