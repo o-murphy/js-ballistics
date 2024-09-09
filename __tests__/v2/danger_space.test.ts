@@ -1,4 +1,4 @@
-import Calculator, { HitResult, Ammo, UNew, DragModel, Shot, Table, Distance, Weapon, Wind } from '../../src/v2';
+import Calculator, { HitResult, Ammo, UNew, DragModel, Shot, Table, Distance, Weapon, Wind, Unit, UnitProps } from '../../src/v2';
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
 describe('TestDangerSpace', () => {
@@ -43,12 +43,13 @@ describe('TestDangerSpace', () => {
             lookAngle
         );
 
-        function assertAlmostEqual(actual: number, expected: number, tolerance: number = 1e-7) {
-            expect(Math.abs(actual - expected)).toBeLessThanOrEqual(tolerance);
-        }
+        // function assertAlmostEqual(actual: number, expected: number, tolerance: number = 1e-7) {
+        //     expect(Math.abs(actual - expected)).toBeLessThanOrEqual(tolerance);
+        // }
         
-        assertAlmostEqual(dangerSpace.begin.distance.In(Distance.Yard), 393.6, 1);
-        assertAlmostEqual(dangerSpace.end.distance.In(Distance.Yard), 579.0, 1);
+
+        expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(393.6, 1e-1)
+        expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(579.0, 1e-1)
 
         // Second test
         dangerSpace = shotResult.dangerSpace(
@@ -57,7 +58,10 @@ describe('TestDangerSpace', () => {
             lookAngle
         );
 
-        assertAlmostEqual(dangerSpace.begin.distance.In(Distance.Yard), 484.5, 1);
-        assertAlmostEqual(dangerSpace.end.distance.In(Distance.Yard), 514.8, 1);
+        expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(484.5, 1e-1)
+        expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(514.8, 1e-1)
+
+        // assertAlmostEqual(dangerSpace.begin.distance.In(Distance.Yard), 484.5, 1);
+        // assertAlmostEqual(dangerSpace.end.distance.In(Distance.Yard), 514.8, 1);
     });
 });

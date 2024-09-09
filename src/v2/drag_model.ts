@@ -18,10 +18,15 @@ class BCPoint {
     readonly Mach: (number)
     readonly V: (Velocity | null)
 
-    constructor(
+    constructor({
+        BC,
+        Mach = null,
+        V = null
+    }: {
         BC: number,
-        Mach: (number | null),
-        V: (number | Velocity | null)
+        Mach?: (number | null),
+        V?: (number | Velocity | null)
+    }
     ) {
         if (BC <= 0) {
             throw new Error("Ballistic coefficient must be positive")
@@ -160,22 +165,22 @@ function DragModelMultiBC({
 }: {
     bcPoints: BCPoint[];
     dragTable: DragTableDataType;
-    weight: (number | Weight);
-    diameter: (number | Distance);
-    length: (number | Distance)
+    weight?: (number | Weight);
+    diameter?: (number | Distance);
+    length?: (number | Distance)
 }): DragModel {
 
     let bc
     const _weight = unitTypeCoerce(weight ?? 0, Weight, preferredUnits.weight);
     const _diameter = unitTypeCoerce(diameter ?? 0, Distance, preferredUnits.diameter);
-    if ((_weight > 0) && (_diameter > 0)) {
-        bc = sectionalDensity(_weight.In(Weight.Grain), _diameter.in(Distance.Inch))
+    if (_weight.rawValue > 0 && _diameter.rawValue > 0) {
+        bc = sectionalDensity(_weight.In(Weight.Grain), _diameter.In(Distance.Inch))
     } else {
         bc = 1.0
     }
 
     const _dragTable = makeDataPoints(dragTable)
-    bcPoints.sort((a, b) => a.BC - b.BC);
+    bcPoints.sort((a, b) => a.Mach - b.Mach);
     const bcInterp = linearInterpolation(
         _dragTable.map((point) => point.Mach),
         bcPoints.map((point) => point.Mach),
@@ -186,7 +191,7 @@ function DragModelMultiBC({
         _dragTable[i].CD = _dragTable[i].CD / bcInterp[i];
     }
 
-    return new DragModel({ bc: bc, dragTable: _dragTable, weight: weight, diameter: diameter, length: length });
+    return new DragModel({ bc: bc, dragTable: _dragTable, weight: _weight, diameter: _diameter, length: length });
 }
 
 
@@ -235,5 +240,6 @@ function linearInterpolation(
     return y;
 }
 
-export type { Table, DragDataPoint, DragTable, BCPoint, DragModelMultiBC };
+export type { Table, DragTable, DragTableDataType };
+export {DragDataPoint, BCPoint, DragModelMultiBC}
 export default DragModel;
