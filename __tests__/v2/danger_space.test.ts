@@ -43,8 +43,12 @@ describe('TestDangerSpace', () => {
             lookAngle
         );
 
-        expect(Math.round(dangerSpace.begin.distance.to(Distance.Yard)._value)).toBeCloseTo(393.6, 1);
-        expect(Math.round(dangerSpace.end.distance.to(Distance.Yard)._value)).toBeCloseTo(579.0, 1);
+        function assertAlmostEqual(actual: number, expected: number, tolerance: number = 1e-7) {
+            expect(Math.abs(actual - expected)).toBeLessThanOrEqual(tolerance);
+        }
+        
+        assertAlmostEqual(dangerSpace.begin.distance.In(Distance.Yard), 393.6, 1);
+        assertAlmostEqual(dangerSpace.end.distance.In(Distance.Yard), 579.0, 1);
 
         // Second test
         dangerSpace = shotResult.dangerSpace(
@@ -53,7 +57,7 @@ describe('TestDangerSpace', () => {
             lookAngle
         );
 
-        expect(Math.round(dangerSpace.begin.distance.to(Distance.Yard)._value)).toBeCloseTo(484.5, 1);
-        expect(Math.round(dangerSpace.end.distance.to(Distance.Yard)._value)).toBeCloseTo(514.8, 1);
+        assertAlmostEqual(dangerSpace.begin.distance.In(Distance.Yard), 484.5, 1);
+        assertAlmostEqual(dangerSpace.end.distance.In(Distance.Yard), 514.8, 1);
     });
 });

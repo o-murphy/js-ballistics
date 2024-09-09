@@ -221,9 +221,11 @@ class HitResult {
 
     indexAtDistance(d: Distance): number {
         // Get index of the first trajectory point where distance >= d
-        return this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance >= d) !== -1
-            ? this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance >= d)
-            : -1;
+        // return this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance.rawValue >= d.rawValue) !== -1
+        //     ? this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance.rawValue >= d.rawValue)
+        //     : -1;
+        return this.trajectory.findIndex(item => item.distance.rawValue >= d.rawValue);
+
     }
 
     getAtDistance(d: Distance): TrajectoryData {

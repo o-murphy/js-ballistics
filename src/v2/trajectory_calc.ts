@@ -128,7 +128,7 @@ class TrajectoryCalc {
 
         this._initTrajectory(shotInfo)
 
-        return this._trajectory(shotInfo, maxRange.In(Distance.Foot), distStep.In(Distance.Foot), filterFlags);
+        return this._trajectory(shotInfo, maxRange.In(Distance.Foot), _distStep.In(Distance.Foot), filterFlags);
     }
 
     public zeroAngle(shotInfo: Shot, distance: Distance) {
