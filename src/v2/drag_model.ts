@@ -190,7 +190,7 @@ function makeDataPoints(dragTable: DragTableDataType): DragDataPoint[] {
  * @param {number} diameter - The diameter value (in inches).
  * @returns {number} - The calculated sectional density (in lb/in²).
  */
-function sectionalDensity(weight: number, diameter: number) {
+function sectionalDensity(weight: number, diameter: number): number {
     // Divide weight by the square of diameter and then by 7000
     return weight / Math.pow(diameter, 2) / 7000;
 }
@@ -219,7 +219,7 @@ function DragModelMultiBC({
     length?: (number | Distance)
 }): DragModel {
 
-    let bc
+    let bc: number
     const _weight = unitTypeCoerce(weight ?? 0, Weight, preferredUnits.weight);
     const _diameter = unitTypeCoerce(diameter ?? 0, Distance, preferredUnits.diameter);
     if (_weight.rawValue > 0 && _diameter.rawValue > 0) {
