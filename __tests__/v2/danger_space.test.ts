@@ -1,4 +1,4 @@
-import Calculator, { HitResult, Ammo, UNew, DragModel, Shot, Table, Distance, Weapon, Wind, Unit, UnitProps } from '../../src/v2';
+import Calculator, { HitResult, Ammo, UNew, DragModel, Shot, Table, Distance, Weapon, Wind } from '../../src/v2';
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
 describe('TestDangerSpace', () => {

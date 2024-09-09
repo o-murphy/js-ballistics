@@ -6,16 +6,18 @@ import DragModel from "./drag_model.js";
 
 
 class Weapon {
-    /**
-    * @param {number | Distance | null} sightHeight - Height of the sight above the bore axis.
-    * @param {number | Distance | null} twist - The twist rate of the barrel.
-    * @param {number | Angular | null} zeroLookAngle - The look angle for the zero distance.
-    */
 
     readonly sightHeight: Distance;
     readonly twist: Distance;
     public zeroElevation: Angular;
 
+    /**
+     * Initializes a new instance of the Weapon class.
+     * @param {Object} options - Parameters for initializing the weapon.
+     * @param {number | Distance | null} [options.sightHeight=null] - Height of the sight above the bore axis.
+     * @param {number | Distance | null} [options.twist=null] - The twist rate of the barrel.
+     * @param {number | Angular | null} [options.zeroElevation=null] - The look angle for the zero distance.
+     */
     constructor({
         sightHeight = null,
         twist = null,
@@ -34,18 +36,20 @@ class Weapon {
 
 
 class Ammo {
-    /**
-     * Creates Ammo and Projectile properties.
-     * @param {DragModel} dm - Drag model instance.
-     * @param {number|Velocity|null} mv - Velocity value.
-     * @param {number} tempModifier - Temperature modifier value.
-     * @param {number|Temperature|null} powder_temp - Powder temperature value.
-     */
+
     readonly dm: DragModel;
     readonly mv: Velocity;
     readonly powderTemp: Temperature;
     protected _tempModifier: number;
 
+    /**
+     * Creates an instance of Ammo with specified properties.
+     * @param {Object} options - Parameters for initializing the Ammo instance.
+     * @param {DragModel} options.dm - Drag model instance.
+     * @param {number | Velocity} options.mv - Velocity value.
+     * @param {number} [options.tempModifier=0] - Temperature modifier value. Defaults to 0.
+     * @param {number | Temperature | null} [options.powderTemp=null] - Powder temperature value. Defaults to null.
+     */
     constructor({
         dm,
         mv,
@@ -66,8 +70,13 @@ class Ammo {
         this._tempModifier = tempModifier ?? 0;
     }
 
+    /**
+     * Calculates the velocity correction based on the change in temperature and assigns it to the temperature modifier.
+     * @param {number | Velocity} otherVelocity - The velocity to compare with.
+     * @param {number | Temperature} otherTemperature - The temperature to compare with.
+     * @returns {number} - The calculated temperature sensitivity adjustment.
+     */
     calcPowderSens(otherVelocity: (number | Velocity), otherTemperature: (number | Temperature)): number {
-        // Calculates velocity correction by temperature change; assigns to self.temp_modifier
         const v0 = this.mv.In(Velocity.MPS)
         const t0 = this.powderTemp.In(Temperature.Celsius)
         const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).In(Velocity.MPS)
@@ -83,9 +92,13 @@ class Ammo {
         this._tempModifier = vDelta / tDelta * (15 / vLower)  // * 100
         return this._tempModifier
     }
-
+    
+    /**
+     * Calculates the muzzle velocity at a given temperature based on the temperature modifier.
+     * @param {number | Temperature} currentTemp - The current temperature for which to calculate the velocity.
+     * @returns {Velocity} - The calculated muzzle velocity at the specified temperature.
+     */
     getVelocityForTemp(currentTemp: (number | Temperature)): Velocity {
-        // Calculates muzzle velocity at temperature, based on temp_modifier
         const v0 = this.mv.In(Velocity.MPS)
         const t0 = this.powderTemp.In(Temperature.Celsius)
         const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(Temperature.Celsius)

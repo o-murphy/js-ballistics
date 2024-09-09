@@ -28,24 +28,26 @@ enum TrajFlag {
 
 class TrajectoryData {
     /**
-     * Constructor for TrajectoryData class.
-     * ! DATACLASS, USES AS RETURNED VALUE ONLY
-     * @param {number} time
-     * @param {Distance} distance
-     * @param {Velocity} velocity
-     * @param {number} mach
-     * @param {Distance} height
-     * @param {Distance} drop
-     * @param {Angular} dropAdjustment
-     * @param {Distance} windage
-     * @param {Angular} windageAdjustment
-     * @param {Distance} lookDistance
-     * @param {Angular} angle
-     * @param {number} densityFactor
-     * @param {number} drag
-     * @param {Energy} energy
-     * @param {Weight} ogw
-     * @param {TrajFlag} flag
+     * Represents data related to a trajectory calculation.
+     * This class is used solely as a return value from trajectory calculations.
+     * 
+     * @class
+     * @param {number} time - The time elapsed in the trajectory calculation.
+     * @param {Distance} distance - The distance traveled.
+     * @param {Velocity} velocity - The velocity at the given point.
+     * @param {number} mach - The Mach number at the given point.
+     * @param {Distance} height - The height above the reference point.
+     * @param {Distance} targetDrop - The drop from the target elevation.
+     * @param {Angular} dropAdjustment - Adjustment in angle due to drop.
+     * @param {Distance} windage - The amount of windage correction.
+     * @param {Angular} windageAdjustment - Adjustment in angle due to windage.
+     * @param {Distance} lookDistance - The distance to the target.
+     * @param {Angular} angle - The angle of the trajectory.
+     * @param {number} densityFactor - Factor representing air density effects.
+     * @param {number} drag - The drag experienced by the projectile.
+     * @param {Energy} energy - The energy of the projectile at the given point.
+     * @param {Weight} ogw - The optimal gun weight.
+     * @param {TrajFlag} flag - Flags representing various trajectory characteristics.
      */
     constructor(
         readonly time: number,
@@ -84,8 +86,10 @@ class TrajectoryData {
     }
 
     /**
-     * matrix of floats of the trajectory in default units
-     * @return {number[]}
+     * Returns an array of numerical values representing the trajectory data in default units.
+     * 
+     * @returns {number[]} An array where each element corresponds to a specific piece of trajectory data
+     *                      converted to default units.
      */
     inDefUnits(): number[] {
         return [
@@ -109,7 +113,9 @@ class TrajectoryData {
     }
 
     /**
-     * @return {string[]}
+     * Returns an array of strings representing the trajectory data in a formatted manner.
+     * 
+     * @returns {string[]} An array of formatted strings, each representing a piece of trajectory data.
      */
     formatted(): string[] {
 
@@ -145,15 +151,17 @@ class TrajectoryData {
 
 
 class DangerSpace {
-    /** Stores the danger space data for distance specified
-     * ! DATACLASS, USES AS RETURNED VALUE ONLY
-     * @param {TrajectoryData} atRange
-     * @param {number|Distance|null} targetHeight
-     * @param {TrajectoryData} begin
-     * @param {TrajectoryData} end
-     * @param {number|Angular|null} lookAngle
-     */
 
+    /**
+     * Stores the danger space data for a specified distance.
+     * ! DATACLASS, USES AS RETURNED VALUE ONLY
+     * 
+     * @param {TrajectoryData} atRange - The trajectory data at the specified range.
+     * @param {number | Distance | null} targetHeight - The height of the target, or null if not applicable.
+     * @param {TrajectoryData} begin - The starting trajectory data for the danger space.
+     * @param {TrajectoryData} end - The ending trajectory data for the danger space.
+     * @param {number | Angular | null} lookAngle - The look angle for the danger space, or null if not applicable.
+     */
     constructor(
         readonly atRange: TrajectoryData,
         readonly targetHeight: Distance,
@@ -161,8 +169,17 @@ class DangerSpace {
         readonly end: TrajectoryData,
         readonly lookAngle: Angular
     ) {
+        this.atRange = atRange;
+        this.targetHeight = targetHeight;
+        this.begin = begin;
+        this.end = end;
+        this.lookAngle = lookAngle;
     }
 
+    /**
+     * Returns a string representation of the DangerSpace object.
+     * @returns {string} - A string summarizing the DangerSpace data.
+     */
     toString(): string {
         return `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
             `for ${this.targetHeight.to(preferredUnits.drop)} tall target ` +
@@ -180,13 +197,25 @@ class HitResult {
      * @param {boolean} _extra
      */
 
-    constructor(
-        readonly shot: Shot,
-        readonly _trajectory: TrajectoryData[],
-        readonly _extra: boolean = false,
-    ) { }
+    readonly shot: Shot
+    readonly _trajectory: TrajectoryData[]
+    readonly _extra: boolean = false
 
-    toArray(): Array<TrajectoryData> {
+    constructor(
+        shot: Shot,
+        trajectory: TrajectoryData[],
+        extra: boolean = false,
+    ) {
+        this.shot = shot
+        this._trajectory = trajectory
+        this._extra = extra
+    }
+
+    /**
+     * Returns a copy of the trajectory data as an array.
+     * @returns {TrajectoryData[]} - A new array containing the trajectory data.
+     */
+    toArray(): TrajectoryData[] {
         return [...this._trajectory];
     }
 
@@ -194,10 +223,18 @@ class HitResult {
     //     return this._trajectory[index];
     // }
 
+    /**
+     * Gets the trajectory data.
+     * @returns {TrajectoryData[]} - The trajectory data array.
+     */
     get trajectory(): TrajectoryData[] {
         return this._trajectory
     }
 
+    /**
+     * Gets the extra data flag.
+     * @returns {boolean} - True if extra data is included, otherwise false.
+     */
     get extra(): boolean {
         return this._extra
     }
@@ -219,13 +256,13 @@ class HitResult {
         return data;
     }
 
-    indexAtDistance(d: Distance): number {
-        // Get index of the first trajectory point where distance >= d
-        // return this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance.rawValue >= d.rawValue) !== -1
-        //     ? this.trajectory.findIndex(trajectoryPoint => trajectoryPoint.distance.rawValue >= d.rawValue)
-        //     : -1;
-        return this.trajectory.findIndex(item => item.distance.rawValue >= d.rawValue);
-
+    /**
+     * Finds the index of the TrajectoryData item closest to the given distance.
+     * @param {Distance} distance - The distance to search for.
+     * @returns {number} - The index of the closest TrajectoryData item.
+     */
+    indexAtDistance(distance: Distance): number {
+        return this.trajectory.findIndex(item => item.distance.rawValue >= distance.rawValue);
     }
 
     getAtDistance(d: Distance): TrajectoryData {
@@ -236,15 +273,16 @@ class HitResult {
         return this.trajectory[index];
     }
 
-    /** get danger space for target height and look angle
-     * @param {number|Distance|null} atRange
-     * @param {number|Distance|null} targetHeight
-     * @param {number|Angular|null} lookAngle
-     * @return {DangerSpace} - danger space for target height and look angle
+    /**
+     * Calculates the danger space for the specified range and target height.
+     * @param {number | Distance} atRange - The distance at which to calculate the danger space.
+     * @param {number | Distance} targetHeight - The height of the target.
+     * @param {number | Angular | null} lookAngle - The look angle for the calculation.
+     * @returns {DangerSpace} - The computed DangerSpace object.
      */
-    dangerSpace(atRange: (number | Distance),
+    public dangerSpace(atRange: (number | Distance),
         targetHeight: (number | Distance),
-        lookAngle: (number | Angular | null) = null) {
+        lookAngle: (number | Angular | null) = null): DangerSpace {
         this._checkExtra();
 
         const _atRange: Distance = unitTypeCoerce(atRange, Distance, preferredUnits.distance);

@@ -6,18 +6,44 @@ import Table from './drag_tables.js'
 
 export const cSpeedOfSoundMetric: number = 340.0
 
+/**
+ * Represents a data point for drag calculation.
+ */
 class DragDataPoint {
+    /**
+     * @param {number} Mach - Mach number at the data point.
+     * @param {number} CD - Drag coefficient at the data point.
+     */
     constructor(public Mach: number, public CD: number) { }
 }
 
+/**
+ * Type alias for drag table data.
+ * Can be an array of objects with Mach and CD properties or DragDataPoint instances.
+ */
 type DragTableDataType = Array<{ Mach: number, CD: number } | DragDataPoint>;
+
+/**
+ * Type alias for an array of DragDataPoint instances.
+ */
 type DragTable = DragDataPoint[]
 
+/**
+ * Represents a ballistic coefficient point.
+ */
 class BCPoint {
     readonly BC: number
     readonly Mach: (number)
     readonly V: (Velocity | null)
 
+    /**
+     * Creates an instance of BCPoint.
+     * @param {Object} options - The parameters for initializing the ballistic coefficient point.
+     * @param {number} options.BC - The ballistic coefficient. Must be positive.
+     * @param {number} [options.Mach=null] - Mach number. Optional if velocity is provided.
+     * @param {number | Velocity | null} [options.V=null] - Velocity. Optional if Mach number is provided.
+     * @throws {Error} If BC is less than or equal to zero, or if both Mach and V are specified, or if neither Mach nor V is specified.
+     */
     constructor({
         BC,
         Mach = null,
@@ -67,6 +93,15 @@ class DragModel {
     protected sectionalDensity: number;
     protected formFactor: number;
 
+    /**
+     * Creates an instance of DragModel.
+     * @param {Object} options - The options for initializing the drag model.
+     * @param {number} options.bc - Coefficient value for drag.
+     * @param {DragTable} options.dragTable - Custom drag table.
+     * @param {number | Weight} [options.weight=0] - Weight value or Weight instance (default: 0).
+     * @param {number | Distance} [options.diameter=0] - Diameter value or Distance instance (default: 0).
+     * @param {number | Distance} [options.length=0] - Length value or Distance instance (default: 0).
+     */
     constructor({
         bc,
         dragTable,
@@ -130,7 +165,12 @@ class DragModel {
     }
 }
 
-
+/**
+ * Converts a drag table into an array of `DragDataPoint` objects.
+ * @param {DragTableDataType} dragTable - The input drag table data, which can be a mix of `DragDataPoint` instances and objects with `Mach` and `CD` properties.
+ * @returns {DragDataPoint[]} - An array of `DragDataPoint` objects.
+ * @throws {TypeError} - If any item in the drag table is not a `DragDataPoint` or an object with `Mach` and `CD` properties.
+ */
 function makeDataPoints(dragTable: DragTableDataType): DragDataPoint[] {
     return dragTable.map(point => {
         if (point instanceof DragDataPoint) {
@@ -145,17 +185,26 @@ function makeDataPoints(dragTable: DragTableDataType): DragDataPoint[] {
 }
 
 /**
- * Calculate and return the sectional density.
- * @param {number} weight - Weight value.
- * @param {number} diameter - Diameter value.
- * @returns {number} - Calculated sectional density.
+ * Calculates and returns the sectional density.
+ * @param {number} weight - The weight value (in grains).
+ * @param {number} diameter - The diameter value (in inches).
+ * @returns {number} - The calculated sectional density (in lb/in²).
  */
 function sectionalDensity(weight: number, diameter: number) {
     // Divide weight by the square of diameter and then by 7000
     return weight / Math.pow(diameter, 2) / 7000;
 }
 
-
+/**
+ * Creates a `DragModel` instance with multiple ballistic coefficient (BC) points.
+ * @param {Object} options - The options for initializing the `DragModel`.
+ * @param {BCPoint[]} options.bcPoints - An array of `BCPoint` objects representing the ballistic coefficients.
+ * @param {DragTableDataType} options.dragTable - The drag table data, which can be a mix of `DragDataPoint` instances and objects with `Mach` and `CD` properties.
+ * @param {number | Weight} [options.weight=0] - The weight value or a `Weight` instance. Defaults to 0.
+ * @param {number | Distance} [options.diameter=0] - The diameter value or a `Distance` instance. Defaults to 0.
+ * @param {number | Distance} [options.length=0] - The length value or a `Distance` instance. Defaults to 0.
+ * @returns {DragModel} - An instance of `DragModel` initialized with the provided options.
+ */
 function DragModelMultiBC({
     bcPoints,
     dragTable,
@@ -187,14 +236,21 @@ function DragModelMultiBC({
         bcPoints.map((point) => point.BC / bc)
     )
 
-    for (let i = 0; i < _dragTable.length; i++) {
-        _dragTable[i].CD = _dragTable[i].CD / bcInterp[i];
-    }
+    _dragTable.forEach((item, index) => {
+        item.CD = item.CD / bcInterp[index];
+    });
 
     return new DragModel({ bc: bc, dragTable: _dragTable, weight: _weight, diameter: _diameter, length: length });
 }
 
-
+/**
+ * Performs linear interpolation based on the provided x-values, x-coordinates, and y-values.
+ * @param {number[]} x - The x-values at which interpolation is to be performed.
+ * @param {number[]} xp - The x-coordinates of the data points used for interpolation.
+ * @param {number[]} yp - The y-values of the data points used for interpolation.
+ * @returns {number[]} - An array of interpolated y-values corresponding to the x-values.
+ * @throws {Error} - Throws an error if the lengths of `xp` and `yp` do not match, or if `x` is empty.
+ */
 function linearInterpolation(
     x: number[],
     xp: number[],
@@ -241,5 +297,5 @@ function linearInterpolation(
 }
 
 export type { Table, DragTable, DragTableDataType };
-export {DragDataPoint, BCPoint, DragModelMultiBC}
+export { DragDataPoint, BCPoint, DragModelMultiBC }
 export default DragModel;

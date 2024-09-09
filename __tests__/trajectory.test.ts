@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import {Ammo, Atmo, DragModel, Table, Shot, TrajectoryCalc, UNew, Unit, Weapon, Wind, TrajFlag} from "../src/index.js";
+import {Ammo, Atmo, DragModel, Table, Shot, TrajectoryCalc, UNew, Unit, Weapon, Wind, TrajFlag, TrajectoryData} from "../src/index.js";
 
 describe("TrajectoryCalc", () => {
 
@@ -105,7 +105,7 @@ describe("TrajectoryCalc", () => {
         customAssertEqual(data.length, 11, 0.1, "Length")
 
         const test_data = [
-            [data[0], 0, 2750, 2.463, 2820.6, -2, 0, 0, 0, 0, 880, Unit.MOA],
+            [data[0], 0, 2750.0, 2.463, 2820.6, -2, 0, 0, 0, 0, 880, Unit.MOA],
             [data[1], 100, 2351.2, 2.106, 2061, 0, 0, -0.6, -0.6, 0.118, 550, Unit.MOA],
             [data[5], 500, 1169.1, 1.047, 509.8, -87.9, -16.8, -19.5, -3.7, 0.857, 67, Unit.MOA],
             [data[10], 1000, 776.4, 0.695, 224.9, -823.9, -78.7, -87.5, -8.4, 2.495, 20, Unit.MOA]
