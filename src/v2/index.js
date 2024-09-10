@@ -18,7 +18,7 @@ import {
     cSpeedOfSound
 } from "./conditions";
 import { Weapon, Ammo } from "./munition";
-import DragModel, { DragDataPoint, DragTable, BCPoint, DragModelMultiBC } from "./drag_model";
+import DragModel, { DragDataPoint, BCPoint, DragModelMultiBC } from "./drag_model";
 
 import {
     TrajectoryData,
