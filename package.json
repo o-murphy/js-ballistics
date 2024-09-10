@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "js-ballistics",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.1",
   "description": "ISC library for small arms ballistic calculations (JavaScript ES6+)",
   "main": "dist/index.js",
   "scripts": {
