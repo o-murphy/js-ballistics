@@ -11,14 +11,9 @@ import {
     Atmo,
     Wind,
     Shot,
-    cStandardDensity,
-    cStandardTemperature,
-    cStandardPressure,
-    cIcaoStandardHumidity,
-    cSpeedOfSound
 } from "./conditions";
 import { Weapon, Ammo } from "./munition";
-import DragModel, { DragDataPoint, BCPoint, DragModelMultiBC } from "./drag_model";
+import DragModel, { DragDataPoint, DragTable, BCPoint, DragModelMultiBC } from "./drag_model";
 
 import {
     TrajectoryData,
@@ -46,14 +41,10 @@ export {
     Atmo,
     Wind,
     Shot,
-    cStandardDensity,
-    cStandardTemperature,
-    cStandardPressure,
-    cIcaoStandardHumidity,
-    cSpeedOfSound,
 
     DragModel,
     DragDataPoint, 
+    DragTable, 
     BCPoint, 
     DragModelMultiBC,
 
