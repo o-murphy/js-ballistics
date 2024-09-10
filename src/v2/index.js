@@ -54,7 +54,6 @@ export {
 
     DragModel,
     DragDataPoint, 
-    DragTable, 
     BCPoint, 
     DragModelMultiBC,
 
