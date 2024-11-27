@@ -1,121 +1,111 @@
 // Module for Weapon and Ammo properties definitions
 
 // Import necessary units and settings
-import {Unit, UNew, unitTypeCoerce, Distance, Angular, Temperature, Velocity} from './unit';
-import calcSettings from './settings';
+import { UNew, unitTypeCoerce, Distance, Angular, Temperature, Velocity, preferredUnits } from './unit';
 import DragModel from "./drag_model.js";
 
 
 class Weapon {
-    /**
-     * @param {number | Distance|Object} sightHeight - Height of the sight above the bore axis.
-     * @param {number | Distance|Object} zeroDistance - Sight-line distance to "zero."
-     * @param {number | Distance|Object} twist - The twist rate of the barrel.
-     * @param {number | Angular|Object} zeroLookAngle - The look angle for the zero distance.
-     */
 
     readonly sightHeight: Distance;
-    readonly zeroDistance: Distance;
     readonly twist: Distance;
-    readonly zeroLookAngle: Angular;
+    public zeroElevation: Angular;
 
-    constructor(
-        sightHeight: (number | Distance) = UNew.Inch(2),
-        zeroDistance: (number | Distance) = UNew.Yard(100),
-        twist: (number | Distance) = UNew.Inch(0),
-        zeroLookAngle: (number | Angular) = UNew.MIL(0)
+    /**
+     * Initializes a new instance of the Weapon class.
+     * @param {Object} options - Parameters for initializing the weapon.
+     * @param {number | Distance | null} [options.sightHeight=null] - Height of the sight above the bore axis.
+     * @param {number | Distance | null} [options.twist=null] - The twist rate of the barrel.
+     * @param {number | Angular | null} [options.zeroElevation=null] - The look angle for the zero distance.
+     */
+    constructor({
+        sightHeight = null,
+        twist = null,
+        zeroElevation = null
+    }: {
+        sightHeight?: number | Distance | null;
+        twist?: number | Distance | null;
+        zeroElevation?: number | Angular | null;
+    }
     ) {
-        this.sightHeight = unitTypeCoerce(sightHeight, Distance, calcSettings.Units.sight_height);
-        this.zeroDistance = unitTypeCoerce(zeroDistance, Distance, calcSettings.Units.distance);
-        this.twist = unitTypeCoerce(twist, Distance, calcSettings.Units.twist);
-        this.zeroLookAngle = unitTypeCoerce(zeroLookAngle, Angular, calcSettings.Units.angular);
+        this.sightHeight = unitTypeCoerce(sightHeight ?? 0, Distance, preferredUnits.sight_height)
+        this.twist = unitTypeCoerce(twist ?? 0, Distance, preferredUnits.twist)
+        this.zeroElevation = unitTypeCoerce(zeroElevation ?? 0, Angular, preferredUnits.angular)
     }
 }
 
 
 class Ammo {
-    /**
-     * Creates Ammo and Projectile properties.
-     * @param {DragModel} dm - Drag model instance.
-     * @param {number|Distance|Object} length - Length value.
-     * @param {number|Velocity|Object} mv - Velocity value.
-     * @param {number} temp_modifier - Temperature modifier value.
-     * @param {number|Temperature|Object} powder_temp - Powder temperature value.
-     */
+
     readonly dm: DragModel;
-    readonly length: Distance;
     readonly mv: Velocity;
     readonly powderTemp: Temperature;
-
     protected _tempModifier: number;
 
-    constructor(dm: DragModel,
-                length: (number | Distance) = UNew.Inch(2),
-                mv: (number | Velocity) = UNew.FPS(2700),
-                tempModifier: number = 0,
-                powderTemp: (number | Temperature) = UNew.Celsius(15)) {
+    /**
+     * Creates an instance of Ammo with specified properties.
+     * @param {Object} options - Parameters for initializing the Ammo instance.
+     * @param {DragModel} options.dm - Drag model instance.
+     * @param {number | Velocity} options.mv - Velocity value.
+     * @param {number} [options.tempModifier=0] - Temperature modifier value. Defaults to 0.
+     * @param {number | Temperature | null} [options.powderTemp=null] - Powder temperature value. Defaults to null.
+     */
+    constructor({
+        dm,
+        mv,
+        powderTemp = null,
+        tempModifier = 0
+    }: {
+        dm: DragModel;
+        mv: number | Velocity;
+        powderTemp?: number | Temperature | null;
+        tempModifier?: number
+    }) {
         if (!dm) {
             throw new Error("'dm' have to be an instance of 'DragModel'")
         }
         this.dm = dm;
-        this.length = unitTypeCoerce(length, Distance, calcSettings.Units.length);
-        this.mv = unitTypeCoerce(mv, Velocity, calcSettings.Units.velocity);
-        this._tempModifier = tempModifier;
-        this.powderTemp = unitTypeCoerce(powderTemp, Temperature, calcSettings.Units.length);
-    }
-
-    get tempModifier(): number {
-        return this._tempModifier;
+        this.mv = unitTypeCoerce(mv ?? 0, Velocity, preferredUnits.velocity);
+        this.powderTemp = unitTypeCoerce(powderTemp ?? UNew.Celsius(15), Temperature, preferredUnits.temperature);
+        this._tempModifier = tempModifier ?? 0;
     }
 
     /**
-     * Calculates velocity correction by temperature change.
-     * @param {number|Velocity} otherVelocity - Other velocity value.
-     * @param {number|Temperature} otherTemperature - Other temperature value.
-     * @returns {number} - Temperature modifier.
+     * Calculates the velocity correction based on the change in temperature and assigns it to the temperature modifier.
+     * @param {number | Velocity} otherVelocity - The velocity to compare with.
+     * @param {number | Temperature} otherTemperature - The temperature to compare with.
+     * @returns {number} - The calculated temperature sensitivity adjustment.
      */
     calcPowderSens(otherVelocity: (number | Velocity), otherTemperature: (number | Temperature)): number {
-        const v0 = this.mv.In(Unit.MPS);
-        const t0 = this.powderTemp.In(Unit.Celsius);
-        const v1 = unitTypeCoerce(otherVelocity, Velocity, calcSettings.Units.velocity).In(Unit.MPS);
-        const t1 = unitTypeCoerce(otherTemperature, Temperature, calcSettings.Units.temperature).In(Unit.Celsius);
+        const v0 = this.mv.In(Velocity.MPS)
+        const t0 = this.powderTemp.In(Temperature.Celsius)
+        const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).In(Velocity.MPS)
+        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature).In(Temperature.Celsius)
 
-        const vDelta = Math.abs(v0 - v1);
-        const tDelta = Math.abs(t0 - t1);
-        const vLower = v1 < v0 ? v1 : v0;
+        const vDelta = Math.abs(v0 - v1)
+        const tDelta = Math.abs(t0 - t1)
+        const vLower = v1 < v0 ? v1 : v0
 
-        if (vDelta === 0 || tDelta === 0) {
-            throw new Error("Temperature modifier error, other velocity and temperature can't be the same as default");
+        if ((vDelta === 0) || (tDelta === 0)) {
+            throw new Error("Temperature modifier error, other velocity and temperature can't be same as default")
         }
-
-        const tempModifier = (vDelta / tDelta) * (15 / vLower) * 100
-        if (isNaN(tempModifier)) {
-            throw new Error(`tempModifier can't be ${tempModifier}`);
-        }
-
-        this._tempModifier = tempModifier;
-        return this._tempModifier;
+        this._tempModifier = vDelta / tDelta * (15 / vLower)  // * 100
+        return this._tempModifier
     }
-
+    
     /**
-     * Calculates current velocity by temperature correction.
-     * @param {Temperature|Object} currentTemp - Current temperature value.
-     * @returns {Velocity|Object} - Velocity corrected for the specified temperature.
+     * Calculates the muzzle velocity at a given temperature based on the temperature modifier.
+     * @param {number | Temperature} currentTemp - The current temperature for which to calculate the velocity.
+     * @returns {Velocity} - The calculated muzzle velocity at the specified temperature.
      */
     getVelocityForTemp(currentTemp: (number | Temperature)): Velocity {
-        const tempModifier = this._tempModifier;
-        const v0 = this.mv.In(Unit.MPS);
-        const t0 = this.powderTemp.In(Unit.Celsius);
-        const t1 = unitTypeCoerce(
-            currentTemp, Temperature, calcSettings.Units.temperature
-        ).In(Unit.Celsius);
-
-        const tDelta = t1 - t0;
-        const muzzleVelocity = (tempModifier / (15 / v0)) * tDelta + v0;
-
-        return UNew.MPS(muzzleVelocity);
+        const v0 = this.mv.In(Velocity.MPS)
+        const t0 = this.powderTemp.In(Temperature.Celsius)
+        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(Temperature.Celsius)
+        const tDelta = t1 - t0
+        const muzzleVelocity = this._tempModifier / (15 / v0) * tDelta + v0
+        return UNew.MPS(muzzleVelocity)
     }
 }
 
-
-export {Weapon, Ammo};
+export { Weapon, Ammo };

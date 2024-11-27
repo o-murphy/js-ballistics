@@ -1,4 +1,5 @@
-import { Atmo, Temperature, Pressure, Velocity, UNew } from "../../src/v2";
+import { Atmo, Temperature, Pressure, Velocity, UNew } from "../src";
+
 
 describe('Atmo Class Tests', () => {
     let standard: Atmo;

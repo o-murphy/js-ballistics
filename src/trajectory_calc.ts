@@ -1,16 +1,14 @@
 // Conditions module
-import {Atmo, Shot, Wind} from './conditions';
+import { Atmo, Shot, Wind } from './conditions';
 // Munition module
-import {Ammo, Weapon} from './munition';
-// Settings module
-import calcSettings from './settings';
+import { Ammo, Weapon } from './munition';
 // TrajectoryData module
-import {TrajectoryData, TrajFlag} from './trajectory_data';
+import { TrajectoryData, TrajFlag } from './trajectory_data';
 // Unit module
-import {Angular, Distance, UNew, Unit, unitTypeCoerce} from './unit';
-// VectorJs module
+import { Angular, Distance, UNew, Weight, Pressure, Velocity, Temperature, unitTypeCoerce, preferredUnits } from './unit';
+// Vector module
 import Vector from "./vector";
-import type {DragTable} from "./drag_model";
+import type { DragTable } from "./drag_model";
 
 
 // Constants
@@ -20,7 +18,63 @@ const cMaximumDrop: number = -15000;
 const cMaxIterations: number = 20;
 const cGravityConstant: number = -32.17405;
 
+let _globalUsePowderSensitivity = false;
+let _globalMaxCalcStepSize: Distance = UNew.Foot(0.5);
 
+/**
+ * Retrieves the current global maximum calculation step size.
+ * @returns {Distance} - The global maximum calculation step size.
+ */
+function getGlobalMaxCalcStepSize(): Distance {
+    return _globalMaxCalcStepSize;
+}
+
+/**
+ * Retrieves the current global setting for powder sensitivity usage.
+ * @returns {boolean} - The current global setting for powder sensitivity.
+ */
+function getGlobalUsePowderSensitivity(): boolean {
+    return _globalUsePowderSensitivity;
+}
+
+/**
+ * Resets global settings to their default values.
+ * - `globalUsePowderSensitivity` is set to `false`.
+ * - `globalMaxCalcStepSize` is set to `0.5` feet.
+ */
+function resetGlobals(): void {
+    _globalUsePowderSensitivity = false;
+    _globalMaxCalcStepSize = UNew.Foot(0.5);
+}
+
+/**
+ * Sets the global maximum calculation step size.
+ * @param {number | Distance} value - The new value for the global maximum calculation step size.
+ * @throws {Error} - Throws an error if the value is less than or equal to 0.
+ */
+function setGlobalMaxCalcStepSize(value: number | Distance): void {
+    const convertedValue = unitTypeCoerce(value, Distance, preferredUnits.distance);
+    if (convertedValue.rawValue <= 0) {
+        throw new Error("_globalMaxCalcStepSize has to be > 0");
+    }
+    _globalMaxCalcStepSize = convertedValue;
+}
+
+/**
+ * Sets the global setting for powder sensitivity usage.
+ * @param {boolean} value - The new setting for powder sensitivity.
+ * @throws {TypeError} - Throws a TypeError if the value is not a boolean.
+ */
+function setGlobalUsePowderSensitivity(value: boolean): void {
+    if (typeof value !== "boolean") {
+        throw new TypeError(`setGlobalUsePowderSensitivity ${value} is not a boolean`);
+    }
+    _globalUsePowderSensitivity = value;
+}
+
+/**
+ * Represents a point in a curve with three coefficients.
+ */
 class CurvePoint {
     constructor(
         public a: number,
@@ -30,488 +84,400 @@ class CurvePoint {
     }
 }
 
-
+/**
+ * Represents an array of `CurvePoint` instances.
+ */
 type Curve = CurvePoint[]
+
+/**
+ * Defines the properties required for a trajectory calculation.
+ */
+interface TrajectoryInterface {
+    lookAngle: number,
+    twist: number,
+    length: number,
+    diameter: number,
+    weight: number,
+    barrelElevation: number,
+    barrelAzimuth: number,
+    sightHeight: number,
+    cantCosine: number,
+    cantSine: number,
+    alt0: number,
+    calcStep: number,
+    muzzleVelocity: number
+    stabilityCoefficient: number
+}
 
 
 class TrajectoryCalc {
 
     readonly ammo: Ammo;
+
     protected _bc: number;
     protected _tableData: DragTable;
     protected _curve: Curve;
+    protected _gravityVector: Vector;
+    protected _t_props: TrajectoryInterface;
 
+    /**
+     * Creates an instance of `TrajectoryCalc`.
+     * @param {Ammo} ammo - The ammunition instance containing drag model and other data.
+     */
     constructor(ammo: Ammo) {
         this.ammo = ammo;
-        this._bc = ammo.dm.value;
+        this._bc = ammo.dm.bc;
         this._tableData = this.ammo.dm.dragTable;
         this._curve = calculateCurve(this._tableData);
+        this._gravityVector = new Vector(.0, cGravityConstant, .0)
     }
 
-    getCalcStep(step: number): number {
-        let maximumStep = calcSettings.maxCalcStepSize.In(Unit.Foot);
-        step /= 2;
+    /**
+     * Retrieves the drag table data used in trajectory calculations.
+     * @returns {DragTable} The drag table data.
+     */
+    get tableData(): DragTable {
+        return this._tableData
+    }
 
-        if (step > maximumStep) {
-            const stepOrder: number = Math.round(Math.log10(step));
-            const maximumOrder: number = Math.round(Math.log10(maximumStep));
-            step /= Math.pow(10, stepOrder - maximumOrder + 1);
+    /**
+     * Retrieves the calculation step size for trajectory calculations.
+     * @param {number} [step=0] - The step size to retrieve.
+     * @returns {number} The calculation step size.
+     */
+    public static getCalcStep(step: number = 0): number {
+        const preferredStep = _globalMaxCalcStepSize.In(Distance.Foot);
+
+        if (step === 0) {
+            return preferredStep / 2.0;
         }
-
-        return step;
+        return Math.min(step, preferredStep) / 2.0;
     }
 
     /**
-     *
-     * @param {Weapon} weapon
-     * @param {Atmo} atmo
-     * @return {Angular}
-     * @public
+     * Calculates the trajectory of a shot based on the given parameters.
+     * @param {Shot} shotInfo - The shot information including weapon, ammo, and angles.
+     * @param {Distance} maxRange - The maximum range to calculate the trajectory for.
+     * @param {Distance} distStep - The step size for distance intervals in the trajectory calculation.
+     * @param {boolean} [extraData=false] - Flag indicating whether to include additional data in the trajectory results.
+     * @returns {TrajectoryData[]} - An array of trajectory data points.
      */
-    zeroAngle(weapon: Weapon, atmo: Atmo): Angular {
-        return this._zeroAngle(this.ammo, weapon, atmo);
-    }
-
-    /**
-     *
-     * @param {Weapon} weapon
-     * @param {Shot} shotInfo
-     * @param {number|Distance} step
-     * @param {boolean} extraData
-     * @return {TrajectoryData[]}
-     */
-    trajectory(weapon: Weapon, shotInfo: Shot,
-               step: (number | Distance), extraData: boolean = false): TrajectoryData[] {
-        let distStep: Distance = unitTypeCoerce(step, Distance, calcSettings.Units.distance);
-        const atmo: Atmo = shotInfo.atmo;
-        const winds: Wind[] = shotInfo.winds;
-        let filterFlags: TrajFlag = TrajFlag.RANGE;
+    public trajectory(shotInfo: Shot, maxRange: Distance, distStep: Distance, extraData: boolean = false): TrajectoryData[] {
+        let _distStep: Distance = unitTypeCoerce(distStep, Distance, preferredUnits.distance);
+        let filterFlags = TrajFlag.RANGE
 
         if (extraData) {
-            distStep = UNew.Foot(0.2);
-            filterFlags = TrajFlag.ALL;
+            _distStep = UNew.Foot(0.2)
+            filterFlags = TrajFlag.ALL
         }
 
-        return this._trajectory(this.ammo, weapon, atmo, shotInfo, winds, distStep, filterFlags);
+        this._initTrajectory(shotInfo)
+
+        return this._trajectory(shotInfo, maxRange.In(Distance.Foot), _distStep.In(Distance.Foot), filterFlags);
     }
 
     /**
-     *
-     * @param {Ammo} ammo
-     * @param {Weapon} weapon
-     * @param {Atmo} atmo
-     * @return {Angular|Object}
+     * Calculates the angle needed to zero the weapon for a given distance.
+     * @param {Shot} shotInfo - The shot information including weapon, ammo, and angles.
+     * @param {Distance} distance - The distance at which to zero the weapon.
+     * @returns {Angular} - The angle required to zero the weapon at the specified distance.
+     */
+    public zeroAngle(shotInfo: Shot, distance: Distance): Angular {
+        this._initTrajectory(shotInfo)
+
+        let zeroDistance = Math.cos(this._t_props.lookAngle) * distance.In(Distance.Foot)
+        let heightAtZero = Math.sin(this._t_props.lookAngle) * distance.In(Distance.Foot)
+        let maximumRange = zeroDistance - (1.5 * this._t_props.calcStep)
+
+        let iterationsCount = 0
+        let zeroFindingError = cZeroFindingAccuracy * 2
+        let height: number
+        let t: TrajectoryData
+
+        while (zeroFindingError > cZeroFindingAccuracy && iterationsCount < cMaxIterations) {
+            t = this._trajectory(shotInfo, maximumRange, zeroDistance, TrajFlag.NONE)[0]
+            height = t.height.In(Distance.Foot)
+            zeroFindingError = Math.abs(height - heightAtZero)
+            if (zeroFindingError > cZeroFindingAccuracy) {
+                this._t_props.barrelElevation -= (height - heightAtZero) / zeroDistance
+            } else {
+                break
+            }
+            iterationsCount += 1
+        }
+
+        if (zeroFindingError > cZeroFindingAccuracy) {
+            throw new Error(`Zero vertical error ${zeroFindingError} feet, after ${iterationsCount} iterations.`)
+        }
+
+        return UNew.Radian(this._t_props.barrelElevation)
+    }
+
+    /**
+     * Calculates the trajectory data for a shot over a range of distances.
+     * @param {Shot} shotInfo - The shot information including weapon, ammo, and angles.
+     * @param {number} maxRange - The maximum range for the trajectory calculation.
+     * @param {number} distStep - The step size for distance increments in the calculation.
+     * @param {TrajFlag} filterFlags - Flags to filter the trajectory data output.
+     * @returns {TrajectoryData[]} - An array of trajectory data points for the specified range and step size.
      * @private
      */
-    _zeroAngle(ammo: Ammo, weapon: Weapon, atmo: Atmo): Angular {
-        const calcStep: number = this.getCalcStep(weapon.zeroDistance.In(Unit.Foot));
-        const zeroDistance: number = Math.cos(
-            weapon.zeroLookAngle.In(Unit.Radian)
-        ) * weapon.zeroDistance.In(Unit.Foot);
-        const heightAtZero: number = Math.sin(
-            weapon.zeroLookAngle.In(Unit.Radian)
-        ) * weapon.zeroDistance.In(Unit.Foot);
-        const maximumRange: number = zeroDistance + calcStep;
-        const sightHeight: number = weapon.sightHeight.In(Unit.Foot);
-        const mach: number = atmo.mach.In(Unit.FPS);
-        const densityFactor: number = atmo.densityFactor();
-        const muzzleVelocity: number = ammo.mv.In(Unit.FPS);
-        const barrelAzimuth: number = 0.0;
-        let barrelElevation: number = Math.atan(heightAtZero / zeroDistance);
-        let iterationsCount: number = 0;
-        let zeroFindingError: number = cZeroFindingAccuracy * 2;
-        const gravityVector: Vector = new Vector(0.0, cGravityConstant, 0.0);
+    _trajectory(shotInfo: Shot, maxRange: number, distStep: number, filterFlags: TrajFlag): TrajectoryData[] {
+        let ranges: TrajectoryData[] = [];
+        const rangesLength: number = Math.floor(maxRange / distStep) + 1;
+        let time: number = .0;
+        let previousMach: number = .0;
+        let drag: number = .0;
 
-        while (
-            zeroFindingError > cZeroFindingAccuracy &&
-            iterationsCount < cMaxIterations
-            ) {
-            let velocity: number = muzzleVelocity;
-            let time: number = 0.0;
-            let rangeVector: Vector = new Vector(0.0, -sightHeight, 0.0);
-            let velocityVector: Vector = new Vector(
-                Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
-                Math.sin(barrelElevation),
-                Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
-            ).mulByConst(velocity);
+        let mach: number = .0
+        let densityFactor: number = .0
 
-            while (rangeVector.x <= maximumRange) {
-                if (velocity < cMinimumVelocity || rangeVector.y < cMaximumDrop) break;
+        const lenWinds: number = shotInfo.winds.length;
+        let currentWind: number = .0;
+        let currentItem: number = .0;
+        let nextRangeDistance: number = .0;
+        let nextWindRange: number = Wind.MAX_DISTANCE_FEET;
 
-                let deltaTime: number = calcStep / velocityVector.x;
-
-                let drag: number = densityFactor * velocity * this.dragByMach(velocity / mach);
-
-                velocityVector = velocityVector.subtract(
-                    velocityVector.mulByConst(drag).subtract(gravityVector).mulByConst(deltaTime)
-                );
-
-                let deltaRangeVector: Vector = new Vector(
-                    calcStep,
-                    velocityVector.y * deltaTime,
-                    velocityVector.z * deltaTime
-                );
-
-                rangeVector = rangeVector.add(deltaRangeVector);
-                velocity = velocityVector.magnitude();
-                time += deltaRangeVector.magnitude() / velocity;
-
-                if (Math.abs(rangeVector.x - zeroDistance) < 0.5 * calcStep) {
-                    zeroFindingError = Math.abs(rangeVector.y - heightAtZero);
-                    if (zeroFindingError > cZeroFindingAccuracy) {
-                        barrelElevation -= (rangeVector.y - heightAtZero) / rangeVector.x;
-                    }
-                    break;
-                }
-            }
-
-            iterationsCount += 1;
+        let windVector: Vector
+        if (lenWinds < 1) {
+            windVector = new Vector(.0, .0, .0)
+        } else {
+            windVector = windToVector(shotInfo.winds[0])
+            nextWindRange = shotInfo.winds[0].untilDistance.In(Distance.Foot)
         }
 
-        return UNew.Radian(barrelElevation);
-    }
+        let velocity: number = this._t_props.muzzleVelocity
+        let rangeVector: Vector = new Vector(
+            .0,
+            -this._t_props.cantCosine * this._t_props.sightHeight,
+            -this._t_props.cantSine * this._t_props.sightHeight
+        )
+        let velocityVector: Vector = new Vector(
+            Math.cos(this._t_props.barrelElevation) * Math.cos(this._t_props.barrelAzimuth),
+            Math.sin(this._t_props.barrelElevation),
+            Math.cos(this._t_props.barrelElevation) * Math.sin(this._t_props.barrelAzimuth)
+        ).mulByConst(velocity)
 
+        let seenZero = TrajFlag.NONE
 
-    /**
-     *
-     * @param {Ammo} ammo
-     * @param {Weapon} weapon
-     * @param {Atmo} atmo
-     * @param {Shot} shotInfo
-     * @param {Wind[]} winds
-     * @param {Distance|Object} distStep
-     * @param {TrajFlag} filterFlags
-     * @return {TrajectoryData[]}
-     */
-    _trajectory(ammo: Ammo, weapon: Weapon, atmo: Atmo, shotInfo: Shot,
-                winds: Wind[], distStep: Distance, filterFlags: TrajFlag): TrajectoryData[] {
-        let time: number = 0;
-        const lookAngle: number = weapon.zeroLookAngle.In(Unit.Radian);
-        const twist: number = weapon.twist.In(Unit.Inch);
-        const length: number = ammo.length.In(Unit.Inch);
-        const diameter: number = ammo.dm.diameter.In(Unit.Inch);
-        const weight: number = ammo.dm.weight.In(Unit.Grain);
-
-        // step = shotInfo.step >> Distance.Foot
-        const step: number = distStep.In(Unit.Foot);
-        const calcStep: number = this.getCalcStep(step);
-
-        const maximumRange: number = shotInfo.maxRange.In(Unit.Foot) + 1;
-
-        // const rangesLength = Math.floor(maximumRange / step);
-        const rangesLength: number = Math.round(maximumRange / step) + 1;
-        const lenWinds: number = winds.length;
-        let currentWind: number = 0;
-        let currentItem: number = 0;
-
-        let stabilityCoefficient: number = 1.0;
-        let nextWindRange: number = 1e7;
-
-        const barrelElevation: number =
-            shotInfo.zeroAngle.In(Unit.Radian) +
-            shotInfo.relativeAngle.In(Unit.Radian);
-        const alt0: number = atmo.altitude.In(Unit.Foot);
-        const sightHeight: number = weapon.sightHeight.In(Unit.Foot);
-
-        const barrelAzimuth: number = 0.0;
-        let nextRangeDistance: number = 0.0;
-        let previousMach: number = 0.0;
-
-        const gravityVector: Vector = new Vector(0.0, cGravityConstant, 0.0);
-        let rangeVector: Vector = new Vector(0.0, -sightHeight, 0.0);
-
-        const ranges: TrajectoryData[] = [];
-
-        let velocityVector: Vector;
-        let windVector: Vector = new Vector(.0, .0, .0);
-        let deltaRangeVector: Vector;
-        let velocity: number;
-        let twistCoefficient: number = 0.0;
-
-        let _flag: TrajFlag = TrajFlag.NONE;
-        let seenZero: TrajFlag = TrajFlag.NONE;
-        let mach: number = 0.0;
-        let referenceHeight,
-            windage,
-            velocityAdjusted,
-            deltaTime,
-            drag,
-            densityFactor: number;
-
-        const getInitialWind = (): void => {
-            if (lenWinds < 1) {
-                windVector = new Vector(0.0, 0.0, 0.0);
-            } else {
-                if (lenWinds > 1) {
-                    nextWindRange = winds[0].untilDistance.In(Unit.Foot);
-                }
-                windVector = windToVector(shotInfo, winds[0]);
-            }
+        if (rangeVector.y >= 0) {
+            seenZero |= TrajFlag.ZERO_UP;
+        } else if (rangeVector.y < 0 && this._t_props.barrelElevation < this._t_props.lookAngle) {
+            seenZero |= TrajFlag.ZERO_DOWN;
         }
 
-        const accurate_velocity_to_temperature = (): number => {
-            if (calcSettings.USE_POWDER_SENSITIVITY && ammo.tempModifier) {
-                return ammo.getVelocityForTemp(atmo.temperature).In(Unit.FPS);
-            } else {
-                return ammo.mv.In(Unit.FPS);
-            }
-        }
+        let _flag = TrajFlag.NONE
 
-        const get_initial_velocity_vector = (): Vector => {
-            // x - distance towards target, y - drop, and z - windage
-            return  new Vector(
-                Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
-                Math.sin(barrelElevation),
-                Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
-            ).mulByConst(velocity);
-        }
+        while (rangeVector.x <= maxRange + this._t_props.calcStep) {
+            _flag = TrajFlag.NONE
 
-        const accurateToTwist = (): void => {
-            if ((twist !== 0) && length && diameter) {
-                stabilityCoefficient = calculateStabilityCoefficient(ammo, weapon, atmo);
-                twistCoefficient = twist > 0 ? -1 : 1;
-            }
-        }
-
-        const lookForSeenZero = (): void => {
-            // With non-zero lookAngle, rounding can suggest multiple adjacent zero-crossings
-            // Record when we see each zero crossing, so we only register one
-            seenZero = TrajFlag.NONE;
-            if (rangeVector.y >= 0) {
-                // We're starting above zero; we can only go down
-                seenZero |= TrajFlag.ZERO_UP;
-            } else if ((rangeVector.y < 0) && (barrelElevation < lookAngle)) {
-                // We're below and pointing down from lookAngle; no zeroes!
-                seenZero |= TrajFlag.ZERO_DOWN;
-            }
-        }
-
-        /** NOTE: bellow the functions to calculate trajectory over the loop **/
-        const getNextWind = (): void => {
             if (rangeVector.x >= nextWindRange) {
-                currentWind++;
-                windVector = windToVector(shotInfo, winds[currentWind]);
-
-                nextWindRange =
-                    currentWind === lenWinds - 1
-                        ? 1e7
-                        : winds[currentWind].untilDistance.In(Unit.Foot);
+                currentWind += 1
+                if (currentWind >= lenWinds) {
+                    windVector = new Vector(.0, .0, .0)
+                    nextWindRange = Wind.MAX_DISTANCE_FEET
+                } else {
+                    windVector = windToVector(shotInfo.winds[currentWind])
+                    nextWindRange = shotInfo.winds[currentWind].untilDistance.In(Distance.Foot)
+                }
             }
-        }
 
-        const lookForZeroCrossing = (): void => {
-            // Zero-crossing checks
-            if (rangeVector.x > 0) {
-                // Zero reference line is the sight line defined by lookAngle
-                referenceHeight = rangeVector.x * Math.tan(lookAngle);
+            [densityFactor, mach] = shotInfo.atmo.getDensityFactorAndMachForAltitude(this._t_props.alt0 + rangeVector.y)
 
-                // If we haven't seen ZERO_UP, we look for that first
-                if (!(seenZero & TrajFlag.ZERO_UP)) {
-                    if (rangeVector.y >= referenceHeight) {
-                        _flag |= TrajFlag.ZERO_UP;
-                        seenZero |= TrajFlag.ZERO_UP;
+            if (filterFlags) {
+                if (rangeVector.x > 0) {
+                    let referenceHeight = rangeVector.x * Math.tan(this._t_props.lookAngle)
+
+                    if (!(seenZero & TrajFlag.ZERO_UP)) {
+                        if (rangeVector.y >= referenceHeight) {
+                            _flag |= TrajFlag.ZERO_UP
+                            seenZero |= TrajFlag.ZERO_UP
+                        }
+                    } else if (!(seenZero & TrajFlag.ZERO_DOWN)) {
+                        if (rangeVector.y < referenceHeight) {
+                            _flag |= TrajFlag.ZERO_DOWN
+                            seenZero |= TrajFlag.ZERO_DOWN
+                        }
                     }
+                }
 
-                    // We've crossed above sight line; now look for crossing back through it
-                } else if (!(seenZero & TrajFlag.ZERO_DOWN)) {
-                    if (rangeVector.y < referenceHeight) {
-                        _flag |= TrajFlag.ZERO_DOWN;
-                        seenZero |= TrajFlag.ZERO_DOWN;
+                if (previousMach > 1 && 1 >= velocity / mach) {
+                    _flag |= TrajFlag.MACH
+                }
+
+                if (rangeVector.x >= nextRangeDistance) {
+                    _flag |= TrajFlag.RANGE
+                    nextRangeDistance += distStep
+                    currentItem += 1
+                }
+
+                if (_flag & filterFlags) {
+                    ranges.push(createTrajectoryRow(
+                        time, rangeVector, velocityVector,
+                        velocity, mach, this.spinDrift(time), this._t_props.lookAngle,
+                        densityFactor, drag, this._t_props.weight, _flag
+                    ))
+                    if (currentItem === rangesLength) {
+                        break
                     }
                 }
             }
-        }
 
-        const lookForMachCrossing = () => {
-            // Mach crossing check
-            if ((velocity / mach <= 1) && (previousMach > 1)) {
-                _flag |= TrajFlag.MACH;
-            }
-        }
+            previousMach = velocity / mach
 
-        const lookForNextRange = (): void => {
-            // Next range check
-            if (rangeVector.x >= nextRangeDistance) {
-                _flag |= TrajFlag.RANGE;
-                nextRangeDistance += step;
-                currentItem += 1;
-            }
-        }
-
-        const registerTrajectoryPoint = () => {
-            windage = rangeVector.z;
-            if (!(twist === 0)) {
-                windage +=
-                    (1.25 * (stabilityCoefficient + 1.2) *
-                        Math.pow(time, 1.83) * twistCoefficient) / 12;
-            }
-
-            ranges.push(
-                createTrajectoryRow(
-                    time,
-                    rangeVector,
-                    velocityVector,
-                    velocity,
-                    mach,
-                    windage,
-                    weight,
-                    _flag
-                )
-            );
-        }
-
-        const initNextRangeData = () => {
-            previousMach = velocity / mach;
-            velocityAdjusted = velocityVector.subtract(windVector);
-            deltaTime = calcStep / velocityVector.x;
-            velocity = velocityAdjusted.magnitude();
-            drag = densityFactor * velocity * this.dragByMach(velocity / mach);
-
-            velocityVector = velocityVector.subtract(
-                velocityAdjusted
-                    .mulByConst(drag)
-                    .subtract(gravityVector)
-                    .mulByConst(deltaTime)
-            );
-            deltaRangeVector = new Vector(
-                calcStep,
+            let deltaTime: number = this._t_props.calcStep / velocityVector.x;
+            let velocityAdjusted: Vector = velocityVector.subtract(windVector)
+            velocity = velocityAdjusted.magnitude()
+            drag = densityFactor * velocity * this.dragByMach(velocity / mach)
+            velocityVector = velocityVector.subtract(velocityAdjusted.mulByConst(drag).subtract(this._gravityVector).mulByConst(deltaTime))
+            let deltaRangeVector: Vector = new Vector(
+                this._t_props.calcStep,
                 velocityVector.y * deltaTime,
                 velocityVector.z * deltaTime
-            );
-            rangeVector = rangeVector.add(deltaRangeVector);
-            velocity = velocityVector.magnitude();
-            time += deltaRangeVector.magnitude() / velocity;
-        }
+            )
+            rangeVector = rangeVector.add(deltaRangeVector)
+            velocity = velocityVector.magnitude()
+            time += deltaRangeVector.magnitude() / velocity
 
-        /** prepare initial data **/
-        getInitialWind()
-        velocity = accurate_velocity_to_temperature()
-        velocityVector = get_initial_velocity_vector()
-        accurateToTwist()
-        lookForSeenZero()
-
-        while (rangeVector.x <= (maximumRange + calcStep)) {
-            _flag = TrajFlag.NONE;
-
-            if ((velocity < cMinimumVelocity) || (rangeVector.y < cMaximumDrop)) break;
-
-            [densityFactor, mach] = atmo.getDensityFactorAndMachForAltitude(
-                alt0 + rangeVector.y
-            );
-
-            getNextWind()
-            lookForZeroCrossing()
-            lookForMachCrossing()
-            lookForNextRange()
-
-            if (_flag & filterFlags) {
-                registerTrajectoryPoint()
-                if (currentItem === rangesLength) break;
+            if (velocity < cMinimumVelocity || rangeVector.y < cMaximumDrop) {
+                break
             }
-            initNextRangeData()
-
         }
 
-        return ranges;
+        if (!filterFlags) {
+            ranges.push(createTrajectoryRow(
+                time, rangeVector, velocityVector,
+                velocity, mach, this.spinDrift(time), this._t_props.lookAngle,
+                densityFactor, drag, this._t_props.weight, _flag
+            ))
+        }
+
+        return ranges
     }
 
+    /**
+     * Initializes the trajectory properties based on the provided shot information.
+     * @param {Shot} shotInfo - The shot information including weapon, ammo, and environmental conditions.
+     * @private
+     */
+    _initTrajectory(shotInfo: Shot): void {
+        this._t_props = {
+            lookAngle: shotInfo.lookAngle.In(Angular.Radian),
+            twist: shotInfo.weapon.twist.In(Distance.Inch),
+            length: shotInfo.ammo.dm.length.In(Distance.Inch),
+            diameter: shotInfo.ammo.dm.diameter.In(Distance.Inch),
+            weight: shotInfo.ammo.dm.weight.In(Weight.Grain),
+            barrelElevation: shotInfo.barrelElevation.In(Angular.Radian),
+            barrelAzimuth: shotInfo.barrelAzimuth.In(Angular.Radian),
+            sightHeight: shotInfo.weapon.sightHeight.In(Distance.Foot),
+            cantCosine: Math.cos(shotInfo.cantAngle.In(Angular.Radian)),
+            cantSine: Math.sin(shotInfo.cantAngle.In(Angular.Radian)),
+            alt0: shotInfo.atmo.altitude.In(Distance.Foot),
+            calcStep: TrajectoryCalc.getCalcStep(),
+            muzzleVelocity: (_globalUsePowderSensitivity ?
+                shotInfo.ammo.getVelocityForTemp(shotInfo.atmo.temperature) :
+                shotInfo.ammo.mv).In(Velocity.FPS),
+            stabilityCoefficient: 0
+        }
+        this._t_props.stabilityCoefficient = this.calcStabilityCoefficient(shotInfo.atmo)
+    }
 
     /**
-     *
-     * @param {number} mach
-     * @return {number}
+     * Calculates the drag coefficient for a given Mach number.
+     * @param {number} mach - The Mach number for which the drag coefficient is to be calculated.
+     * @returns {number} - The calculated drag coefficient for the provided Mach number.
      */
-    // FIXME - the mach is not valid
-    dragByMach(mach: number): number {
-        const cd = calculateByCurve(this._tableData, this._curve, mach);
+    public dragByMach(mach: number): number {
+        const cd = calculateByCurve(this._tableData, this._curve, mach); // Assuming `calculateByCurve` exists
         return cd * 2.08551e-04 / this._bc;
     }
 
     /**
-     * Returns custom drag function based on input data
-     * @return {{CD: number, Mach: number}[]}
+     * Calculates the spin drift of the projectile over time.
+     * @param {number} time - The time in seconds for which the spin drift is to be calculated.
+     * @returns {number} - The calculated spin drift in inches over the specified time.
      */
-    get cdm(): DragTable {
-        const dragTable = this.ammo.dm.dragTable;
-        const bc = this.ammo.dm.value;
-        let output: DragTable = []
-        dragTable.forEach(point => {
-            const stMach = point.Mach;
-            const stCD = calculateByCurve(dragTable, this._curve, stMach);
-            const cd = stCD * bc;
-            output.push({CD: cd, Mach: stMach});
-        })
-        return output
+    public spinDrift(time: number): number {
+        if (this._t_props.twist !== 0) {
+            const sign = this._t_props.twist > 0 ? 1 : -1;
+            return sign * (1.25 * (this._t_props.stabilityCoefficient + 1.2) * Math.pow(time, 1.83)) / 12;
+        }
+        return 0;
+    }
+
+    /**
+     * Calculates the stability coefficient of the projectile based on atmospheric conditions.
+     * @param {Atmo} atmo - The atmospheric conditions including temperature, pressure, and humidity.
+     * @returns {number} - The calculated stability coefficient.
+     */
+    public calcStabilityCoefficient(atmo: Atmo): number {
+        if (this._t_props.twist && this._t_props.length && this._t_props.diameter) {
+            const twistRate = Math.abs(this._t_props.twist) / this._t_props.diameter;
+            const lengthRatio = this._t_props.length / this._t_props.diameter;
+
+            // Miller stability formula
+            const sd = 30 * this._t_props.weight / (
+                Math.pow(twistRate, 2) * Math.pow(this._t_props.diameter, 3) * lengthRatio * (1 + Math.pow(lengthRatio, 2))
+            );
+
+            // Velocity correction factor
+            const fv = Math.pow(this._t_props.muzzleVelocity / 2800, 1.0 / 3.0);
+
+            // Atmospheric correction
+            const ft = atmo.temperature.In(Temperature.Fahrenheit); // Assuming a method to convert to Fahrenheit
+            const pt = atmo.pressure.In(Pressure.InHg); // Assuming a method to convert to InHg
+            const ftp = ((ft + 460) / (59 + 460)) * (29.92 / pt);
+
+            return sd * fv * ftp;
+        }
+        return 0;
     }
 
 }
 
 /**
- *
- * @param {Ammo} ammo
- * @param {Weapon} rifle
- * @param {Atmo} atmo
- * @return {number}
+ * Converts wind data into a vector representation.
+ * @param {Wind} wind - The wind data including velocity and direction.
+ * @returns {Vector} - The vector representation of the wind.
  */
-function calculateStabilityCoefficient(ammo: Ammo, rifle: Weapon, atmo: Atmo): number {
-    const weight = ammo.dm.weight.In(Unit.Grain);
-    const diameter = ammo.dm.diameter.In(Unit.Inch);
-    const twist = Math.abs(rifle.twist.In(Unit.Inch)) / diameter;
-    const length = ammo.length.In(Unit.Inch) / diameter;
-    const ft = atmo.temperature.In(Unit.Fahrenheit);
-    const mv = ammo.mv.In(Unit.FPS);
-    const pt = atmo.pressure.In(Unit.InHg);
-    const sd = 30 * weight / (
-        Math.pow(twist, 2) * Math.pow(diameter, 3) * length * (1 + Math.pow(length, 2))
-    );
-    const fv = Math.pow(mv / 2800, 1.0 / 3.0);
-    const ftp = ((ft + 460) / (59 + 460)) * (29.92 / pt);
-    return sd * fv * ftp;
+function windToVector(wind: Wind): Vector {
+    const rangeComponent = wind.velocity.In(Velocity.FPS) * Math.cos(wind.directionFrom.In(Angular.Radian))
+    const crossComponent = wind.velocity.In(Velocity.FPS) * Math.sin(wind.directionFrom.In(Angular.Radian))
+    return new Vector(rangeComponent, .0, crossComponent)
 }
 
 /**
- * @param {Shot} shot
- * @param {Wind} wind
- * @return {Vector}
+ * Creates a trajectory data row for a given time step.
+ * @param {number} time - The time at which the trajectory data is calculated.
+ * @param {Vector} rangeVector - The vector representing the range.
+ * @param {Vector} velocityVector - The vector representing the velocity.
+ * @param {number} velocity - The magnitude of the velocity.
+ * @param {number} mach - The Mach number corresponding to the velocity.
+ * @param {number} spinDrift - The spin drift effect on the trajectory.
+ * @param {number} lookAngle - The angle of the sight relative to the bore axis.
+ * @param {number} densityFactor - The atmospheric density factor affecting the trajectory.
+ * @param {number} drag - The drag force experienced by the projectile.
+ * @param {number} weight - The weight of the projectile.
+ * @param {number} flag - Flags indicating specific trajectory conditions or calculations.
+ * @returns {TrajectoryData} - An object containing the calculated trajectory data.
  */
-function windToVector(shot: Shot, wind: Wind): Vector {
-    const sightCosine = Math.cos(shot.zeroAngle.In(Unit.Radian));
-    const sightSine = Math.sin(shot.zeroAngle.In(Unit.Radian));
-    const cantCosine = Math.cos(shot.cantAngle.In(Unit.Radian));
-    const cantSine = Math.sin(shot.cantAngle.In(Unit.Radian));
-    const rangeVelocity = wind.velocity.In(Unit.FPS) * Math.cos(
-        wind.directionFrom.In(Unit.Radian)
-    );
-    const crossComponent = wind.velocity.In(Unit.FPS) * Math.sin(
-        wind.directionFrom.In(Unit.Radian)
-    );
-    const rangeFactor = -rangeVelocity * sightSine;
-    return new Vector(
-        rangeVelocity * sightCosine,
-        rangeFactor * cantCosine + crossComponent * cantSine,
-        crossComponent * cantCosine - rangeFactor * cantSine
-    );
-}
-
-/**
- *
- * @param {number} time
- * @param {Vector} rangeVector
- * @param {Vector} velocityVector
- * @param {number} velocity
- * @param {number} mach
- * @param {number} windage
- * @param {number} weight
- * @param {TrajFlag} flag
- * @return {TrajectoryData}
- */
-function createTrajectoryRow(time: number, rangeVector: Vector, velocityVector: Vector,
-                             velocity: number, mach: number, windage: number, weight: number,
-                             flag: TrajFlag): TrajectoryData {
-
-    let dropAdjustment: number = getCorrection(rangeVector.x, rangeVector.y);
-    let windageAdjustment: number = getCorrection(rangeVector.x, windage);
-    let trajectoryAngle: number = Math.atan(velocityVector.y / velocityVector.x);
+function createTrajectoryRow(
+    time: number,
+    rangeVector: Vector,
+    velocityVector: Vector,
+    velocity: number,
+    mach: number,
+    spinDrift: number,
+    lookAngle: number,
+    densityFactor: number,
+    drag: number,
+    weight: number,
+    flag: number
+): TrajectoryData {
+    const windage = rangeVector.z + spinDrift
+    const dropAdjustment = getCorrection(rangeVector.x, rangeVector.y)
+    const windageAdjustment = getCorrection(rangeVector.x, windage)
+    const trajectoryAngle = Math.atan(velocityVector.y / velocityVector.x)
 
     return new TrajectoryData(
         time,
@@ -519,53 +485,60 @@ function createTrajectoryRow(time: number, rangeVector: Vector, velocityVector: 
         UNew.FPS(velocity),
         velocity / mach,
         UNew.Foot(rangeVector.y),
-        UNew.Radian(dropAdjustment),
+        UNew.Foot((rangeVector.y - rangeVector.x * Math.tan(lookAngle)) * Math.cos(lookAngle)),
+        UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),
         UNew.Radian(windageAdjustment),
+        UNew.Foot(rangeVector.x / Math.cos(lookAngle)),
         UNew.Radian(trajectoryAngle),
+        densityFactor - 1,
+        drag,
         UNew.FootPound(calculateEnergy(weight, velocity)),
         UNew.Pound(calculateOGW(weight, velocity)),
         flag
-    );
+    )
 }
 
 /**
- *
- * @param {number} distance
- * @param {number} offset
- * @return {number}
+ * Calculates the correction needed for a given distance and offset.
+ * @param {number} distance - The distance for which the correction is to be calculated.
+ * @param {number} offset - The offset that affects the correction calculation.
+ * @returns {number} - The calculated correction value.
  */
 function getCorrection(distance: number, offset: number): number {
-    if (!(distance === 0)) {
-        return Math.atan(offset / distance);
+    // Sight adjustment in radians
+    if (distance != 0) {
+        return Math.atan(offset / distance)
     }
-    return NaN; // better null
+    return 0
 }
 
 /**
- *
- * @param {number} bulletWeight
- * @param {number} velocity
- * @return {number}
+ * Calculates the kinetic energy of a bullet based on its weight and velocity.
+ * @param {number} bulletWeight - The weight of the bullet in grains.
+ * @param {number} velocity - The velocity of the bullet in feet per second (FPS).
+ * @returns {number} - The calculated kinetic energy in foot-pounds (ft-lb).
  */
 function calculateEnergy(bulletWeight: number, velocity: number): number {
-    return bulletWeight * Math.pow(velocity, 2) / 450400;
+    // energy in ft-lbs
+    return bulletWeight * Math.pow(velocity, 2) / 450400
 }
 
 /**
- *
- * @param {number} bulletWeight
- * @param {number} velocity
- * @return {number}
+ * Calculates the optical ground weight (OGW) of a bullet based on its weight and velocity.
+ * @param {number} bulletWeight - The weight of the bullet in grains.
+ * @param {number} velocity - The velocity of the bullet in feet per second (FPS).
+ * @returns {number} - The calculated optical ground weight.
  */
 function calculateOGW(bulletWeight: number, velocity: number): number {
-    return Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12;
+    // Optimal Game Weight in pounds
+    return Math.pow(bulletWeight, 2) * Math.pow(velocity, 3) * 1.5e-12
 }
 
-
 /**
- * @param {DragTable} dataPoints
- * @return {Curve}
+ * Calculates a curve based on drag data points for trajectory analysis.
+ * @param {DragTable} dataPoints - An array of `DragDataPoint` objects representing the drag data.
+ * @returns {Curve} - An array of `CurvePoint` objects representing the calculated curve.
  */
 function calculateCurve(dataPoints: DragTable): Curve {
     let rate: number =
@@ -608,10 +581,11 @@ function calculateCurve(dataPoints: DragTable): Curve {
 }
 
 /**
- * @param {DragTable} data
- * @param {Curve} curve
- * @param {number} mach
- * @return {number}
+ * Calculates a value based on drag data and a provided curve using a given Mach number.
+ * @param {DragTable} data - An array of `DragDataPoint` objects representing the drag data.
+ * @param {CurvePoint[]} curve - An array of `CurvePoint` objects representing the curve used for interpolation.
+ * @param {number} mach - The Mach number to use for the calculation.
+ * @returns {number} - The calculated value based on the curve and Mach number.
  */
 function calculateByCurve(data: DragTable, curve: CurvePoint[], mach: number): number {
     let m: number = 0;
@@ -640,3 +614,10 @@ function calculateByCurve(data: DragTable, curve: CurvePoint[], mach: number): n
 
 // Export the classes and constants
 export default TrajectoryCalc;
+export {
+    getGlobalMaxCalcStepSize,
+    getGlobalUsePowderSensitivity,
+    setGlobalMaxCalcStepSize,
+    setGlobalUsePowderSensitivity,
+    resetGlobals
+}

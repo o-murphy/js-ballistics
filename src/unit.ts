@@ -586,53 +586,53 @@ class Energy extends AbstractUnit {
 
 // Dict of properties of the Unit enum type
 const UnitProps = {
-    [Unit.Radian]: {name: 'radian', accuracy: 6, symbol: 'rad'},
-    [Unit.Degree]: {name: 'degree', accuracy: 4, symbol: '°'},
-    [Unit.MOA]: {name: 'MOA', accuracy: 2, symbol: 'MOA'},
-    [Unit.MIL]: {name: 'MIL', accuracy: 2, symbol: 'MIL'},
-    [Unit.MRad]: {name: 'MRAD', accuracy: 2, symbol: 'MRAD'},
-    [Unit.Thousand]: {name: 'thousand', accuracy: 2, symbol: 'ths'},
-    [Unit.InchesPer100Yd]: {name: 'inches/100yd', accuracy: 2, symbol: 'in/100yd'},
-    [Unit.CmPer100M]: {name: 'cm/100m', accuracy: 2, symbol: 'cm/100m'},
-    [Unit.OClock]: {name: 'hour', accuracy: 2, symbol: 'h'},
+    [Unit.Radian]: { name: 'radian', accuracy: 6, symbol: 'rad' },
+    [Unit.Degree]: { name: 'degree', accuracy: 4, symbol: '°' },
+    [Unit.MOA]: { name: 'MOA', accuracy: 2, symbol: 'MOA' },
+    [Unit.MIL]: { name: 'MIL', accuracy: 2, symbol: 'MIL' },
+    [Unit.MRad]: { name: 'MRAD', accuracy: 2, symbol: 'MRAD' },
+    [Unit.Thousand]: { name: 'thousand', accuracy: 2, symbol: 'ths' },
+    [Unit.InchesPer100Yd]: { name: 'inches/100yd', accuracy: 2, symbol: 'in/100yd' },
+    [Unit.CmPer100M]: { name: 'cm/100m', accuracy: 2, symbol: 'cm/100m' },
+    [Unit.OClock]: { name: 'hour', accuracy: 2, symbol: 'h' },
 
-    [Unit.Inch]: {name: 'inch', accuracy: 3, symbol: 'inch'},
-    [Unit.Foot]: {name: 'foot', accuracy: 2, symbol: 'ft'},
-    [Unit.Yard]: {name: 'yard', accuracy: 3, symbol: 'yd'},
-    [Unit.Mile]: {name: 'mile', accuracy: 3, symbol: 'mi'},
-    [Unit.NauticalMile]: {name: 'nautical mile', accuracy: 3, symbol: 'nm'},
-    [Unit.Millimeter]: {name: 'millimeter', accuracy: 3, symbol: 'mm'},
-    [Unit.Centimeter]: {name: 'centimeter', accuracy: 3, symbol: 'cm'},
-    [Unit.Meter]: {name: 'meter', accuracy: 3, symbol: 'm'},
-    [Unit.Kilometer]: {name: 'kilometer', accuracy: 3, symbol: 'km'},
-    [Unit.Line]: {name: 'line', accuracy: 3, symbol: 'ln'},
+    [Unit.Inch]: { name: 'inch', accuracy: 3, symbol: 'inch' },
+    [Unit.Foot]: { name: 'foot', accuracy: 2, symbol: 'ft' },
+    [Unit.Yard]: { name: 'yard', accuracy: 3, symbol: 'yd' },
+    [Unit.Mile]: { name: 'mile', accuracy: 3, symbol: 'mi' },
+    [Unit.NauticalMile]: { name: 'nautical mile', accuracy: 3, symbol: 'nm' },
+    [Unit.Millimeter]: { name: 'millimeter', accuracy: 3, symbol: 'mm' },
+    [Unit.Centimeter]: { name: 'centimeter', accuracy: 3, symbol: 'cm' },
+    [Unit.Meter]: { name: 'meter', accuracy: 3, symbol: 'm' },
+    [Unit.Kilometer]: { name: 'kilometer', accuracy: 3, symbol: 'km' },
+    [Unit.Line]: { name: 'line', accuracy: 3, symbol: 'ln' },
 
-    [Unit.FootPound]: {name: 'foot * pound', accuracy: 0, symbol: 'ft·lb'},
-    [Unit.Joule]: {name: 'joule', accuracy: 0, symbol: 'J'},
+    [Unit.FootPound]: { name: 'foot * pound', accuracy: 0, symbol: 'ft·lb' },
+    [Unit.Joule]: { name: 'joule', accuracy: 0, symbol: 'J' },
 
-    [Unit.MmHg]: {name: 'mmHg', accuracy: 0, symbol: 'mmHg'},
-    [Unit.InHg]: {name: 'inHg', accuracy: 6, symbol: 'inHg'},
-    [Unit.Bar]: {name: 'bar', accuracy: 2, symbol: 'bar'},
-    [Unit.hPa]: {name: 'hPa', accuracy: 4, symbol: 'hPa'},
-    [Unit.PSI]: {name: 'psi', accuracy: 4, symbol: 'psi'},
+    [Unit.MmHg]: { name: 'mmHg', accuracy: 0, symbol: 'mmHg' },
+    [Unit.InHg]: { name: 'inHg', accuracy: 6, symbol: 'inHg' },
+    [Unit.Bar]: { name: 'bar', accuracy: 2, symbol: 'bar' },
+    [Unit.hPa]: { name: 'hPa', accuracy: 4, symbol: 'hPa' },
+    [Unit.PSI]: { name: 'psi', accuracy: 4, symbol: 'psi' },
 
-    [Unit.Fahrenheit]: {name: 'fahrenheit', accuracy: 1, symbol: '°F'},
-    [Unit.Celsius]: {name: 'celsius', accuracy: 1, symbol: '°C'},
-    [Unit.Kelvin]: {name: 'kelvin', accuracy: 1, symbol: '°K'},
-    [Unit.Rankin]: {name: 'rankin', accuracy: 1, symbol: '°R'},
+    [Unit.Fahrenheit]: { name: 'fahrenheit', accuracy: 1, symbol: '°F' },
+    [Unit.Celsius]: { name: 'celsius', accuracy: 1, symbol: '°C' },
+    [Unit.Kelvin]: { name: 'kelvin', accuracy: 1, symbol: '°K' },
+    [Unit.Rankin]: { name: 'rankin', accuracy: 1, symbol: '°R' },
 
-    [Unit.MPS]: {name: 'mps', accuracy: 0, symbol: 'm/s'},
-    [Unit.KMH]: {name: 'kmh', accuracy: 1, symbol: 'km/h'},
-    [Unit.FPS]: {name: 'fps', accuracy: 1, symbol: 'ft/s'},
-    [Unit.MPH]: {name: 'mph', accuracy: 1, symbol: 'mph'},
-    [Unit.KT]: {name: 'knots', accuracy: 1, symbol: 'kt'},
+    [Unit.MPS]: { name: 'mps', accuracy: 0, symbol: 'm/s' },
+    [Unit.KMH]: { name: 'kmh', accuracy: 1, symbol: 'km/h' },
+    [Unit.FPS]: { name: 'fps', accuracy: 1, symbol: 'ft/s' },
+    [Unit.MPH]: { name: 'mph', accuracy: 1, symbol: 'mph' },
+    [Unit.KT]: { name: 'knots', accuracy: 1, symbol: 'kt' },
 
-    [Unit.Grain]: {name: 'grain', accuracy: 1, symbol: 'gr'},
-    [Unit.Ounce]: {name: 'ounce', accuracy: 1, symbol: 'oz'},
-    [Unit.Gram]: {name: 'gram', accuracy: 1, symbol: 'g'},
-    [Unit.Pound]: {name: 'pound', accuracy: 3, symbol: 'lb'},
-    [Unit.Kilogram]: {name: 'kilogram', accuracy: 3, symbol: 'kg'},
-    [Unit.Newton]: {name: 'newton', accuracy: 3, symbol: 'N'},
+    [Unit.Grain]: { name: 'grain', accuracy: 1, symbol: 'gr' },
+    [Unit.Ounce]: { name: 'ounce', accuracy: 1, symbol: 'oz' },
+    [Unit.Gram]: { name: 'gram', accuracy: 1, symbol: 'g' },
+    [Unit.Pound]: { name: 'pound', accuracy: 3, symbol: 'lb' },
+    [Unit.Kilogram]: { name: 'kilogram', accuracy: 3, symbol: 'kg' },
+    [Unit.Newton]: { name: 'newton', accuracy: 3, symbol: 'N' },
 };
 
 
@@ -744,7 +744,7 @@ const UNew = {
  * @throws {TypeError} If the instance is not of the expected class type or 'number'.
  */
 function unitTypeCoerce(
-    instance: (number|AbstractUnit),
+    instance: (number | AbstractUnit),
     expectedClass: (typeof AbstractUnit | any),
     defaultUnit: Unit
 ): any {
@@ -757,13 +757,86 @@ function unitTypeCoerce(
     }
     else {
         // If the instance is not of the expected type, throw a TypeError.
-        throw new TypeError(`Instance must be a type of ${
-            expectedClass.name
-        } or 'number'`);
+        throw new TypeError(`Instance must be a type of ${expectedClass.name
+            } or 'number'`);
     }
 }
 
+
+export interface IPreferredUnits {
+    angular: Unit;
+    distance: Unit;
+    velocity: Unit;
+    pressure: Unit;
+    temperature: Unit;
+    diameter: Unit;
+    length: Unit;
+    weight: Unit;
+    adjustment: Unit;
+    drop: Unit;
+    energy: Unit;
+    ogw: Unit;
+    sight_height: Unit;
+    target_height: Unit;
+    twist: Unit;
+    defaults(): void;
+    setUnits(units: Partial<IPreferredUnits>): void;
+}
+
+// Type guard to check if a value is a valid Unit
+function isUnit(value: any): value is Unit {
+    return Object.values(Unit).includes(value);
+}
+
+export class PreferredUnits implements IPreferredUnits {
+    angular: Unit = Unit.Degree;
+    distance: Unit = Unit.Yard;
+    velocity: Unit = Unit.FPS;
+    pressure: Unit = Unit.InHg;
+    temperature: Unit = Unit.Fahrenheit;
+    diameter: Unit = Unit.Inch;
+    length: Unit = Unit.Inch;
+    weight: Unit = Unit.Grain;
+    adjustment: Unit = Unit.MIL;
+    drop: Unit = Unit.Inch;
+    energy: Unit = Unit.FootPound;
+    ogw: Unit = Unit.Pound;
+    sight_height: Unit = Unit.Inch;
+    target_height: Unit = Unit.Inch;
+    twist: Unit = Unit.Inch;
+
+    defaults(): void {
+        this.angular = Unit.Degree;
+        this.distance = Unit.Yard;
+        this.velocity = Unit.FPS;
+        this.pressure = Unit.InHg;
+        this.temperature = Unit.Fahrenheit;
+        this.diameter = Unit.Inch;
+        this.length = Unit.Inch;
+        this.weight = Unit.Grain;
+        this.adjustment = Unit.MIL;
+        this.drop = Unit.Inch;
+        this.energy = Unit.FootPound;
+        this.ogw = Unit.Pound;
+        this.sight_height = Unit.Inch;
+        this.target_height = Unit.Inch;
+        this.twist = Unit.Inch;
+    }
+
+    setUnits(units: Partial<IPreferredUnits>): void {
+        for (const [key, value] of Object.entries(units)) {
+            if (isUnit(value)) {
+                (this as any)[key] = value;
+            } else {
+                console.warn(`${value} is not a valid Unit`);
+            }
+        }
+    }
+}
+
+const preferredUnits = new PreferredUnits();
+
 export {
     AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
-    Unit, UnitProps, unitTypeCoerce, UNew, Measure
+    Unit, UnitProps, unitTypeCoerce, UNew, Measure, preferredUnits
 }

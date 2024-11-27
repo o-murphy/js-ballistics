@@ -1,5 +1,5 @@
 import { expect, describe, test, beforeEach } from '@jest/globals';
-import Calculator, { UNew, DragModel, Table, Ammo, Weapon, Shot, DragModelMultiBC, BCPoint } from '../../src/v2';
+import Calculator, { UNew, DragModel, Table, Ammo, Weapon, Shot, DragModelMultiBC, BCPoint } from '../src';
 
 
 describe('TestMultiBC', () => {
