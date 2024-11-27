@@ -3,6 +3,13 @@
 ![NPM version](https://img.shields.io/npm/v/js-ballistics?style=flat-square&logo=npm)
 ![License](https://img.shields.io/npm/l/js-ballistics?style=flat-square)
 
+[![SWUbanner]][SWUdocs]
+
+[SWUbanner]:
+https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg
+[SWUdocs]:
+https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md
+
 ### Table of contents
 * **[Installation](#installation)**
 <!--   * [Latest stable](#latest-stable-release-from-pypi)
