@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import {Measure, UNew, Unit, UnitProps, unitTypeCoerce} from '../src/index';
+import {Measure, UNew, Unit, UnitProps, unitTypeCoerce} from '../src';
 
 describe("Unit back'n'forth", () => {
 

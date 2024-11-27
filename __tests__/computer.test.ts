@@ -1,5 +1,5 @@
 import { expect, describe, test, beforeEach } from '@jest/globals';
-import Calculator, { Ammo, Wind, Atmo, DragModel, Table, UNew, Weapon, Shot, HitResult, setGlobalUsePowderSensitivity, getGlobalUsePowderSensitivity } from '../../src/v2';
+import Calculator, { Ammo, Wind, Atmo, DragModel, Table, UNew, Weapon, Shot, HitResult, setGlobalUsePowderSensitivity, getGlobalUsePowderSensitivity } from '../src';
 
 
 describe('TestComputer', () => {
