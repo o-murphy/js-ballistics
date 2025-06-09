@@ -5,6 +5,7 @@
 - [x] munition
   - [x] weapon
   - [x] ammo
+  - [ ] sight ?
 - [x] conditions
   - [x] atmo
   - [x] vacuum
@@ -14,9 +15,9 @@
 - [ ] exceptions
 - [ ] helpers (partially)
 - [ ] interface
-- [ ] interface_config?
+- [ ] interface_config ?
 - [ ] trajectory calc
-- [ ] trajectory data
+- [x] trajectory data
 - [x] unit
 
 
@@ -28,7 +29,7 @@
   - [ ] incomplete shots
   - [ ] issues
   - [ ] mbc
-  - [ ] sight?
+  - [ ] sight ?
   - [ ] trajectory
   - [x] units
   - [x] vector

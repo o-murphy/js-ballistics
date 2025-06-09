@@ -486,7 +486,7 @@ describe('TestComputer', () => {
         expect(tSameTemp.trajectory[0].velocity.rawValue).toBeLessThan(baselineTrajectory.trajectory[0].velocity.rawValue);
 
         // Test case 3: Different powder temperature
-        const coldDiffTemp = new Atmo({temperature: UNew.Celsius(-5)});
+        const coldDiffTemp = new Atmo({powderT: UNew.Celsius(-5)});
         const shotDiffTemp = new Shot({weapon, ammo, atmo: coldDiffTemp});
         const tDiffTemp = calc.fire({shot: shotDiffTemp, trajectoryRange: range, trajectoryStep: step});
         expect(tDiffTemp.trajectory[0].velocity.rawValue).toBeLessThan(baselineTrajectory.trajectory[0].velocity.rawValue);
