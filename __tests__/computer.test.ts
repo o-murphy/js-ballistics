@@ -469,41 +469,29 @@ describe('TestComputer', () => {
     });
 
     test('powder_sensitivity', () => {
-        // Store the previous global powder sensitivity setting
-        const previous = getGlobalUsePowderSensitivity();
-        
-        // Set global powder sensitivity to true
-        setGlobalUsePowderSensitivity(true);
-        
-        // Adjust the ammo's powder sensitivity
-        ammo.calcPowderSens(UNew.FPS(2550), UNew.Celsius(0));
-        
-        // Create a new atmosphere with reduced temperature
-        const coldAtmo = new Atmo({
-            temperature: UNew.Celsius(-5)
-        });
-        
-        // Create a new shot with the cold atmosphere
-        const coldShot = new Shot({
-            weapon: weapon,
-            ammo: ammo,
-            atmo: coldAtmo
-        });
-        
-        // Calculate the trajectory for the shot
-        const trajectoryWithCold = calc.fire({
-            shot: coldShot,
-            trajectoryRange: range,
-            trajectoryStep: step
-        });
-        
-        // Assert that the velocity at index 0 is less than the baseline velocity
-        expect(trajectoryWithCold.trajectory[0].velocity.rawValue).toBeLessThan(
-            baselineTrajectory.trajectory[0].velocity.rawValue
-        );
-        
-        // Restore the previous global powder sensitivity setting
-        setGlobalUsePowderSensitivity(previous);
+        ammo.calcPowderSens(UNew.FPS(2550), UNew.Celsius(0))
+
+        // Test case 1: Don't use powder sensitivity
+        ammo.usePowderSensitivity = false;
+        const coldNoSens = new Atmo({temperature: UNew.Celsius(-5)});
+        const shotNoSens = new Shot({weapon, ammo, atmo: coldNoSens});
+        const tNoSens = calc.fire({shot: shotNoSens, trajectoryRange: range, trajectoryStep: step});
+        expect(tNoSens.trajectory[0].velocity.rawValue).toBeCloseTo(baselineTrajectory.trajectory[0].velocity.rawValue);
+
+        // Test case 2: Powder temperature the same as atmosphere temperature
+        ammo.usePowderSensitivity = true;
+        const coldSameTemp = new Atmo({temperature: UNew.Celsius(-5)});
+        const shotSameTemp = new Shot({weapon, ammo, atmo: coldSameTemp});
+        const tSameTemp = calc.fire({shot: shotSameTemp, trajectoryRange: range, trajectoryStep: step});
+        expect(tSameTemp.trajectory[0].velocity.rawValue).toBeLessThan(baselineTrajectory.trajectory[0].velocity.rawValue);
+
+        // Test case 3: Different powder temperature
+        const coldDiffTemp = new Atmo({temperature: UNew.Celsius(-5)});
+        const shotDiffTemp = new Shot({weapon, ammo, atmo: coldDiffTemp});
+        const tDiffTemp = calc.fire({shot: shotDiffTemp, trajectoryRange: range, trajectoryStep: step});
+        expect(tDiffTemp.trajectory[0].velocity.rawValue).toBeLessThan(baselineTrajectory.trajectory[0].velocity.rawValue);
+
+        ammo.usePowderSensitivity = false
     });
 
     // end region Ammo

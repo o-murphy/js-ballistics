@@ -2,6 +2,11 @@
 
 - [x] constants
 - [x] vector
-- [ ] munition
-  - [ ] weapon
-  - [ ] ammo
+- [x] munition
+  - [x] weapon
+  - [x] ammo
+- [x] conditions
+  - [x] atmo?
+  - [x] vacuum
+  - [x] wind
+  - [x] shot

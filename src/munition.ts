@@ -37,11 +37,11 @@ class Weapon {
 
 class Ammo {
 
-    readonly dm: DragModel;
-    readonly mv: Velocity;
-    readonly powderTemp: Temperature;
-    protected _tempModifier: number;
-
+    public dm: DragModel;
+    public mv: Velocity;
+    public powderTemp: Temperature;
+    public tempModifier: number;
+    public usePowderSensitivity: boolean;
     /**
      * Creates an instance of Ammo with specified properties.
      * @param {Object} options - Parameters for initializing the Ammo instance.
@@ -49,17 +49,20 @@ class Ammo {
      * @param {number | Velocity} options.mv - Velocity value.
      * @param {number} [options.tempModifier=0] - Temperature modifier value. Defaults to 0.
      * @param {number | Temperature | null} [options.powderTemp=null] - Powder temperature value. Defaults to null.
+     * @param {boolean} [options.usePowderSensitivity=false] - Use powder sensitivity value. Defaults to false.
      */
     constructor({
         dm,
         mv,
         powderTemp = null,
-        tempModifier = 0
+        tempModifier = 0,
+        usePowderSensitivity = false
     }: {
         dm: DragModel;
         mv: number | Velocity;
         powderTemp?: number | Temperature | null;
-        tempModifier?: number
+        tempModifier?: number;
+        usePowderSensitivity?: boolean;
     }) {
         if (!dm) {
             throw new Error("'dm' have to be an instance of 'DragModel'")
@@ -67,7 +70,8 @@ class Ammo {
         this.dm = dm;
         this.mv = unitTypeCoerce(mv ?? 0, Velocity, preferredUnits.velocity);
         this.powderTemp = unitTypeCoerce(powderTemp ?? UNew.Celsius(15), Temperature, preferredUnits.temperature);
-        this._tempModifier = tempModifier ?? 0;
+        this.tempModifier = tempModifier ?? 0;
+        this.usePowderSensitivity = usePowderSensitivity;
     }
 
     /**
@@ -89,21 +93,27 @@ class Ammo {
         if ((vDelta === 0) || (tDelta === 0)) {
             throw new Error("Temperature modifier error, other velocity and temperature can't be same as default")
         }
-        this._tempModifier = vDelta / tDelta * (15 / vLower)  // * 100
-        return this._tempModifier
+        this.tempModifier = vDelta / tDelta * (15 / vLower)  // * 100
+        return this.tempModifier
     }
-    
+
     /**
      * Calculates the muzzle velocity at a given temperature based on the temperature modifier.
      * @param {number | Temperature} currentTemp - The current temperature for which to calculate the velocity.
      * @returns {Velocity} - The calculated muzzle velocity at the specified temperature.
      */
     getVelocityForTemp(currentTemp: (number | Temperature)): Velocity {
+        if (!this.usePowderSensitivity) {
+            return this.mv
+        }
         const v0 = this.mv.In(Velocity.MPS)
+        if (!isFinite(v0)) {
+            return UNew.MPS(0)
+        }
         const t0 = this.powderTemp.In(Temperature.Celsius)
         const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(Temperature.Celsius)
         const tDelta = t1 - t0
-        const muzzleVelocity = this._tempModifier / (15 / v0) * tDelta + v0
+        const muzzleVelocity = this.tempModifier / (15 / v0) * tDelta + v0
         return UNew.MPS(muzzleVelocity)
     }
 }

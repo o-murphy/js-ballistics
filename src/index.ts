@@ -9,6 +9,7 @@ import Vector from "./vector";
 
 import {
     Atmo,
+    Vacuum,
     Wind,
     Shot,
 } from "./conditions";
@@ -39,6 +40,7 @@ export {
     Table,
 
     Atmo,
+    Vacuum,
     Wind,
     Shot,
 

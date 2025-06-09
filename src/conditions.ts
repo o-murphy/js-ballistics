@@ -1,56 +1,44 @@
 // Classes to define zeroing or current environment conditions
 
+import {
+    cLapseRateImperial, cStandardTemperatureF, cStandardDensity,
+    cPressureExponent, cStandardHumidity, cDegreesFtoR, cSpeedOfSoundImperial, cDegreesCtoK,
+    cMaxWindDistanceFeet,
+    cLowestTempF,
+    cStandardDensityMetric,
+    cLapseRateKperFoot,
+    cStandardPressureMetric,
+    cLapseRateMetric,
+    cStandardTemperatureC
+} from './constants';
+import { cSpeedOfSoundMetric } from './drag_model';
 import { Ammo, Weapon } from './munition';
 import {
-    Unit, unitTypeCoerce, UNew,
+    unitTypeCoerce, UNew,
     Distance, Pressure, Temperature, Velocity, Angular,
     preferredUnits
 } from './unit';
-
-// Constants for standard atmospheric conditions
-export const cStandardHumidity: number = 0.0  // Relative Humidity
-export const cPressureExponent: number = 5.255876  // =g*M/R*L
-export const cA0: number = 1.24871
-export const cA1: number = 0.0988438;
-export const cA2: number = 0.00152907;
-export const cA3: number = -3.07031e-06;
-export const cA4: number = 4.21329e-07;
-export const cA5: number = 3.342e-04;
-
-// ISA, metric prefer_units: (https://www.engineeringtoolbox.com/international-standard-atmosphere-d_985.html)
-export const cDegreesCtoK: number = 273.15;  // °K = °C + 273.15
-export const cStandardTemperatureC: number = 15.0;  // °C
-export const cLapseRateMetric: number = -6.5e-03;  // Lapse Rate, °C/m
-export const cStandardPressureMetric: number = 1013.25;  // hPa
-export const cSpeedOfSoundMetric: number = 331.3;  // Mach1 in m/s = cSpeedOfSound * sqrt(°K)
-export const cStandardDensityMetric: number = 1.2250;  // kg/m^3
-export const cDensityImperialToMetric: number = 16.0185;  // lb/ft^3 to kg/m^3
-
-// ICAO standard atmosphere:
-export const cDegreesFtoR: number = 459.67  // °R = °F + 459.67
-export const cStandardTemperatureF: number = 59.0  // °F
-export const cLapseRateImperial: number = -3.56616e-03  // Lapse rate, °F/ft
-export const cStandardPressure: number = 29.92  // InHg
-export const cSpeedOfSoundImperial: number = 49.0223  // Mach1 in fps = cSpeedOfSound * sqrt(°R)
-export const cStandardDensity: number = 0.076474  // lb/ft^3
-
+import Vector from './vector';
 
 
 class Atmo {
 
-    readonly altitude: Distance
-    readonly pressure: Pressure
-    readonly temperature: Temperature
-    readonly humidity: number
+    private _altitude: Distance
+    private _pressure: Pressure
+    private _temperature: Temperature
+    private _powderTemp: Temperature
+    private _humidity: number
 
-    readonly densityRatio: number
-    readonly mach: Velocity
+    private _densityRatio: number
+    // readonly mach: Velocity
 
-    protected _mach1: number
+    protected _mach: number
     protected _a0: number
     protected _t0: number
     protected _p0: number
-    protected _ta: number
+    public static cLowestTempC: number = UNew.Fahrenheit(cLowestTempF).In(Temperature.Celsius)
+
+    protected _initializing: boolean
 
     /**
      * Represents atmospheric conditions and performs density calculations.
@@ -60,253 +48,256 @@ class Atmo {
      * @param {number | Pressure | null} [options.pressure=null] - Atmospheric pressure, or a pressure object.
      * @param {number | Temperature | null} [options.temperature=null] - Temperature in Fahrenheit, or a temperature object.
      * @param {number} [options.humidity=0.0] - Relative humidity as a decimal (default: 0.0, where 1.0 is 100%).
+     * @param {number | Temperature | null} [options.powderT=null] - Powder temperature (default: null).
      */
     constructor({
         altitude = null,
         pressure = null,
         temperature = null,
-        humidity = 0.0
+        humidity = 0.0,
+        powderT = null,
     }: {
         altitude?: (number | Distance | null);
         pressure?: (number | Pressure | null);
         temperature?: (number | Temperature | null);
-        humidity?: number
+        humidity?: number;
+        powderT?: (number | Temperature | null);
     }
     ) {
-        // Ensure humidity is within the valid range [0, 1]
-        this.humidity = humidity || 0.0;
-        if (humidity > 1.0) {
-            this.humidity = humidity / 100.0;
+        this._initializing = true
+        this._altitude = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance);
+        this._pressure = unitTypeCoerce(pressure ?? Atmo.standardPressure(this.altitude), Pressure, preferredUnits.pressure);
+        this._temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(this.altitude), Temperature, preferredUnits.temperature);
+        // If powder_temperature not provided we use atmospheric temperature:
+
+        this._powderTemp = unitTypeCoerce(powderT ?? this.temperature, Temperature, preferredUnits.temperature)
+        this._t0 = this.temperature.In(Temperature.Celsius)
+        this._p0 = this.pressure.In(Pressure.hPa)
+        this._a0 = this.altitude.In(Distance.Foot)
+        this._mach = Atmo.machF(this._temperature.In(Temperature.Fahrenheit))
+        this.humidity = humidity
+        this._initializing = false
+        this.updateDensityRatio()
+    }
+
+    get altitude(): Distance {
+        return this._altitude
+    }
+
+    get pressure(): Pressure {
+        return this._pressure
+    }
+
+    get temperature(): Temperature {
+        return this._temperature
+    }
+
+    get humidity(): number {
+        return this._humidity
+    }
+
+    get powderTemp(): Temperature {
+        return this._powderTemp
+    }
+
+    get mach(): Velocity {
+        return UNew.FPS(this._mach)
+    }
+
+    get densityRatio(): number {
+        return this._densityRatio
+    }
+
+    set humidity(value: number) {
+        if (value < 0 || value > 100) {
+            throw new Error("Humidity must be between 0% and 100%.")
         }
-        if (!(0.0 <= this.humidity && this.humidity <= 1.0)) {
-            this.humidity = 0.0;
+        if (value > 1) {
+            value = value / 100.0
         }
-
-        // Coerce input values to appropriate units
-        this.altitude = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance);
-        this.pressure = unitTypeCoerce(pressure ?? Atmo.standardPressure(this.altitude), Pressure, preferredUnits.pressure);
-        this.temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(this.altitude), Temperature, preferredUnits.temperature);
-
-        // Constants and initializations
-        this._t0 = this.temperature.In(Unit.Fahrenheit);
-        this._p0 = this.pressure.In(Unit.InHg);
-        this._a0 = this.altitude.In(Unit.Foot);
-        this._ta = this._a0 * cLapseRateImperial + cStandardTemperatureF;
-        this.densityRatio = this.calculateDensity({
-            t: this._t0,
-            p: this._p0
-        }) / cStandardDensity
-        this._mach1 = Atmo.machF(this._t0);
-        this.mach = UNew.FPS(this._mach1)
-    }
-
-    /**
-    * Calculates the ICAO standard temperature at a given altitude.
-    * 
-    * The standard temperature decreases with altitude at a fixed rate (lapse rate).
-    * 
-    * @param {Distance} altitude - The altitude above sea level.
-    * @returns {Temperature} - The standard temperature at the given altitude in Fahrenheit.
-    */
-    static standardTemperature(altitude: Distance): Temperature {
-        return UNew.Fahrenheit(cStandardTemperatureF + (altitude.In(Distance.Foot)) * cLapseRateImperial)
-    }
-
-    /**
-    * Calculates the ICAO standard pressure at a given altitude.
-    * 
-    * The pressure decreases with altitude according to a fixed mathematical model.
-    * 
-    * @param {Distance} altitude - The altitude above sea level.
-    * @returns {Pressure} - The standard atmospheric pressure at the given altitude in inches of mercury (InHg).
-    */
-    static standardPressure(altitude: Distance): Pressure {
-        // ICAO standard pressure for altitude
-        return UNew.InHg(0.02953 * Math.pow(3.73145 - 2.56555e-05 * altitude.In(Distance.Foot), cPressureExponent))
-    }
-
-    /**
-    * Creates a standard ICAO atmosphere based on the given altitude and temperature.
-    * 
-    * If the temperature is not provided, the standard ICAO temperature for the given altitude is used.
-    * 
-    * @param {Object} options - Configuration options for the atmosphere.
-    * @param {number | Distance | null} [options.altitude=null] - The altitude above sea level. If not provided, defaults to null.
-    * @param {number | Temperature | null} [options.temperature=null] - The temperature in Fahrenheit. If not provided, defaults to the standard temperature for the given altitude.
-    * @returns {Atmo} - An instance of the `Atmo` class representing the atmospheric conditions.
-    */
-    static standard({
-        altitude = null,
-        temperature = null
-    }: {
-        altitude?: (number | Distance | null);
-        temperature?: (number | Temperature | null)
-    }): Atmo {
-        return Atmo.icao({ altitude: altitude, temperature: temperature })
-    }
-
-    /**
-    * Creates an ICAO standard atmosphere based on the given altitude and temperature.
-    * 
-    * If the temperature is not specified, the standard ICAO temperature for the altitude is used.
-    * The method also calculates the standard pressure for the given altitude.
-    * 
-    * @param {Object} options - Configuration options for the atmosphere.
-    * @param {number | Distance | null} [options.altitude=null] - The altitude above sea level. If not provided, defaults to 0.
-    * @param {number | Temperature | null} [options.temperature=null] - The temperature in Fahrenheit. If not provided, the standard temperature for the altitude is used.
-    * @returns {Atmo} - An instance of the `Atmo` class representing the ICAO atmosphere with the given conditions.
-    */
-    static icao({
-        altitude = null,
-        temperature = null
-    }: {
-        altitude?: (number | Distance | null);
-        temperature?: (number | Temperature | null)
-    }): Atmo {
-        const _altitude: Distance = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance)
-        const _temperature: Temperature = unitTypeCoerce(temperature ?? Atmo.standardTemperature(_altitude), Temperature, preferredUnits.temperature)
-        const _pressure: Pressure = Atmo.standardPressure(_altitude)
-        return new Atmo({
-            altitude: _altitude.In(preferredUnits.distance),
-            pressure: _pressure.In(preferredUnits.pressure),
-            temperature: _temperature.In(preferredUnits.temperature),
-            humidity: cStandardHumidity
+        this._humidity = value
+        if (!this._initializing) {
+            this.updateDensityRatio()
         }
+    }
+
+    updateDensityRatio() {
+        this._densityRatio = Atmo.calculateAirDensity(this._t0, this._p0, this.humidity) / cStandardDensityMetric
+    }
+
+    get densityMetric(): number {
+        return this._densityRatio * cStandardDensityMetric
+    }
+
+    get densityImperial(): number {
+        return this._densityRatio * cStandardDensity
+    }
+
+    temperatureAtAltitude(altitude: number): number {
+        let t = (altitude - this._a0) * cLapseRateKperFoot + this._t0
+        if (t < Atmo.cLowestTempC) {
+            t = Atmo.cLowestTempC
+            console.warn(`Temperature interpolated from altitude fell below minimum temperature limit. 
+                Model not accurate here.  Temperature bounded at cLowestTempF: ${cLowestTempF}°F.`)
+        }
+        return t
+    }
+
+    pressureAtAltitude(altitude: number): number {
+        return this._p0 * Math.pow(
+            1 + cLapseRateKperFoot * (altitude - this._a0) / (this._t0 + cDegreesCtoK),
+            cPressureExponent
         )
     }
 
-    /**
-    * Calculates the speed of sound (Mach 1) in feet per second (fps) at a given temperature in Fahrenheit.
-    * 
-    * @param {number} fahrenheit - The temperature in Fahrenheit.
-    * @returns {number} - The speed of sound (Mach 1) in fps at the given temperature.
-    */
+    getDensityFactorAndMachForAltitude(altitude: number): [number, number] {
+        // Within 30 ft of initial altitude use initial values to save compute
+        if (Math.abs(this._a0 - altitude) < 30) {
+            return [this._densityRatio, this._mach]
+        }
+        if (altitude > 36089) {
+            console.warn("Density request for altitude above troposphere. Atmospheric model not valid here.")
+        }
+        const t = this.temperatureAtAltitude(altitude) + cDegreesCtoK
+        const mach = UNew.MPS(Atmo.machK(t)).In(Velocity.FPS)
+        const p = this.pressureAtAltitude(altitude)
+        const densityDelta = ((this._t0 + cDegreesCtoK) * p) / (this._p0 * t)
+        const densityRatio = this._densityRatio * densityDelta
+        return [densityRatio, mach]
+    }
+
+    static standardTemperature(altitude: Distance): Temperature {
+        return UNew.Fahrenheit(cStandardTemperatureF + (altitude.In(Distance.Foot) * cLapseRateImperial))
+    }
+
+    static standardPressure(altitude: Distance): Pressure {
+        return UNew.hPa(
+            cStandardPressureMetric * Math.pow(
+                1 + cLapseRateMetric * altitude.In(Distance.Meter) / (cStandardTemperatureC + cDegreesCtoK),
+                cPressureExponent
+            )
+        )
+    }
+
+    static icao({
+        altitude = 0,
+        temperature = null,
+        humidity = cStandardHumidity
+    }: {
+        altitude?: number | Distance,
+        temperature?: number | Temperature | null,
+        humidity?: number
+    }
+    ) {
+        const _altitude = unitTypeCoerce(altitude, Distance, preferredUnits.distance)
+        if (temperature === null || temperature === undefined) {
+            temperature = Atmo.standardTemperature(_altitude)
+        }
+        const pressure = Atmo.standardPressure(_altitude)
+        return new Atmo({ altitude, pressure, temperature, humidity })
+    }
+
+    static standard = Atmo.icao
+
     static machF(fahrenheit: number): number {
+        if (fahrenheit < -cDegreesFtoR) {
+            console.warn(`Invalid temperature: ${fahrenheit}°F. Adjusted to (${cLowestTempF}°F).`)
+        }
         return Math.sqrt(fahrenheit + cDegreesFtoR) * cSpeedOfSoundImperial
     }
 
-    /**
-    * Calculates the speed of sound (Mach 1) in meters per second (m/s) at a given temperature in Celsius.
-    * 
-    * @param {number} celsius - The temperature in Celsius.
-    * @returns {number} - The speed of sound (Mach 1) in m/s at the given temperature.
-    */
     static machC(celsius: number): number {
-        return Math.sqrt(1 + celsius / cDegreesCtoK) * cSpeedOfSoundMetric
+        if (celsius < -cDegreesCtoK) {
+            const badTemp = celsius
+            celsius = Atmo.cLowestTempC
+            console.warn(`Invalid temperature: ${badTemp}°C. Adjusted to (${celsius}°C).`)
+        }
+        return Atmo.machK(celsius + cDegreesCtoK)
     }
 
+    static machK(kelvin: number): number {
+        return Math.sqrt(kelvin) * cSpeedOfSoundMetric
+    }
+
+    static calculateAirDensity(t: number, p: number, humidity: number): number {
+        const R = 8.314472  // J/(mol·K), universal gas constant
+        const M_a = 28.96546e-3  // kg/mol, molar mass of dry air
+        const M_v = 18.01528e-3  // kg/mol, molar mass of water vapor
+
+        const saturationVaporPressure = (T: number): number => {
+            const A = [1.2378847e-5, -1.9121316e-2, 33.93711047, -6.3431645e3]
+            return Math.exp(A[0] * T ** 2 + A[1] * T + A[2] + A[3] / T)
+        }
+
+        const enchancementFactor = (p: number, T: number): number => {
+            const alpha = 1.00062
+            const beta = 3.14e-8
+            const gamma = 5.6e-7
+            return alpha + beta * p + gamma * T ** 2
+        }
+
+        const compressibilityFactor = (p: number, T: number, x_v: number): number => {
+            const a0 = 1.58123e-6
+            const a1 = -2.9331e-8
+            const a2 = 1.1043e-10
+            const b0 = 5.707e-6
+            const b1 = -2.051e-8
+            const c0 = 1.9898e-4
+            const c1 = -2.376e-6
+            const d = 1.83e-11
+            const e = -0.765e-8
+
+            const t = T - cDegreesCtoK
+            const Z = 1 - (p / T) * (a0 + a1 * t + a2 * t ** 2 + (b0 + b1 * t) * x_v + (c0 + c1 * t) * x_v ** 2) + (p / T) ** 2 * (d + e * x_v ** 2)
+            return Z
+        }
+
+        // Temperature in Kelvin
+        const T_K = t + cDegreesCtoK
+
+        // Calculation of saturated vapor pressure and enhancement factor
+        const p_sv = saturationVaporPressure(T_K)
+        const f = enchancementFactor(p, t)
+
+        // Calculation of partial pressure and mole fraction of water vapor
+        const p_v = humidity / 100 * f * p_sv
+        const x_v = p_v / p
+
+        // Calculation of compressibility factor
+        const Z = compressibilityFactor(p, T_K, x_v)
+
+        const density = (p * M_a) / (Z * R * T_K) * (1 - x_v * (1 - M_v / M_a))
+        return 100 * density
+    }
+}
+
+
+class Vacuum extends Atmo {
     /**
-    * Calculates the density of air based on temperature, pressure, and humidity.
-    * 
-    * The calculation uses the formula for humid air, considering the partial pressures of dry air and water vapor.
-    * 
-    * @param {Object} options - Parameters for air density calculation.
-    * @param {Temperature} options.temperature - The air temperature.
-    * @param {Pressure} options.pressure - The atmospheric pressure.
-    * @param {number} options.humidity - The relative humidity as a decimal (where 1.0 is 100%).
-    * @returns {number} - The air density in Imperial units (lb/ft³).
-    * 
-    * @see https://en.wikipedia.org/wiki/Density_of_air#Humid_air
-    */
-    static airDensity({
-        temperature,
-        pressure: pressure,
-        humidity
+ * Represents atmospheric conditions and performs density calculations.
+ * 
+ * @param {Object} [options] - The options for initializing the atmospheric conditions.
+ * @param {number | Distance | null} [options.altitude=null] - Altitude above sea level, or a distance object.
+ * @param {number | Pressure | null} [options.pressure=null] - Atmospheric pressure, or a pressure object.
+ * @param {number | Temperature | null} [options.temperature=null] - Temperature in Fahrenheit, or a temperature object.
+ * @param {number} [options.humidity=0.0] - Relative humidity as a decimal (default: 0.0, where 1.0 is 100%).
+ */
+    constructor({
+        altitude = null,
+        temperature = null,
     }: {
-        temperature: Temperature,
-        pressure: Pressure,
-        humidity: number
-    }): number {
-        // Density in Imperial units (lb/ft^3)
-        const tC = temperature.In(Temperature.Celsius)
-        const pM = pressure.In(Pressure.hPa) * 100
-        const psat = 6.1078 * Math.pow(10, 17.27 * tC / (tC + 237.3))
-        const pv = humidity * psat  // Pressure of water vapor in Pascals
-        const pd = pM - pv  // Partial pressure of dry air in Pascals
-        // Density in metric units kg/m^3
-        const density = (pd * 0.0289652 + pv * 0.018016) / (8.31446 * (tC + cDegreesCtoK))
-        return density / cDensityImperialToMetric
+        altitude?: (number | Distance | null);
+        temperature?: (number | Temperature | null);
+    }
+    ) {
+        super({ altitude, pressure: 0, temperature, humidity: 0 })
+        // this.cLowestTempC = cDegreesCtoK
+        // this.pressure = 
+        // this.densityRatio = 
     }
 
-    /**
-    * Gets the air density in metric units (kg/m³).
-    * 
-    * The density is calculated based on the `densityRatio` and the standard air density at sea level in metric units.
-    * 
-    * @returns {number} - The air density in kilograms per cubic meter (kg/m³).
-    */
-    get densityMetric(): number {
-        const cStandardDensityMetric = 1.225; // Standard air density at sea level (kg/m^3)
-        return this.densityRatio * cStandardDensityMetric;
-    }
+    updateDensityRatio() {
 
-    /**
-    * Gets the air density in imperial units (lb/ft³).
-    * 
-    * The density is calculated based on the `densityRatio` and the standard air density at sea level in imperial units.
-    * 
-    * @returns {number} - The air density in pounds per cubic foot (lb/ft³).
-    */
-    get densityImperial(): number {
-        const cStandardDensity = 0.0765; // Standard air density at sea level (lb/ft^3)
-        return this.densityRatio * cStandardDensity;
-    }
-
-    /**
-    * Calculates the interpolated temperature at a given altitude above sea level (ASL).
-    * 
-    * This method uses the standard lapse rate to adjust the temperature based on the altitude difference from the reference altitude.
-    * 
-    * @param {number} altitude - The altitude above sea level (in feet).
-    * @returns {number} - The temperature at the given altitude in degrees Fahrenheit (°F).
-    */
-    temperatureAtAltitude(altitude: number): number {
-        return (altitude - this._a0) * cLapseRateImperial + this._t0
-    }
-
-    /**
-    * Calculates air density based on the given temperature and pressure, adjusting for the specified atmosphere conditions.
-    * 
-    * The calculation accounts for humidity's effect on air density and uses temperature in degrees Fahrenheit and pressure in inches of mercury.
-    * 
-    * @param {Object} options - The parameters for the density calculation.
-    * @param {number} options.t - The temperature in degrees Fahrenheit (°F).
-    * @param {number} options.p - The atmospheric pressure in inches of mercury (inHg).
-    * @returns {number} - The air density in pounds per cubic foot (lb/ft³).
-    */
-    calculateDensity({ t, p }: { t: number, p: number }): number {
-        let hc
-        if (t > 0) {
-            const et0 = cA0 + t * (cA1 + t * (cA2 + t * (cA3 + t * cA4)))
-            const et = cA5 * this.humidity * et0
-            hc = (p - 0.3783 * et) / cStandardPressure
-        } else {
-            hc = 1.0
-        }
-        return cStandardDensity * ((cStandardTemperatureF + cDegreesFtoR) / (t + cDegreesFtoR)) * hc
-    }
-
-    /**
-    * Gets the air density factor and Mach number for a given altitude.
-    * 
-    * If the altitude is within 30 feet of the current altitude, the method returns the current density ratio and Mach number.
-    * For other altitudes, it uses an exponential approximation for the air density ratio and calculates the Mach number based on the interpolated temperature at the given altitude.
-    * 
-    * @param {number} altitude - The altitude above sea level in feet.
-    * @returns {[number, number]} - A tuple containing:
-    *   - The air density ratio relative to the standard density.
-    *   - The Mach number at the given altitude.
-    */
-    getDensityFactorAndMachForAltitude(altitude: number): [number, number] {
-        if (Math.abs(this._a0 - altitude) < 30) {
-            return [this.densityRatio, this._mach1];
-        } else {
-            // Exponential approximation for air density ratio
-            const densityRatio = Math.exp(-altitude / 34112.0);
-            const temperature = this.temperatureAtAltitude(altitude);
-            const mach = Atmo.machF(temperature);
-            return [densityRatio, mach];
-        }
     }
 }
 
@@ -316,7 +307,7 @@ class Wind {
     readonly velocity: Velocity
     readonly directionFrom: Angular
     readonly untilDistance: Distance
-    public static MAX_DISTANCE_FEET: number = 1e8
+    public MAX_DISTANCE_FEET: number = cMaxWindDistanceFeet
 
     /**
      * Stores wind data at the desired distance.
@@ -331,7 +322,7 @@ class Wind {
         velocity = null,
         directionFrom = null,
         untilDistance = null,
-        maxDistanceFeet = 1e8
+        maxDistanceFeet = cMaxWindDistanceFeet
     }: {
         velocity?: (number | Velocity | null);
         directionFrom?: (number | Angular | null);
@@ -339,10 +330,18 @@ class Wind {
         maxDistanceFeet?: (number | null)
     }) {
         // Coerce input values to appropriate units
-        Wind.MAX_DISTANCE_FEET = maxDistanceFeet ?? 1e8
+        this.MAX_DISTANCE_FEET = maxDistanceFeet ?? cMaxWindDistanceFeet;
         this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);
         this.directionFrom = unitTypeCoerce(directionFrom ?? 0, Angular, preferredUnits.angular);
-        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(Wind.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
+        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(this.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
+    }
+
+    get vector(): Vector {
+        const windVelocityFps = this.velocity.In(Velocity.FPS)
+        const windDirectionRad = this.directionFrom.In(Angular.Radian)
+        const rangeComponent = windVelocityFps * Math.cos(windDirectionRad)
+        const crossComponent = windVelocityFps * Math.sin(windDirectionRad)
+        return new Vector(rangeComponent, 0, crossComponent)
     }
 }
 
@@ -351,13 +350,14 @@ class Wind {
  */
 class Shot {
 
-    weapon: Weapon;
-    ammo: Ammo;
     lookAngle: Angular;
     relativeAngle: Angular;
     cantAngle: Angular;
+
+    weapon: Weapon;
+    ammo: Ammo;
     atmo: Atmo;
-    winds: Wind[];
+    protected _winds: Wind[];
 
     /**
      * Creates an instance of the Shot class.
@@ -394,7 +394,15 @@ class Shot {
         this.weapon = weapon
         this.ammo = ammo;
         this.atmo = atmo ?? Atmo.icao({})
-        this.winds = (winds ?? [new Wind({})])
+        this._winds = winds ?? [new Wind({})]
+    }
+
+    set winds(winds: Wind[]) {
+        this._winds = winds ?? [new Wind({})]
+    }
+
+    get winds(): Wind[] {
+        return (this._winds ?? [new Wind({})])
             .slice()  // Create a copy of the array
             .sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
     }
@@ -434,4 +442,4 @@ class Shot {
 }
 
 
-export { Atmo, Wind, Shot };
+export { Atmo, Vacuum, Wind, Shot };
