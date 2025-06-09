@@ -309,7 +309,7 @@ class Wind {
     readonly velocity: Velocity
     readonly directionFrom: Angular
     readonly untilDistance: Distance
-    public MAX_DISTANCE_FEET: number = cMaxWindDistanceFeet
+    public static MAX_DISTANCE_FEET: number = cMaxWindDistanceFeet
 
     /**
      * Stores wind data at the desired distance.
@@ -332,10 +332,10 @@ class Wind {
         maxDistanceFeet?: (number | null)
     }) {
         // Coerce input values to appropriate units
-        this.MAX_DISTANCE_FEET = maxDistanceFeet ?? cMaxWindDistanceFeet;
+        Wind.MAX_DISTANCE_FEET = maxDistanceFeet ?? cMaxWindDistanceFeet;
         this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);
         this.directionFrom = unitTypeCoerce(directionFrom ?? 0, Angular, preferredUnits.angular);
-        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(this.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
+        this.untilDistance = unitTypeCoerce(untilDistance ?? UNew.Foot(Wind.MAX_DISTANCE_FEET), Distance, preferredUnits.distance);
     }
 
     get vector(): Vector {
