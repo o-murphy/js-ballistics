@@ -12,7 +12,6 @@ import {
     Weight,
     AbstractUnit
 } from "./unit";
-import { Weapon } from "./munition";
 import { Shot } from "./conditions";
 
 enum TrajFlag {
@@ -21,9 +20,50 @@ enum TrajFlag {
     ZERO_DOWN = 1 << 1,
     MACH = 1 << 2,
     RANGE = 1 << 3,
-    DANGER = 1 << 4,
     ZERO = ZERO_UP | ZERO_DOWN,
-    ALL = ZERO | MACH | RANGE | DANGER
+    ALL = ZERO | MACH | RANGE,
+    APEX = 16,
+}
+
+
+const trajFlagNames: Record<number, string> = {
+    [TrajFlag.NONE]: 'NONE',
+    [TrajFlag.ZERO_UP]: 'ZERO_UP',
+    [TrajFlag.ZERO_DOWN]: 'ZERO_DOWN',
+    [TrajFlag.ZERO]: 'ZERO',
+    [TrajFlag.MACH]: 'MACH',
+    [TrajFlag.RANGE]: 'RANGE',
+    [TrajFlag.APEX]: 'APEX',
+    [TrajFlag.ALL]: 'ALL',
+}
+
+export const trajFlagName = (value: TrajFlag) => {
+    if (Object.prototype.hasOwnProperty.call(trajFlagNames, value)) {
+        return trajFlagNames[value];
+    }
+
+    let parts: string[] = [];
+    // Object.entries iterates over key-value pairs. Keys (bitStr) will be strings, so convert to number.
+    for (const [bitStr, name] of Object.entries(trajFlagNames)) {
+        const bit = Number(bitStr); // Convert the string key back to a number
+
+        // Ensure 'bit' is not 0 (e.g., TrajFlag.NONE) as (value & 0) == 0 is always true.
+        // And check if the 'bit' flag is set in the 'value'.
+        if (bit !== 0 && (value & bit) === bit) {
+            parts.push(name);
+        }
+    }
+
+    if (parts.includes("ZERO_UP") && parts.includes("ZERO_DOWN")) {
+        // Filter out both specific parts to keep the combined logic
+        parts = parts.filter(part => part !== "ZERO_UP" && part !== "ZERO_DOWN");
+        // If you had a specific combined name like `ZERO_TOGGLE` in _TrajFlagNames for `ZERO_UP | ZERO_DOWN`,
+        // that would have been caught by the direct lookup, so this step might be simpler.
+        // If the combination is dynamic, you might add a specific combined name here.
+        // e.g., parts.push("ZERO_TOGGLE"); // If you want a specific combined name
+    }
+
+    return parts.length > 0 ? parts.join("|") : "UNKNOWN";
 }
 
 class TrajectoryData {
@@ -144,7 +184,7 @@ class TrajectoryData {
             `${this.drag.toFixed(3)}`,
             _fmt(this.energy, preferredUnits.energy),
             _fmt(this.ogw, preferredUnits.ogw),
-            `${this.flag}`
+            `${trajFlagName(this.flag)}`
         ]
     }
 }
@@ -290,7 +330,9 @@ class HitResult {
         const _targetHeight: Distance = unitTypeCoerce(targetHeight, Distance, preferredUnits.distance);
         const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
 
-        const _lookAngle = lookAngle ? this.shot.lookAngle : unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular)
+        const _lookAngle: Angular = (lookAngle === null || lookAngle === undefined)
+            ? this.shot.lookAngle
+            : unitTypeCoerce(lookAngle, Angular, preferredUnits.angular);
 
         // Get index of first trajectory point with distance >= at_range
         const index = this.indexAtDistance(_atRange)

@@ -9,9 +9,9 @@ import {
     cLapseRateKperFoot,
     cStandardPressureMetric,
     cLapseRateMetric,
-    cStandardTemperatureC
+    cStandardTemperatureC,
+    cSpeedOfSoundMetric
 } from './constants';
-import { cSpeedOfSoundMetric } from './drag_model';
 import { Ammo, Weapon } from './munition';
 import {
     unitTypeCoerce, UNew,
@@ -23,13 +23,13 @@ import Vector from './vector';
 
 class Atmo {
 
-    private _altitude: Distance
-    private _pressure: Pressure
-    private _temperature: Temperature
-    private _powderTemp: Temperature
-    private _humidity: number
+    protected _altitude: Distance
+    protected _pressure: Pressure
+    protected _temperature: Temperature
+    protected _powderTemp: Temperature
+    protected _humidity: number
 
-    private _densityRatio: number
+    protected _densityRatio: number
     // readonly mach: Velocity
 
     protected _mach: number
@@ -273,6 +273,9 @@ class Atmo {
 
 
 class Vacuum extends Atmo {
+
+    public static cLowestTempC: number = cDegreesCtoK
+
     /**
  * Represents atmospheric conditions and performs density calculations.
  * 
@@ -291,9 +294,8 @@ class Vacuum extends Atmo {
     }
     ) {
         super({ altitude, pressure: 0, temperature, humidity: 0 })
-        // this.cLowestTempC = cDegreesCtoK
-        // this.pressure = 
-        // this.densityRatio = 
+        this._pressure = unitTypeCoerce(0, Pressure, preferredUnits.pressure)
+        this._densityRatio = 0
     }
 
     updateDensityRatio() {
@@ -394,11 +396,11 @@ class Shot {
         this.weapon = weapon
         this.ammo = ammo;
         this.atmo = atmo ?? Atmo.icao({})
-        this._winds = winds ?? [new Wind({})]
+        this.winds = winds;
     }
 
-    set winds(winds: Wind[]) {
-        this._winds = winds ?? [new Wind({})]
+    set winds(winds: Wind[] | null) { // Changed type to allow null
+        this._winds = (winds === null || winds.length === 0) ? [new Wind({})] : winds;
     }
 
     get winds(): Wind[] {
