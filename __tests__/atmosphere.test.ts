@@ -1,4 +1,4 @@
-import { Atmo, Temperature, Pressure, Velocity, UNew } from "../src";
+import Calculator, { Atmo, Temperature, Pressure, Velocity, UNew, Ammo, DragModel, Table, Weapon, Shot, Unit } from "../src";
 
 
 describe('Atmo Class Tests', () => {
@@ -9,13 +9,13 @@ describe('Atmo Class Tests', () => {
 
     beforeEach(() => {
         standard = Atmo.standard({});
-        highICAO = Atmo.standard({altitude: UNew.Foot(10000)});
-        highISA = Atmo.standard({altitude: UNew.Meter(1000)});
+        highICAO = Atmo.standard({ altitude: UNew.Foot(10000) });
+        highISA = Atmo.standard({ altitude: UNew.Meter(1000) });
         custom = new Atmo({
-                pressure: UNew.InHg(31),
-                temperature: UNew.Fahrenheit(30),
-                humidity: 0.5
-            }
+            pressure: UNew.InHg(31),
+            temperature: UNew.Fahrenheit(30),
+            humidity: 0.5
+        }
         );
     });
 
@@ -42,4 +42,53 @@ describe('Atmo Class Tests', () => {
         expect(Atmo.machC(-20)).toBeCloseTo(318.94, 1);
         expect(highISA.mach.In(Velocity.MPS)).toBeCloseTo(336.4, 1);
     });
+
+    test('Test altitude', () => {
+        // TODO: should warn
+        const _atmo = new Atmo({})
+        _atmo.getDensityFactorAndMachForAltitude(100_000)
+    })
+
+    test('test density', () => {
+        expect(Atmo.calculateAirDensity(20, 1013, 0)).toBeCloseTo(1.20383, 4)
+        expect(Atmo.calculateAirDensity(20, 1013, 1)).toBeCloseTo(1.19332, 4)
+    })
+
+    test('test changes', () => {
+        expect(standard.temperatureAtAltitude(5000)).toBeLessThan(standard.temperature.In(Temperature.Celsius))
+        expect(standard.pressureAtAltitude(5000)).toBeLessThan(standard.pressure.In(Pressure.hPa))
+        const [density_ratio, mach] = standard.getDensityFactorAndMachForAltitude(5000)
+        expect(density_ratio).toBeLessThan(standard.densityRatio)
+        expect(mach).toBeLessThan(standard.mach.In(Velocity.FPS))
+    })
+
+    test('test trajectory effects', () => {
+        const check_distance = UNew.Yard(1000)
+        const ammo = new Ammo({
+            dm: new DragModel({bc: 0.22, dragTable: Table.G7}),
+            mv: UNew.FPS(3000)
+        })
+        const weapon = new Weapon({})
+        const atmo = new Atmo({altitude: 0}) // Start with standard sea-level atmosphere
+        // Set baseline to zero at 1000 yards
+        const zero = new Shot({weapon, ammo, atmo})
+        const calc = new Calculator()
+        const baseline_trajectory = calc.fire({shot: zero, trajectoryRange: check_distance, trajectoryStep: check_distance})
+        const baseline = baseline_trajectory.getAtDistance(check_distance)
+
+        // Increasing humidity reduces air density which decreases drag
+        atmo.humidity = 1.0
+        const t_numid = calc.fire({shot: new Shot({weapon, ammo, atmo}), trajectoryRange: check_distance, trajectoryStep: check_distance})
+        expect(t_numid.getAtDistance(check_distance).time).toBeLessThan(baseline.time)
+
+        // Increasing temperature reduces air density which decreases drag
+        const warm = new Atmo({altitude: 0, temperature: UNew.Fahrenheit(120)})
+        const t_warm = calc.fire({shot: new Shot({weapon, ammo, atmo: warm}), trajectoryRange: check_distance, trajectoryStep: check_distance})
+        expect(t_warm.getAtDistance(check_distance).time).toBeLessThan(baseline.time)
+
+        // Increasing altitude reduces air density which decreases drag
+        const high = new Atmo({altitude: UNew.Foot(5000)})  // simulate increased altitude
+        const t_hight = calc.fire({shot: new Shot({weapon, ammo, atmo: high}), trajectoryRange: check_distance, trajectoryStep: check_distance})
+        expect(t_hight.getAtDistance(check_distance).time).toBeLessThan(baseline.time)
+    })
 });
