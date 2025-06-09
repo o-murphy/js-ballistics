@@ -10,9 +10,18 @@
   - [x] vacuum
   - [x] wind
   - [x] shot
+- [x] drag model
+- [ ] exceptions
+- [ ] helpers (partially)
+- [ ] interface
+- [ ] interface_config?
+- [ ] trajectory calc
+- [ ] trajectory data
+- [x] unit
+
 
 - [tests]
-  - [ ] atmosphere
+  - [x] atmosphere
   - [ ] computer
   - [ ] danger space
   - [ ] helpers

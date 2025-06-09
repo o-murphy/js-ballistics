@@ -2,9 +2,9 @@
 import { Distance, unitTypeCoerce, Weight, Velocity, preferredUnits, } from './unit';
 // @ts-ignore
 import Table from './drag_tables.js'
+import { cDegreesCtoK, cSpeedOfSoundMetric, cStandardTemperatureC } from './constants';
 
 
-export const cSpeedOfSoundMetric: number = 340.0
 
 /**
  * Represents a data point for drag calculation.
@@ -67,8 +67,12 @@ class BCPoint {
         }
 
         this.BC = BC
-        this.V = V ? unitTypeCoerce(V, Velocity, preferredUnits.velocity) : null
+        this.V = V ? unitTypeCoerce(V ?? 0, Velocity, preferredUnits.velocity) : null
         this.Mach = this.V ? this.V.In(Velocity.MPS) / cSpeedOfSoundMetric : (Mach ? Mach : 0)
+    }
+
+    static _machC(): number {
+        return Math.sqrt(cStandardTemperatureC + cDegreesCtoK) * cSpeedOfSoundMetric
     }
 }
 
@@ -116,11 +120,8 @@ class DragModel {
         length?: (number | Distance)
     }
     ) {
-        // Get the length of the dragTable
-        const tableLen = dragTable.length;
-
         // Check if the table length is not greater than 0
-        if (tableLen <= 0) {
+        if (dragTable.length <= 0) {
             throw new Error('Received empty drag table');
         } else if (bc <= 0) {
             // Check if the drag coefficient is not greater than zero
@@ -134,7 +135,7 @@ class DragModel {
         this.diameter = unitTypeCoerce(diameter ?? 0, Distance, preferredUnits.diameter);
         this.length = unitTypeCoerce(length ?? 0, Distance, preferredUnits.length);
         // Calculate and set the sectional density and form factor
-        if (weight && diameter) {
+        if (weight && diameter) {  // FIXME: Check if both > 0 
             this.sectionalDensity = this._getSectionalDensity();
             this.formFactor = this._getFormFactor(this.bc);
         }
