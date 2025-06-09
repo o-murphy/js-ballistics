@@ -17,6 +17,9 @@
 - [ ] interface
 - [ ] interface_config ?
 - [ ] trajectory calc
+  - [x] WindSock
+  - [x] TrajectoryDataFilter
+  - [ ] TrajectoryCalc
 - [x] trajectory data
 - [x] unit
 

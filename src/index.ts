@@ -25,9 +25,7 @@ import {
 
 import TrajectoryCalc, {
     getGlobalMaxCalcStepSize,
-    getGlobalUsePowderSensitivity,
     setGlobalMaxCalcStepSize,
-    setGlobalUsePowderSensitivity,
     resetGlobals
 } from "./trajectory_calc";
 import Calculator from "./interface";
@@ -54,9 +52,7 @@ export {
 
     TrajectoryCalc,
     getGlobalMaxCalcStepSize,
-    getGlobalUsePowderSensitivity,
     setGlobalMaxCalcStepSize,
-    setGlobalUsePowderSensitivity,
     resetGlobals,
 
     TrajectoryData,

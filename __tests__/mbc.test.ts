@@ -60,7 +60,7 @@ describe('TestMultiBC', () => {
         let multiShot = new Shot({ weapon: weapon, ammo: new Ammo({ dm: dmMulti, mv: ammo.mv }) })
         let multiTrajectory = calc.fire({ shot: multiShot, trajectoryRange: range, trajectoryStep: step }).trajectory
 
-        expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(baselineTrajectory[1].velocity.rawValue, 1)
+        expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(baselineTrajectory[1].velocity.rawValue, 5)
         expect(multiTrajectory[4].velocity.rawValue).toBeGreaterThan(baselineTrajectory[4].velocity.rawValue)
     });
 
