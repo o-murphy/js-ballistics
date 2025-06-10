@@ -57,10 +57,10 @@ describe("TrajectoryCalc", () => {
         const dm = new DragModel({ bc: 0.365, dragTable: Table.G1, weight: 69, diameter: 0.223, length: 0.9 })
         const ammo = new Ammo({ dm: dm, mv: 2600 })
         const weapon = new Weapon({ sightHeight: UNew.Inch(3.2) })
-        const atmosphere = Atmo.icao({})
-        const calc = new TrajectoryCalc(ammo)
+        const atmosphere = Atmo.icao()
+        const calc = new Calculator()
 
-        const zero_angle = calc.zeroAngle(
+        const zero_angle = calc.barrelElevationForTarget(
             new Shot({ weapon: weapon, ammo: ammo, atmo: atmosphere }),
             UNew.Yard(100)
         )
@@ -76,10 +76,10 @@ describe("TrajectoryCalc", () => {
         const ammo = new Ammo({ dm: dm, mv: 2750 })
         const weapon = new Weapon({ twist: UNew.Inch(2) })
 
-        const atmosphere = Atmo.icao({})
-        const calc = new TrajectoryCalc(ammo)
+        const atmosphere = Atmo.icao()
+        const calc = new Calculator()
 
-        const zero_angle = calc.zeroAngle(
+        const zero_angle = calc.barrelElevationForTarget(
             new Shot({ ammo: ammo, weapon: weapon, atmo: atmosphere }),
             UNew.Yard(100)
         )
@@ -94,7 +94,7 @@ describe("TrajectoryCalc", () => {
         const dm = new DragModel({ bc: 0.223, dragTable: Table.G1, weight: 168, diameter: 0.308, length: 1.282 })
         const ammo = new Ammo({ dm: dm, mv: 2750 })
         const weapon = new Weapon({ sightHeight: UNew.Inch(2), zeroElevation: UNew.Radian(0.001228) })
-        const atmo = Atmo.icao({})
+        const atmo = Atmo.icao()
 
         const shot_info = new Shot({
             weapon: weapon,
@@ -136,7 +136,7 @@ describe("TrajectoryCalc", () => {
             const dm = new DragModel({ bc: 0.223, dragTable: Table.G7, weight: 168, diameter: 0.308, length: 1.282 })
             const ammo = new Ammo({ dm: dm, mv: UNew.FPS(2750) })
             const weapon = new Weapon({ sightHeight: UNew.Inch(2), twist: UNew.Inch(12), zeroElevation: UNew.MOA(4.221) })
-            const atmo = Atmo.icao({})
+            const atmo = Atmo.icao()
     
             const shot_info = new Shot({
                 weapon: weapon,

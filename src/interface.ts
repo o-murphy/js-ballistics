@@ -1,16 +1,44 @@
-import TrajectoryCalc from "./trajectory_calc";
+import EulerEngine, { EulerEngineConfig } from "./trajectory_calc";
 import { Shot } from "./conditions";
 import { DragTable } from "./drag_model";
 import { HitResult } from "./trajectory_data";
 import { UNew, Angular, Distance, unitTypeCoerce, preferredUnits } from "./unit";
+import { createEngine, EngineConstructor, EngineInterface, GenericConfig } from "./generics/engine";
 
 
 /**
  * A class for performing calculations related to trajectories.
+ * @template C The specific configuration type for the engine used by this calculator.
  */
-export default class Calculator {
+export default class Calculator<C extends GenericConfig> { // Default to TrajectoryCalcConfig
 
-    protected _calc: TrajectoryCalc
+    // The _config property should match the generic type C
+    protected _config: Partial<C>;
+    // The engine constructor should be capable of creating an EngineInterface<C> (engine constructor)
+    protected _engine: EngineConstructor<C>;
+    // The actual instantiated engine (engine instance)
+    protected _calc: EngineInterface<C>;
+
+    /**
+     * Creates an instance of Calculator.
+     * @param options An object containing the configuration and an optional engine constructor.
+     * @param options.config The configuration for the engine.
+     * @param options.engine The constructor of the engine class to use (defaults to TrajectoryCalc).
+     */
+    constructor(options?: { config?: Partial<C>; engine?: EngineConstructor<C> }) {
+        // Assign config directly. It's required, not optional, for type safety.
+        options = options ?? {}
+        this._config = options.config ?? {};
+
+        if (options.engine) {
+            // Case 1: An explicit engine constructor is provided.
+            this._engine = options.engine;
+            this._calc = createEngine(this._engine, this._config);
+        } else {
+            this._engine = EulerEngine as EngineConstructor<EulerEngineConfig>;
+            this._calc = new EulerEngine(this._config as Partial<EulerEngineConfig>)
+        }
+    }
 
     /**
      * Retrieves the drag table data from the trajectory calculations.
@@ -31,7 +59,6 @@ export default class Calculator {
         shot: Shot,
         targetDistance: (number | Distance)
     ): Angular {
-        this._calc = new TrajectoryCalc(shot.ammo)
         const _targetDistance = unitTypeCoerce(targetDistance, Distance, preferredUnits.distance)
         const totalElevation = this._calc.zeroAngle(shot, _targetDistance)
         return UNew.Radian(
@@ -60,25 +87,27 @@ export default class Calculator {
      * @returns {HitResult} - The result of the shot, including information about the hit.
      */
     fire({
-        shot, 
+        shot,
         trajectoryRange,
-        trajectoryStep = 0,
+        trajectoryStep = 0.0,
         extraData = false,
+        timeStep = 0.0
     }: {
-        shot: Shot, 
+        shot: Shot,
         trajectoryRange: (number | Distance),
         trajectoryStep?: (number | Distance),
         extraData?: boolean,
+        timeStep?: number,
     }): HitResult {
         const _trajectoryRange: Distance = unitTypeCoerce(trajectoryRange, Distance, preferredUnits.distance)
+        let step = undefined
+        if (!trajectoryStep) {
+            step = UNew.Inch(_trajectoryRange.rawValue / 10.0)
+        } else {
+            step = unitTypeCoerce(trajectoryStep, Distance, preferredUnits.distance)
+        }
 
-        const _trajectoryStep = trajectoryStep
-            ? unitTypeCoerce(trajectoryStep, Distance, preferredUnits.distance)
-            : _trajectoryRange.In(_trajectoryRange.units)
-
-        this._calc = new TrajectoryCalc(shot.ammo)
-
-        const data = this._calc.trajectory(shot, _trajectoryRange, _trajectoryStep, extraData)
+        const data = this._calc.trajectory(shot, _trajectoryRange, step, extraData, timeStep)
         return new HitResult(shot, data, extraData)
     }
 }

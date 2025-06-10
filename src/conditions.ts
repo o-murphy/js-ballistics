@@ -62,7 +62,7 @@ class Atmo {
         temperature?: (number | Temperature | null);
         humidity?: number;
         powderT?: (number | Temperature | null);
-    }
+    } = {}
     ) {
         this._initializing = true
         this._altitude = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance);
@@ -179,16 +179,15 @@ class Atmo {
         )
     }
 
-    static icao({
-        altitude = 0,
-        temperature = null,
-        humidity = cStandardHumidity
-    }: {
+    static icao({ // Destructure directly in the parameter list
+        altitude = 0, // Default altitude to 0 if not provided in the options object
+        temperature = null,  // No default here; handle null/undefined explicitly in the body
+        humidity = cStandardHumidity // Default humidity to cStandardHumidity if not provided
+    }: { // Type of the destructured options object
         altitude?: number | Distance,
         temperature?: number | Temperature | null,
         humidity?: number
-    }
-    ) {
+    } = {}) {
         const _altitude = unitTypeCoerce(altitude, Distance, preferredUnits.distance)
         if (temperature === null || temperature === undefined) {
             temperature = Atmo.standardTemperature(_altitude)
@@ -291,7 +290,7 @@ class Vacuum extends Atmo {
     }: {
         altitude?: (number | Distance | null);
         temperature?: (number | Temperature | null);
-    }
+    } = {}
     ) {
         super({ altitude, pressure: 0, temperature, humidity: 0 })
         this._pressure = unitTypeCoerce(0, Pressure, preferredUnits.pressure)
@@ -330,7 +329,8 @@ class Wind {
         directionFrom?: (number | Angular | null);
         untilDistance?: (number | Distance | null);
         maxDistanceFeet?: (number | null)
-    }) {
+    } = {}
+    ) {
         // Coerce input values to appropriate units
         Wind.MAX_DISTANCE_FEET = maxDistanceFeet ?? cMaxWindDistanceFeet;
         this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);

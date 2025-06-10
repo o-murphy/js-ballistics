@@ -23,7 +23,7 @@ import {
     HitResult
 } from "./trajectory_data"
 
-import TrajectoryCalc, {
+import EulerEngine, {
     getGlobalMaxCalcStepSize,
     setGlobalMaxCalcStepSize,
     resetGlobals
@@ -50,7 +50,7 @@ export {
 
     Weapon, Ammo,
 
-    TrajectoryCalc,
+    EulerEngine as TrajectoryCalc,
     getGlobalMaxCalcStepSize,
     setGlobalMaxCalcStepSize,
     resetGlobals,
