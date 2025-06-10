@@ -1,5 +1,5 @@
 import { expect, describe, test, beforeEach } from '@jest/globals';
-import Calculator, { Ammo, Wind, Atmo, DragModel, Table, UNew, Weapon, Shot, HitResult, setGlobalUsePowderSensitivity, getGlobalUsePowderSensitivity } from '../src';
+import Calculator, { Ammo, Wind, Atmo, DragModel, Table, UNew, Weapon, Shot, HitResult } from '../src';
 
 
 describe('TestComputer', () => {
@@ -20,7 +20,7 @@ describe('TestComputer', () => {
         dm = new DragModel({ bc: 0.22, dragTable: Table.G7, weight: 168, diameter: 0.308, length: 1.22 });
         ammo = new Ammo({ dm: dm, mv: UNew.FPS(2600) });
         weapon = new Weapon({ sightHeight: 4, twist: 12 });
-        atmo = Atmo.icao({});
+        atmo = Atmo.icao();
         calc = new Calculator();
         baselineShot = new Shot({ weapon: weapon, ammo: ammo, atmo: atmo });
         baselineTrajectory = calc.fire({ shot: baselineShot, trajectoryRange: range, trajectoryStep: step });

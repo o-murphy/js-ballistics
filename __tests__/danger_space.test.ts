@@ -23,7 +23,7 @@ describe('TestDangerSpace', () => {
         
         // Create Shot and Calculator
         const shot = new Shot({
-            weapon: new Weapon({}),
+            weapon: new Weapon(),
             ammo: ammo,
             winds: currentWinds
         });
