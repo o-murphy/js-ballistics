@@ -138,6 +138,7 @@ class TrajectoryDataFilter {
         this.timeStep = timeStep
         this.rangeStep = rangeStep
         this.timeOfLastRecord = 0.0
+        this.nextRecordDistance = 0.0
         this.previousMach = 0.0
         this.previousTime = 0.0
         this.previousPosition = initialPosition
@@ -318,20 +319,6 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
      */
     get tableData(): DragTable {
         return this._tableData
-    }
-
-    /**
-     * Retrieves the calculation step size for trajectory calculations.
-     * @param {number} [step=0] - The step size to retrieve.
-     * @returns {number} The calculation step size.
-     */
-    getCalcStep(step: number = 0): number {
-        const preferredStep = this._config.maxCalcStepSizeFeet;
-
-        if (step === 0) {
-            return preferredStep / 2.0;
-        }
-        return Math.min(step, preferredStep) / 2.0;
     }
 
     zeroAngle(shotInfo: Shot, distance: Distance): Angular {
@@ -523,8 +510,21 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
                 )
             )
         }
-        console.log(`ranges: ${ranges.length}`)
         return ranges
+    }
+
+    /**
+     * Retrieves the calculation step size for trajectory calculations.
+     * @param {number} [step=0] - The step size to retrieve.
+     * @returns {number} The calculation step size.
+     */
+    getCalcStep(step: number = 0): number {
+        const preferredStep = this._config.maxCalcStepSizeFeet;
+
+        if (step === 0) {
+            return preferredStep / 2.0;
+        }
+        return Math.min(step, preferredStep) / 2.0;
     }
 
     /**

@@ -47,7 +47,6 @@ describe('TestDangerSpace', () => {
         //     expect(Math.abs(actual - expected)).toBeLessThanOrEqual(tolerance);
         // }
         
-
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(393.6, 1e-1)
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(579.0, 1e-1)
 
