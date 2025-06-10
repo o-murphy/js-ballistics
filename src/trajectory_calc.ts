@@ -15,7 +15,7 @@ import { EngineInterface, GenericConfig } from './generics/engine';
 const cZeroFindingAccuracy: number = 0.000005;
 const cMinimumVelocity: number = 50.0;
 const cMaximumDrop: number = -15000;
-const cMaxIterations: number = 20;
+const cMaxIterations: number = 60;
 const cGravityConstant: number = -32.17405;
 const cMinimumAltitude: number = -1410.748 // ft
 
@@ -102,7 +102,7 @@ interface EulerEngineConfig extends GenericConfig {
     cMinimumAltitude: number;
 }
 
-type BaseTrajData = {
+type BaseTrajectoryData = {
     time: number;
     position: Vector;
     velocity: Vector;
@@ -159,8 +159,8 @@ class TrajectoryDataFilter {
         this.currentFlag = TrajFlag.NONE
     }
 
-    shouldRecord(position: Vector, velocity: Vector, mach: number, time: number): BaseTrajData | null {
-        let data: BaseTrajData | null = null
+    shouldRecord(position: Vector, velocity: Vector, mach: number, time: number): BaseTrajectoryData | null {
+        let data: BaseTrajectoryData | null = null
         if (this.rangeStep > 0 && position.x >= this.nextRecordDistance) {
             while (this.nextRecordDistance + this.rangeStep < position.x) {
                 this.nextRecordDistance += this.rangeStep
@@ -169,19 +169,20 @@ class TrajectoryDataFilter {
                 const ratio = (this.nextRecordDistance - this.previousPosition.x) / (position.x - this.previousPosition.x)
                 data = {
                     time: this.previousTime + (time - this.previousTime) * ratio,
-                    position: this.previousPosition.add(position.subtract(this.previousPosition)).mulByConst(ratio),
-                    velocity: this.previousVelocity.add(velocity.subtract(this.previousVelocity)).mulByConst(ratio),
+                    position: this.previousPosition.add(position.subtract(this.previousPosition).mulByConst(ratio)),
+                    velocity: this.previousVelocity.add(velocity.subtract(this.previousVelocity).mulByConst(ratio)),
                     mach: this.previousMach + (mach - this.previousMach) * ratio
                 }
             }
             this.currentFlag |= TrajFlag.RANGE
             this.nextRecordDistance += this.rangeStep
-            this.timeOfLastRecord += time
+            this.timeOfLastRecord = time
         } else if (this.timeStep > 0) {
             this.checkNextTime(time)
         }
         this.checkZeroCrossing(position)
         this.checkMachCrossing(velocity.magnitude(), mach)
+
         if (Boolean(this.currentFlag & this.filter) && data === null) {
             data = {
                 time, position, velocity, mach
@@ -191,14 +192,13 @@ class TrajectoryDataFilter {
         this.previousPosition = position
         this.previousVelocity = velocity
         this.previousMach = mach
-
         return data
     }
 
     checkNextTime(time: number) {
         if (time > this.timeOfLastRecord + this.timeStep) {
-            this.currentFlag |= TrajFlag.RANGE,
-                this.timeOfLastRecord = time
+            this.currentFlag |= TrajFlag.RANGE
+            this.timeOfLastRecord = time
         }
     }
 
@@ -212,13 +212,16 @@ class TrajectoryDataFilter {
 
     checkZeroCrossing(rangeVector: Vector) {
         if (rangeVector.x > 0) {
+
             const referenceHeight = rangeVector.x * Math.tan(this.lookAngle)
+
             if (!(this.seenZero & TrajFlag.ZERO_UP)) {
                 if (rangeVector.y >= referenceHeight) {
                     this.currentFlag |= TrajFlag.ZERO_UP
                     this.seenZero |= TrajFlag.ZERO_UP
                 }
-            } else if (this.seenZero & TrajFlag.ZERO_DOWN) {
+            }
+            else if (!(this.seenZero & TrajFlag.ZERO_DOWN)) {
                 if (rangeVector.y < referenceHeight) {
                     this.currentFlag |= TrajFlag.ZERO_DOWN
                     this.seenZero |= TrajFlag.ZERO_DOWN
@@ -265,7 +268,7 @@ class WindSock {
     }
 
     vectorForRange(nextRange: number): Vector {
-        if (nextRange >= this._length) {
+        if (nextRange >= this.nextRange) {
             this.current += 1
             if (this.current >= this._length) {
                 this._last_vector_cache = new Vector(0.0, 0.0, 0.0)
@@ -283,11 +286,11 @@ class WindSock {
 export const defaultEulerConfig: EulerEngineConfig = {
     maxCalcStepSizeFeet: _globalMaxCalcStepSize,
     cZeroFindingAccuracy,
-    cMinimumAltitude,
-    cMaximumDrop,
-    cGravityConstant,
     cMinimumVelocity,
-    cMaxIterations
+    cMaximumDrop,
+    cMaxIterations,
+    cGravityConstant,
+    cMinimumAltitude,
 }
 
 
@@ -305,7 +308,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
     protected _tProps: EulerEngineTrajectoryProps;
 
     constructor(config: Partial<EulerEngineConfig>) {
-        this._config = {...defaultEulerConfig, ...config}
+        this._config = { ...defaultEulerConfig, ...config }
         this.gravityVector = new Vector(.0, this._config.cGravityConstant, .0)
     }
 
@@ -389,7 +392,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
             filterFlags = TrajFlag.ALL
         }
         this._initTrajectory(shotInfo)
-        return this._integrate(shotInfo, maxRange.In(Distance.Foot), filterFlags, timeStep)
+        return this._integrate(shotInfo, maxRange.In(Distance.Foot), distStep.In(Distance.Foot), filterFlags, timeStep)
     }
 
     /**
@@ -417,9 +420,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
             cantSine: Math.sin(shotInfo.cantAngle.In(Angular.Radian)),
             alt0: shotInfo.atmo.altitude.In(Distance.Foot),
             calcStep: this.getCalcStep(),
-            muzzleVelocity: (_globalUsePowderSensitivity ?
-                shotInfo.ammo.getVelocityForTemp(shotInfo.atmo.temperature) :
-                shotInfo.ammo.mv).In(Velocity.FPS),
+            muzzleVelocity: shotInfo.ammo.getVelocityForTemp(shotInfo.atmo.powderTemp).In(Velocity.FPS),
             stabilityCoefficient: 0
         }
         this._tProps.stabilityCoefficient = this.calcStabilityCoefficient(shotInfo.atmo)
@@ -427,6 +428,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
 
     protected _integrate(shotInfo: Shot, maximumRange: number, recordStep: number, filterFlags: TrajFlag, timeStep: number = 0.0): TrajectoryData[] {
         const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } = this._config
+
         let ranges: TrajectoryData[] = [];
         let time: number = .0;
         let drag: number = .0;
@@ -521,6 +523,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
                 )
             )
         }
+        console.log(`ranges: ${ranges.length}`)
         return ranges
     }
 
@@ -529,7 +532,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
      * @param {number} mach - The Mach number for which the drag coefficient is to be calculated.
      * @returns {number} - The calculated drag coefficient for the provided Mach number.
      */
-    protected dragByMach(mach: number): number {
+    dragByMach(mach: number): number {
         const cd = calculateByCurveAndMachList(this.__mach_list, this._curve, mach); // Assuming `calculateByCurve` exists
         return cd * 2.08551e-04 / this._bc;
     }
@@ -539,7 +542,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
      * @param {number} time - The time in seconds for which the spin drift is to be calculated.
      * @returns {number} - The calculated spin drift in inches over the specified time.
      */
-    protected spinDrift(time: number): number {
+    spinDrift(time: number): number {
         if (this._tProps.twist !== 0) {
             const sign = this._tProps.twist > 0 ? 1 : -1;
             return sign * (1.25 * (this._tProps.stabilityCoefficient + 1.2) * Math.pow(time, 1.83)) / 12;
@@ -552,7 +555,7 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
      * @param {Atmo} atmo - The atmospheric conditions including temperature, pressure, and humidity.
      * @returns {number} - The calculated stability coefficient.
      */
-    protected calcStabilityCoefficient(atmo: Atmo): number {
+    calcStabilityCoefficient(atmo: Atmo): number {
         const { twist, length, weight, diameter, muzzleVelocity } = this._tProps
         if (twist && length && diameter && atmo.pressure.rawValue) {
             const twistRate = Math.abs(twist) / diameter;
@@ -576,17 +579,6 @@ class EulerEngine implements EngineInterface<EulerEngineConfig> {
         return 0;
     }
 
-}
-
-/**
- * Converts wind data into a vector representation.
- * @param {Wind} wind - The wind data including velocity and direction.
- * @returns {Vector} - The vector representation of the wind.
- */
-function windToVector(wind: Wind): Vector {
-    const rangeComponent = wind.velocity.In(Velocity.FPS) * Math.cos(wind.directionFrom.In(Angular.Radian))
-    const crossComponent = wind.velocity.In(Velocity.FPS) * Math.sin(wind.directionFrom.In(Angular.Radian))
-    return new Vector(rangeComponent, .0, crossComponent)
 }
 
 /**

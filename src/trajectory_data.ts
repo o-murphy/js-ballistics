@@ -238,8 +238,8 @@ class HitResult {
      */
 
     readonly shot: Shot
-    readonly _trajectory: TrajectoryData[]
-    readonly _extra: boolean = false
+    readonly trajectory: TrajectoryData[]
+    readonly extra: boolean = false
 
     constructor(
         shot: Shot,
@@ -247,8 +247,8 @@ class HitResult {
         extra: boolean = false,
     ) {
         this.shot = shot
-        this._trajectory = trajectory
-        this._extra = extra
+        this.trajectory = trajectory
+        this.extra = extra
     }
 
     /**
@@ -256,31 +256,11 @@ class HitResult {
      * @returns {TrajectoryData[]} - A new array containing the trajectory data.
      */
     toArray(): TrajectoryData[] {
-        return [...this._trajectory];
-    }
-
-    // get(index: number) {
-    //     return this._trajectory[index];
-    // }
-
-    /**
-     * Gets the trajectory data.
-     * @returns {TrajectoryData[]} - The trajectory data array.
-     */
-    get trajectory(): TrajectoryData[] {
-        return this._trajectory
-    }
-
-    /**
-     * Gets the extra data flag.
-     * @returns {boolean} - True if extra data is included, otherwise false.
-     */
-    get extra(): boolean {
-        return this._extra
+        return [...this.trajectory];
     }
 
     protected _checkExtra(): void {
-        if (!this._extra) {
+        if (!this.extra) {
             throw new Error(`${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`);
         }
     }
@@ -288,7 +268,7 @@ class HitResult {
     zeros(): TrajectoryData[] {
         this._checkExtra();
 
-        const data = this._trajectory.filter(row => row.flag & TrajFlag.ZERO);
+        const data = this.trajectory.filter(row => row.flag & TrajFlag.ZERO);
         if (data.length < 1) {
             throw new Error("Can't find zero crossing points");
         }
@@ -381,7 +361,7 @@ class HitResult {
         };
 
         return new DangerSpace(
-            this._trajectory[index],
+            this.trajectory[index],
             _targetHeight,
             findBeginDanger(index),
             findEndDanger(index),
