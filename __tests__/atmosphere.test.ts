@@ -1,4 +1,4 @@
-import Calculator, { Atmo, Temperature, Pressure, Velocity, UNew, Ammo, DragModel, Table, Weapon, Shot, Unit } from "../src";
+import { Calculator, Atmo, Temperature, Pressure, Velocity, UNew, Ammo, DragModel, Table, Weapon, Shot } from "../src";
 
 
 describe('Atmo Class Tests', () => {
@@ -65,30 +65,30 @@ describe('Atmo Class Tests', () => {
     test('test trajectory effects', () => {
         const check_distance = UNew.Yard(1000)
         const ammo = new Ammo({
-            dm: new DragModel({bc: 0.22, dragTable: Table.G7}),
+            dm: new DragModel({ bc: 0.22, dragTable: Table.G7 }),
             mv: UNew.FPS(3000)
         })
         const weapon = new Weapon()
-        const atmo = new Atmo({altitude: 0}) // Start with standard sea-level atmosphere
+        const atmo = new Atmo({ altitude: 0 }) // Start with standard sea-level atmosphere
         // Set baseline to zero at 1000 yards
-        const zero = new Shot({weapon, ammo, atmo})
+        const zero = new Shot({ weapon, ammo, atmo })
         const calc = new Calculator()
-        const baseline_trajectory = calc.fire({shot: zero, trajectoryRange: check_distance, trajectoryStep: check_distance})
+        const baseline_trajectory = calc.fire({ shot: zero, trajectoryRange: check_distance, trajectoryStep: check_distance })
         const baseline = baseline_trajectory.getAtDistance(check_distance)
 
         // Increasing humidity reduces air density which decreases drag
         atmo.humidity = 1.0
-        const tNumid = calc.fire({shot: new Shot({weapon, ammo, atmo}), trajectoryRange: check_distance, trajectoryStep: check_distance})
+        const tNumid = calc.fire({ shot: new Shot({ weapon, ammo, atmo }), trajectoryRange: check_distance, trajectoryStep: check_distance })
         expect(tNumid.getAtDistance(check_distance).time).toBeLessThan(baseline.time)
 
         // Increasing temperature reduces air density which decreases drag
-        const warm = new Atmo({altitude: 0, temperature: UNew.Fahrenheit(120)})
-        const tWarm = calc.fire({shot: new Shot({weapon, ammo, atmo: warm}), trajectoryRange: check_distance, trajectoryStep: check_distance})
+        const warm = new Atmo({ altitude: 0, temperature: UNew.Fahrenheit(120) })
+        const tWarm = calc.fire({ shot: new Shot({ weapon, ammo, atmo: warm }), trajectoryRange: check_distance, trajectoryStep: check_distance })
         expect(tWarm.getAtDistance(check_distance).time).toBeLessThan(baseline.time)
 
         // Increasing altitude reduces air density which decreases drag
-        const high = new Atmo({altitude: UNew.Foot(5000)})  // simulate increased altitude
-        const tHight = calc.fire({shot: new Shot({weapon, ammo, atmo: high}), trajectoryRange: check_distance, trajectoryStep: check_distance})
+        const high = new Atmo({ altitude: UNew.Foot(5000) })  // simulate increased altitude
+        const tHight = calc.fire({ shot: new Shot({ weapon, ammo, atmo: high }), trajectoryRange: check_distance, trajectoryStep: check_distance })
         expect(tHight.getAtDistance(check_distance).time).toBeLessThan(baseline.time)
     })
 });

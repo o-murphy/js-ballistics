@@ -1,17 +1,16 @@
-export default class Vector {
-
+class Vector {
     constructor(
         public x: number,
         public y: number,
         public z: number,
-    ) { }
+    ) {}
 
     copy() {
-        return new Vector(this.x, this.y, this.z)
+        return new Vector(this.x, this.y, this.z);
     }
 
     magnitude(): number {
-        return Math.hypot(this.x, this.y, this.z)
+        return Math.hypot(this.x, this.y, this.z);
     }
 
     mulByConst(a: number): Vector {
@@ -42,3 +41,5 @@ export default class Vector {
         return this.mulByConst(1.0 / m);
     }
 }
+
+export default Vector;

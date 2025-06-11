@@ -1,28 +1,28 @@
 // Global Constants
 
-export const cStandardHumidity: number = 0.0;  // Relative Humidity
-export const cPressureExponent: number = 5.255876;  // =g*M/R*L
+export const cStandardHumidity: number = 0.0; // Relative Humidity
+export const cPressureExponent: number = 5.255876; // =g*M/R*L
 
 // ISA, metric preferred units: (https://www.engineeringtoolbox.com/international-standard-atmosphere-d_985.html)
-export const cDegreesCtoK: number = 273.15;  // °K = °C + 273.15
-export const cStandardTemperatureC: number = 15.0;  // °C
-export const cLapseRateKperFoot: number = -0.0019812;  // Lapse Rate, °K/ft
-export const cLapseRateMetric: number = -6.5e-03;  // Lapse Rate, °C/m
-export const cStandardPressureMetric: number = 1013.25;  // hPa
-export const cSpeedOfSoundMetric: number = 20.0467;  // Mach1 in m/s = cSpeedOfSound * sqrt(°K)
-export const cStandardDensityMetric: number = 1.2250;  // kg/m^3
-export const cDensityImperialToMetric: number = 16.0185;  // lb/ft^3 to kg/m^3
+export const cDegreesCtoK: number = 273.15; // °K = °C + 273.15
+export const cStandardTemperatureC: number = 15.0; // °C
+export const cLapseRateKperFoot: number = -0.0019812; // Lapse Rate, °K/ft
+export const cLapseRateMetric: number = -6.5e-3; // Lapse Rate, °C/m
+export const cStandardPressureMetric: number = 1013.25; // hPa
+export const cSpeedOfSoundMetric: number = 20.0467; // Mach1 in m/s = cSpeedOfSound * sqrt(°K)
+export const cStandardDensityMetric: number = 1.225; // kg/m^3
+export const cDensityImperialToMetric: number = 16.0185; // lb/ft^3 to kg/m^3
 
 // ICAO standard atmosphere:
-export const cDegreesFtoR: number = 459.67;  // °R = °F + 459.67
-export const cStandardTemperatureF: number = 59.0;  // °F
-export const cLapseRateImperial: number = -3.56616e-03;  // Lapse rate, °F/ft
-export const cStandardPressure: number = 29.92;  // InHg
-export const cSpeedOfSoundImperial: number = 49.0223;  // Mach1 in fps = cSpeedOfSound * sqrt(°R)
-export const cStandardDensity: number = 0.076474;  // lb/ft^3
+export const cDegreesFtoR: number = 459.67; // °R = °F + 459.67
+export const cStandardTemperatureF: number = 59.0; // °F
+export const cLapseRateImperial: number = -3.56616e-3; // Lapse rate, °F/ft
+export const cStandardPressure: number = 29.92; // InHg
+export const cSpeedOfSoundImperial: number = 49.0223; // Mach1 in fps = cSpeedOfSound * sqrt(°R)
+export const cStandardDensity: number = 0.076474; // lb/ft^3
 
 // Runtime constants
-export const cLowestTempF: number = -130;  // °F
+export const cLowestTempF: number = -130; // °F
 export const cMaxWindDistanceFeet: number = 1e8; // From python
 
 // CIPM 2007 Air Density Constants (from calculate_air_density in conditions.py)

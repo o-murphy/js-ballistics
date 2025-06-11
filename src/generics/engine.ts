@@ -8,22 +8,26 @@ interface GenericConfig {
 }
 
 interface EngineConstructor<C extends GenericConfig> {
-    new(config: Partial<C>): EngineInterface<C>;
+    new (config: Partial<C>): EngineInterface<C>;
 }
 
 interface EngineInterface<C extends GenericConfig> {
     readonly tableData: DragTable;
     zeroAngle(shotInfo: Shot, distance: Distance): Angular;
-    trajectory(shotInfo: Shot, maxRange: Distance, distStep: Distance, extraData?: boolean, timeStep?: number): TrajectoryData[];
+    trajectory(
+        shotInfo: Shot,
+        maxRange: Distance,
+        distStep: Distance,
+        extraData?: boolean,
+        timeStep?: number,
+    ): TrajectoryData[];
 }
 
-function createEngine<C extends GenericConfig>(ctor: EngineConstructor<C>, config: Partial<C>): EngineInterface<C> {
+function createEngine<C extends GenericConfig>(
+    ctor: EngineConstructor<C>,
+    config: Partial<C>,
+): EngineInterface<C> {
     return new ctor(config);
 }
 
-export {
-    GenericConfig,
-    EngineConstructor,
-    EngineInterface,
-    createEngine
-}
+export { GenericConfig, EngineConstructor, EngineInterface, createEngine };
