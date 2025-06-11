@@ -14,6 +14,7 @@ import {
     CurvePoint,
 } from "./base_engine";
 import EulerIntegrationEngine from "./euler";
+import RK4IntegrationEngine from "./rk4";
 
 export {
     createTrajectoryRow,
@@ -22,7 +23,7 @@ export {
     BaseEngineTrajectoryProps,
     BaseIntegrationEngine,
     EulerIntegrationEngine,
-    // RK4IntegrationEngine,
+    RK4IntegrationEngine,
     defaultEngineConfig,
     calculateEnergy,
     calculateOGW,

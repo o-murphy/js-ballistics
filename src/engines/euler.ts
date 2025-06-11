@@ -1,7 +1,7 @@
 import { Shot } from "../conditions";
 import { TrajectoryData, TrajFlag } from "../trajectory_data";
 import Vector from "../vector";
-import { RangeError } from "../exceptions";
+import { TrajectoryRangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
 import {
     BaseIntegrationEngine,
@@ -140,13 +140,13 @@ class EulerIntegrationEngine
 
                 let reason = "";
                 if (velocity < cMinimumVelocity) {
-                    reason = RangeError.MinimumVelocityReached;
+                    reason = TrajectoryRangeError.MinimumVelocityReached;
                 } else if (rangeVector.y < cMaximumDrop) {
-                    reason = RangeError.MaximumDropReached;
+                    reason = TrajectoryRangeError.MaximumDropReached;
                 } else {
-                    reason = RangeError.MinimumAltitudeReached;
+                    reason = TrajectoryRangeError.MinimumAltitudeReached;
                 }
-                throw new RangeError(reason, ranges);
+                throw new TrajectoryRangeError(reason, ranges);
             }
         }
 

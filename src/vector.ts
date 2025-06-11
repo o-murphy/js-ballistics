@@ -40,6 +40,21 @@ class Vector {
         }
         return this.mulByConst(1.0 / m);
     }
+
+    static sum(...vectors: Vector[]): Vector {
+        let sumX = 0;
+        let sumY = 0;
+        let sumZ = 0;
+
+        // Explicit loop, no reduce() used
+        for (const vector of vectors) {
+            sumX += vector.x;
+            sumY += vector.y;
+            sumZ += vector.z;
+        }
+
+        return new Vector(sumX, sumY, sumZ);
+    }
 }
 
 export default Vector;
