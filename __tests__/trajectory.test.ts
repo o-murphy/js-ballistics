@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import Calculator, { Ammo, Atmo, DragModel, Table, Shot, UNew, Unit, Weapon, Wind, TrajFlag } from "../src";
+import { Calculator, Ammo, Atmo, DragModel, Table, Shot, UNew, Unit, Weapon, Wind, TrajFlag } from "../src";
 
 describe("Calculator", () => {
 
@@ -113,8 +113,6 @@ describe("Calculator", () => {
                 trajectoryStep: UNew.Yard(100),
             }
         ).trajectory
-
-        console.log(data)
 
         expect(data.length).toEqual(11)
 

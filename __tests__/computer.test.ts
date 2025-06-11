@@ -1,12 +1,12 @@
 import { expect, describe, test, beforeEach } from '@jest/globals';
-import Calculator, { Ammo, Wind, Atmo, DragModel, Table, UNew, Weapon, Shot, HitResult } from '../src';
+import { Calculator, Ammo, Wind, Atmo, DragModel, Table, UNew, Weapon, Shot, HitResult } from '../src';
 
 
 describe('TestComputer', () => {
 
     let baselineShot: Shot;
     let baselineTrajectory: HitResult;
-    let calc: Calculator;
+    let calc: Calculator<any>;
     let range: number;
     let step: number;
     let dm: DragModel;
@@ -243,13 +243,13 @@ describe('TestComputer', () => {
             ammo: ammo,
             atmo: atmo
         });
-    
+
         const trajectoryWithNoTwist = calc.fire({
             shot: shotWithNoTwist,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that the windage is 0 with no twist
         expect(trajectoryWithNoTwist.trajectory[5].windage.rawValue).toBe(0);
     });
@@ -261,34 +261,34 @@ describe('TestComputer', () => {
             ammo: ammo,
             atmo: atmo
         });
-    
+
         // Calculate trajectory for right-hand twist
         const trajectoryRightTwist = calc.fire({
             shot: shotRightTwist,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that windage is positive with right-hand twist
         expect(trajectoryRightTwist.trajectory[5].windage.rawValue).toBeGreaterThan(0);
-    
+
         // Create a shot with left-hand twist
         const shotLeftTwist = new Shot({
             weapon: new Weapon({ twist: -8 }),  // Negative twist rate
             ammo: ammo,
             atmo: atmo
         });
-    
+
         // Calculate trajectory for left-hand twist
         const trajectoryLeftTwist = calc.fire({
             shot: shotLeftTwist,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that windage is negative with left-hand twist
         expect(trajectoryLeftTwist.trajectory[5].windage.rawValue).toBeLessThan(0);
-    
+
         // Assert that faster twist (right-hand twist) produces less drift compared to slower twist (left-hand twist)
         expect(
             -trajectoryLeftTwist.trajectory[5].windage.rawValue
@@ -302,21 +302,21 @@ describe('TestComputer', () => {
     test('humidity', () => {
         // Create an atmosphere with 90% humidity
         const humidAtmo = new Atmo({ humidity: 0.9 });
-    
+
         // Create a shot with the humid atmosphere
         const shotWithHumidity = new Shot({
             weapon: weapon,
             ammo: ammo,
             atmo: humidAtmo
         });
-    
+
         // Calculate the trajectory for the shot with humidity
         const trajectoryWithHumidity = calc.fire({
             shot: shotWithHumidity,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that height is greater with increased humidity
         expect(trajectoryWithHumidity.trajectory[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory.trajectory[5].height.rawValue
@@ -326,21 +326,21 @@ describe('TestComputer', () => {
     test('temperature_atmo', () => {
         // Create an atmosphere with temperature at 0°C
         const coldAtmo = new Atmo({ temperature: UNew.Celsius(0) });
-    
+
         // Create a shot with the cold atmosphere
         const shotInCold = new Shot({
             weapon: weapon,
             ammo: ammo,
             atmo: coldAtmo
         });
-    
+
         // Calculate the trajectory for the shot in cold weather
         const trajectoryInCold = calc.fire({
             shot: shotInCold,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that the height is less in colder temperature, indicating increased drop
         expect(trajectoryInCold.trajectory[5].height.rawValue).toBeLessThan(
             baselineTrajectory.trajectory[5].height.rawValue
@@ -350,21 +350,21 @@ describe('TestComputer', () => {
     test('altitude', () => {
         // Create an atmosphere with altitude at 5000 feet
         const highAtmo = Atmo.icao({ altitude: UNew.Foot(5000) });
-    
+
         // Create a shot with the high-altitude atmosphere
         const shotAtHighAltitude = new Shot({
             weapon: weapon,
             ammo: ammo,
             atmo: highAtmo
         });
-    
+
         // Calculate the trajectory for the shot at high altitude
         const trajectoryAtHighAltitude = calc.fire({
             shot: shotAtHighAltitude,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that the height is greater at higher altitude, indicating decreased drop
         expect(trajectoryAtHighAltitude.trajectory[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory.trajectory[5].height.rawValue
@@ -374,21 +374,21 @@ describe('TestComputer', () => {
     test('pressure', () => {
         // Create an atmosphere with pressure at 20.0 inHg
         const thinAtmo = new Atmo({ pressure: UNew.InHg(20.0) });
-    
+
         // Create a shot with the low-pressure atmosphere
         const shotInLowPressure = new Shot({
             weapon: weapon,
             ammo: ammo,
             atmo: thinAtmo
         });
-    
+
         // Calculate the trajectory for the shot in low pressure
         const trajectoryInLowPressure = calc.fire({
             shot: shotInLowPressure,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that the height is greater in lower pressure, indicating decreased drop
         expect(trajectoryInLowPressure.trajectory[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory.trajectory[5].height.rawValue
@@ -408,27 +408,27 @@ describe('TestComputer', () => {
             diameter: dm.diameter,
             length: dm.length
         });
-    
+
         // Create new ammo with the updated DragModel
         const slickAmmo = new Ammo({
             dm: increasedDragModel,
             mv: ammo.mv
         });
-    
+
         // Create a shot with the slick ammo
         const shotWithSlickAmmo = new Shot({
             weapon: weapon,
             ammo: slickAmmo,
             atmo: atmo
         });
-    
+
         // Calculate the trajectory for the shot with slick ammo
         const trajectoryWithSlickAmmo = calc.fire({
             shot: shotWithSlickAmmo,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that the height is greater with the increased ballistic coefficient, indicating decreased drop
         expect(trajectoryWithSlickAmmo.trajectory[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory.trajectory[5].height.rawValue
@@ -441,27 +441,27 @@ describe('TestComputer', () => {
             bc: dm.bc,
             dragTable: dm.dragTable
         });
-    
+
         // Create new ammo with the reduced DragModel
         const reducedAmmo = new Ammo({
             dm: reducedDragModel,
             mv: ammo.mv
         });
-    
+
         // Create a shot with the reduced ammo
         const shotWithReducedAmmo = new Shot({
             weapon: weapon,
             ammo: reducedAmmo,
             atmo: atmo
         });
-    
+
         // Calculate the trajectory for the shot with the reduced ammo
         const trajectoryWithReducedAmmo = calc.fire({
             shot: shotWithReducedAmmo,
             trajectoryRange: range,
             trajectoryStep: step
         });
-    
+
         // Assert that the height is the same as with the baseline, indicating no change in drop
         expect(trajectoryWithReducedAmmo.trajectory[5].height.rawValue).toBeCloseTo(
             baselineTrajectory.trajectory[5].height.rawValue, 1e-2
@@ -473,22 +473,22 @@ describe('TestComputer', () => {
 
         // Test case 1: Don't use powder sensitivity
         ammo.usePowderSensitivity = false;
-        const coldNoSens = new Atmo({temperature: UNew.Celsius(-5)});
-        const shotNoSens = new Shot({weapon, ammo, atmo: coldNoSens});
-        const tNoSens = calc.fire({shot: shotNoSens, trajectoryRange: range, trajectoryStep: step});
+        const coldNoSens = new Atmo({ temperature: UNew.Celsius(-5) });
+        const shotNoSens = new Shot({ weapon, ammo, atmo: coldNoSens });
+        const tNoSens = calc.fire({ shot: shotNoSens, trajectoryRange: range, trajectoryStep: step });
         expect(tNoSens.trajectory[0].velocity.rawValue).toBeCloseTo(baselineTrajectory.trajectory[0].velocity.rawValue);
 
         // Test case 2: Powder temperature the same as atmosphere temperature
         ammo.usePowderSensitivity = true;
-        const coldSameTemp = new Atmo({temperature: UNew.Celsius(-5)});
-        const shotSameTemp = new Shot({weapon, ammo, atmo: coldSameTemp});
-        const tSameTemp = calc.fire({shot: shotSameTemp, trajectoryRange: range, trajectoryStep: step});
+        const coldSameTemp = new Atmo({ temperature: UNew.Celsius(-5) });
+        const shotSameTemp = new Shot({ weapon, ammo, atmo: coldSameTemp });
+        const tSameTemp = calc.fire({ shot: shotSameTemp, trajectoryRange: range, trajectoryStep: step });
         expect(tSameTemp.trajectory[0].velocity.rawValue).toBeLessThan(baselineTrajectory.trajectory[0].velocity.rawValue);
 
         // Test case 3: Different powder temperature
-        const coldDiffTemp = new Atmo({powderT: UNew.Celsius(-5)});
-        const shotDiffTemp = new Shot({weapon, ammo, atmo: coldDiffTemp});
-        const tDiffTemp = calc.fire({shot: shotDiffTemp, trajectoryRange: range, trajectoryStep: step});
+        const coldDiffTemp = new Atmo({ powderT: UNew.Celsius(-5) });
+        const shotDiffTemp = new Shot({ weapon, ammo, atmo: coldDiffTemp });
+        const tDiffTemp = calc.fire({ shot: shotDiffTemp, trajectoryRange: range, trajectoryStep: step });
         expect(tDiffTemp.trajectory[0].velocity.rawValue).toBeLessThan(baselineTrajectory.trajectory[0].velocity.rawValue);
 
         ammo.usePowderSensitivity = false
@@ -500,22 +500,22 @@ describe('TestComputer', () => {
     test('winds_sort', () => {
         // Create an array of Wind instances with varying distances
         const winds = [
-            new Wind({velocity: UNew.MPS(0), directionFrom: UNew.Degree(90), untilDistance: UNew.Meter(100)}),
-            new Wind({velocity: UNew.MPS(1), directionFrom: UNew.Degree(60), untilDistance: UNew.Meter(300)}),
-            new Wind({velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(200)}),
-            new Wind({velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(50)})
+            new Wind({ velocity: UNew.MPS(0), directionFrom: UNew.Degree(90), untilDistance: UNew.Meter(100) }),
+            new Wind({ velocity: UNew.MPS(1), directionFrom: UNew.Degree(60), untilDistance: UNew.Meter(300) }),
+            new Wind({ velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(200) }),
+            new Wind({ velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(50) })
         ];
-    
+
         // Create a Shot instance with the winds array
         const shot = new Shot({
-            weapon: null,
-            ammo: null,
+            weapon: undefined,
+            ammo: undefined,
             lookAngle: 0,
             relativeAngle: 0,
             cantAngle: 0,
             winds: winds
         });
-    
+
         // Assert the order of the sorted winds
         expect(shot.winds[0]).toBe(winds[3]);
         expect(shot.winds[1]).toBe(winds[0]);

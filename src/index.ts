@@ -1,64 +1,120 @@
+import { Atmo, Vacuum, Wind, Shot } from "./conditions";
 import {
-    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
-    Unit, UnitProps, unitTypeCoerce, UNew, Measure, preferredUnits
-} from "./unit";
-
-import Table from "./drag_tables.js";
-
-import Vector from "./vector";
-
-import {
-    Atmo,
-    Vacuum,
-    Wind,
-    Shot,
-} from "./conditions";
-import { Weapon, Ammo } from "./munition";
-import DragModel, { DragDataPoint, DragTable, BCPoint, DragModelMultiBC } from "./drag_model";
-
-import {
-    TrajectoryData,
-    TrajFlag,
-    DangerSpace,
-    HitResult
-} from "./trajectory_data"
-
-import EulerEngine, {
-    getGlobalMaxCalcStepSize,
-    setGlobalMaxCalcStepSize,
-    resetGlobals
-} from "./trajectory_calc";
-import Calculator from "./interface";
-
-export {
-    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
-    Unit, UnitProps, unitTypeCoerce, UNew, Measure, preferredUnits,
-
-    Vector,
-    Table,
-
-    Atmo,
-    Vacuum,
-    Wind,
-    Shot,
-
     DragModel,
-    DragDataPoint, 
-    DragTable, 
-    BCPoint, 
+    DragDataPoint,
+    BCPoint,
     DragModelMultiBC,
-
-    Weapon, Ammo,
-
-    EulerEngine as TrajectoryCalc,
-    getGlobalMaxCalcStepSize,
-    setGlobalMaxCalcStepSize,
-    resetGlobals,
-
+    DragTable,
+    DragTableDataType,
+    Table,
+} from "./drag_model";
+import {
+    _TrajectoryDataFilter,
+    _WindSock,
+    BaseEngineConfig,
+    BaseEngineTrajectoryProps,
+    BaseIntegrationEngine,
+    BaseTrajectoryData,
+    calculateEnergy,
+    calculateOGW,
+    createTrajectoryRow,
+    Curve,
+    CurvePoint,
+    defaultEngineConfig,
+    EulerIntegrationEngine,
+    getCorrection,
+} from "./engines";
+import {
+    ValueError,
+    UnitTypeError,
+    UnitConversionError,
+    UnitAliasError,
+    ZeroFindingError,
+    RangeError,
+} from "./exceptions";
+import Calculator from "./interface";
+import { Weapon, Ammo } from "./munition";
+import {
     TrajectoryData,
     TrajFlag,
+    trajFlagName,
+    trajFlagNames,
     DangerSpace,
     HitResult,
-}
+} from "./trajectory_data";
+import {
+    AbstractUnit,
+    Angular,
+    Distance,
+    Velocity,
+    Weight,
+    Temperature,
+    Pressure,
+    Energy,
+    Unit,
+    UnitProps,
+    unitTypeCoerce,
+    UNew,
+    Measure,
+    preferredUnits,
+} from "./unit";
+import Vector from "./vector";
 
-export default Calculator;
+export {
+    Atmo,
+    Vacuum,
+    Wind,
+    Shot,
+    createTrajectoryRow,
+    BaseEngineConfig,
+    BaseTrajectoryData,
+    BaseEngineTrajectoryProps,
+    BaseIntegrationEngine,
+    EulerIntegrationEngine,
+    // RK4IntegrationEngine,
+    defaultEngineConfig,
+    calculateEnergy,
+    calculateOGW,
+    getCorrection,
+    _WindSock,
+    _TrajectoryDataFilter,
+    Curve,
+    CurvePoint,
+    Table,
+    DragModel,
+    DragTable,
+    DragTableDataType,
+    DragDataPoint,
+    BCPoint,
+    DragModelMultiBC,
+    ValueError,
+    UnitTypeError,
+    UnitConversionError,
+    UnitAliasError,
+    ZeroFindingError,
+    RangeError,
+    Calculator,
+    Weapon,
+    Ammo,
+    TrajectoryData,
+    TrajFlag,
+    trajFlagName,
+    trajFlagNames,
+    DangerSpace,
+    HitResult,
+    AbstractUnit,
+    Angular,
+    Distance,
+    Velocity,
+    Weight,
+    Temperature,
+    Pressure,
+    Energy,
+    Unit,
+    UnitProps,
+    unitTypeCoerce,
+    UNew,
+    Measure,
+    preferredUnits,
+    Vector,
+};
