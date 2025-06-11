@@ -13,8 +13,7 @@ import {
 
 class RK4IntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -44,10 +43,10 @@ class RK4IntegrationEngine
         );
         let velocityVector: Vector = new Vector(
             Math.cos(this._tProps.barrelElevation) *
-                Math.cos(this._tProps.barrelAzimuth),
+            Math.cos(this._tProps.barrelAzimuth),
             Math.sin(this._tProps.barrelElevation),
             Math.cos(this._tProps.barrelElevation) *
-                Math.sin(this._tProps.barrelAzimuth),
+            Math.sin(this._tProps.barrelAzimuth),
         ).mulByConst(velocity);
 
         const rkCalcStep = 4 * this._tProps.calcStep;
@@ -116,7 +115,7 @@ class RK4IntegrationEngine
 
             const f = (v: Vector): Vector => {
                 return this.gravityVector.subtract(
-                    v.mulByConst(v.magnitude()).mulByConst(km),
+                    v.mulByConst(km).mulByConst(v.magnitude())
                 );
             };
 
@@ -138,7 +137,7 @@ class RK4IntegrationEngine
                 .add(p2.mulByConst(0.5))
                 .mulByConst(deltaTime);
             const p4: Vector = velocityVector.add(p3).mulByConst(deltaTime);
-            // velocityVector = velocityVector.add((v1.add(v2.mulByConst(2)).add(v3.mulByConst(2)).add(v4)).mulByConst(1 / 6.0))
+
             velocityVector = velocityVector.add(
                 Vector.sum(
                     v1,
@@ -147,7 +146,7 @@ class RK4IntegrationEngine
                     v4,
                 ).mulByConst(1 / 6.0),
             );
-            // rangeVector = rangeVector.add((p1.add(p2.mulByConst(2)).add(p3.mulByConst(2)).add(p4)).mulByConst(1 / 6.0))
+
             rangeVector = rangeVector.add(
                 Vector.sum(
                     p1,
