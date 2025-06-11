@@ -22,6 +22,7 @@ import {
     CurvePoint,
     defaultEngineConfig,
     EulerIntegrationEngine,
+    RK4IntegrationEngine,
     getCorrection,
 } from "./engines";
 import {
@@ -30,7 +31,7 @@ import {
     UnitConversionError,
     UnitAliasError,
     ZeroFindingError,
-    RangeError,
+    TrajectoryRangeError,
 } from "./exceptions";
 import Calculator from "./interface";
 import { Weapon, Ammo } from "./munition";
@@ -71,7 +72,7 @@ export {
     BaseEngineTrajectoryProps,
     BaseIntegrationEngine,
     EulerIntegrationEngine,
-    // RK4IntegrationEngine,
+    RK4IntegrationEngine,
     defaultEngineConfig,
     calculateEnergy,
     calculateOGW,
@@ -92,7 +93,7 @@ export {
     UnitConversionError,
     UnitAliasError,
     ZeroFindingError,
-    RangeError,
+    TrajectoryRangeError,
     Calculator,
     Weapon,
     Ammo,

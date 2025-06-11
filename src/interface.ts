@@ -35,7 +35,7 @@ class Calculator<C extends GenericConfig> {
      * Creates an instance of Calculator.
      * @param options An object containing the configuration and an optional engine constructor.
      * @param options.config The configuration for the engine.
-     * @param options.engine The constructor of the engine class to use (defaults to TrajectoryCalc).
+     * @param options.engine The constructor of the engine class to use (defaults to EulerIntegrationEngine).
      */
     constructor(options?: {
         config?: Partial<C>;

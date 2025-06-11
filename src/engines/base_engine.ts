@@ -17,7 +17,7 @@ import {
 // Vector module
 import Vector from "../vector";
 import type { DragTable } from "../drag_model";
-import { RangeError, ZeroFindingError } from "../exceptions";
+import { TrajectoryRangeError, ZeroFindingError } from "../exceptions";
 import { EngineInterface, GenericConfig } from "../generics/engine";
 
 // Export the classes and constants
@@ -352,7 +352,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
                 )[0];
                 height = t.height.In(Distance.Foot);
             } catch (e: unknown) {
-                if (e instanceof RangeError) {
+                if (e instanceof TrajectoryRangeError) {
                     if (
                         e.lastDistance === null ||
                         e.lastDistance == undefined

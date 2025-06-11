@@ -7,7 +7,7 @@ export {
     UnitConversionError,
     UnitAliasError,
     ZeroFindingError,
-    RangeError,
+    TrajectoryRangeError,
 };
 
 // You might need a base ValueError if you don't have one, or extend from a standard Error
@@ -60,7 +60,7 @@ class ZeroFindingError extends Error {
     }
 }
 
-class RangeError extends Error {
+class TrajectoryRangeError extends Error {
     public reason: string;
     public incompleteTrajectory: TrajectoryData[];
     public lastDistance: Distance | null;
