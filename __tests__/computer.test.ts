@@ -20,37 +20,31 @@ const calculators = [
 ];
 
 describe.each(calculators)("TestComputer %s", ({ engine }) => {
-    let baselineShot: Shot;
-    let baselineTrajectory: HitResult;
-    let calc: Calculator<any>;
-    let range: number;
-    let step: number;
-    let dm: DragModel;
-    let weapon: Weapon;
-    let ammo: Ammo;
-    let atmo: Atmo;
-
-    beforeEach(() => {
-        range = 1000;
-        step = 100;
-        dm = new DragModel({
-            bc: 0.22,
-            dragTable: Table.G7,
-            weight: 168,
-            diameter: 0.308,
-            length: 1.22,
-        });
-        ammo = new Ammo({ dm: dm, mv: UNew.FPS(2600) });
-        weapon = new Weapon({ sightHeight: 4, twist: 12 });
-        atmo = Atmo.icao();
-        calc = new Calculator({ engine });
-        baselineShot = new Shot({ weapon: weapon, ammo: ammo, atmo: atmo });
-        baselineTrajectory = calc.fire({
-            shot: baselineShot,
-            trajectoryRange: range,
-            trajectoryStep: step,
-        });
+    const calc: Calculator<any> = new Calculator({ engine });
+    const range: number = 1000;
+    const step: number = 100;
+    const dm: DragModel = new DragModel({
+        bc: 0.22,
+        dragTable: Table.G7,
+        weight: 168,
+        diameter: 0.308,
+        length: 1.22,
     });
+    const weapon: Weapon = new Weapon({ sightHeight: 4, twist: 12 });
+    const ammo: Ammo = new Ammo({ dm: dm, mv: UNew.FPS(2600) });
+    const atmo: Atmo = Atmo.icao();
+    const baselineShot: Shot = new Shot({
+        weapon: weapon,
+        ammo: ammo,
+        atmo: atmo,
+    });
+    const baselineTrajectory: HitResult = calc.fire({
+        shot: baselineShot,
+        trajectoryRange: range,
+        trajectoryStep: step,
+    });
+
+    beforeEach(() => {});
 
     // region Cant_angle
 
@@ -265,6 +259,79 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         expect(trajectoryWithWind.trajectory[5].height.rawValue).toBeLessThan(
             baselineTrajectory.trajectory[5].height.rawValue,
         );
+    });
+
+    // Wind from in front should increase drop
+    test("multi_winds", () => {
+        const shot = new Shot({
+            weapon,
+            ammo,
+            atmo,
+            winds: [
+                new Wind({
+                    velocity: UNew.MPS(4),
+                    directionFrom: UNew.OClock(9),
+                    untilDistance: UNew.Meter(500),
+                }),
+                new Wind({
+                    velocity: UNew.MPS(4),
+                    directionFrom: UNew.OClock(3),
+                    untilDistance: UNew.Meter(800),
+                }),
+            ],
+        });
+
+        calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
+        const t = calc.fire({
+            shot,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
+
+        expect(t.trajectory[5].windage.rawValue).toBeLessThan(
+            baselineTrajectory[5].windage.rawValue,
+        );
+    });
+
+    // Wind from in front should increase drop
+    test("no_winds", () => {
+        const shot1 = new Shot({
+            weapon,
+            ammo,
+            atmo,
+        });
+
+        const shot2 = new Shot({
+            weapon,
+            ammo,
+            atmo,
+            winds: [],
+        });
+
+        calc.fire({
+            shot: shot1,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
+        calc.fire({
+            shot: shot2,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
+
+        const trajectory1 = calc.fire({
+            shot: shot1,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
+        const trajectory2 = calc.fire({
+            shot: shot2,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
+
+        expect(trajectory1.length).toBeGreaterThan(0);
+        expect(trajectory2.length).toBeGreaterThan(0);
     });
 
     // end region Wind
@@ -551,6 +618,29 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
     });
 
     // end region Ammo
+
+    test("zero_velocity", () => {
+        const tdm = new DragModel({
+            bc: dm.bc + 0.5,
+            dragTable: dm.dragTable,
+            weight: dm.weight,
+            diameter: dm.diameter,
+            length: dm.length,
+        });
+        const slick = new Ammo({ dm: tdm, mv: 0 });
+        const tShot = new Shot({ weapon, ammo: slick, atmo: atmo });
+        calc.fire({
+            shot: tShot,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
+    });
+
+    test("very_short_shot", () => {
+        const tShot = new Shot({ weapon, ammo, atmo });
+        const hitResult = calc.fire({ shot: tShot, trajectoryRange: range });
+        expect(hitResult.length).toBeGreaterThan(1);
+    });
 
     // region Shot
     test("winds_sort", () => {
