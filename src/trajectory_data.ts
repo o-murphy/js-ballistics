@@ -266,6 +266,10 @@ class HitResult {
         }
     }
 
+    get length(): number {
+        return this.trajectory.length;
+    }
+
     zeros(): TrajectoryData[] {
         this._checkExtra();
 

@@ -13,7 +13,8 @@ import {
 
 class RK4IntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig> {
+    implements EngineInterface<BaseEngineConfig>
+{
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -43,10 +44,10 @@ class RK4IntegrationEngine
         );
         let velocityVector: Vector = new Vector(
             Math.cos(this._tProps.barrelElevation) *
-            Math.cos(this._tProps.barrelAzimuth),
+                Math.cos(this._tProps.barrelAzimuth),
             Math.sin(this._tProps.barrelElevation),
             Math.cos(this._tProps.barrelElevation) *
-            Math.sin(this._tProps.barrelAzimuth),
+                Math.sin(this._tProps.barrelAzimuth),
         ).mulByConst(velocity);
 
         const rkCalcStep = 4 * this._tProps.calcStep;
@@ -112,10 +113,11 @@ class RK4IntegrationEngine
             const relativeSpeed = relativeVelocity.magnitude();
             const deltaTime = rkCalcStep / Math.max(1.0, relativeSpeed);
             const km = densityFactor * this.dragByMach(relativeSpeed / mach);
+            drag = km * relativeSpeed;
 
             const f = (v: Vector): Vector => {
                 return this.gravityVector.subtract(
-                    v.mulByConst(km).mulByConst(v.magnitude())
+                    v.mulByConst(km).mulByConst(v.magnitude()),
                 );
             };
 

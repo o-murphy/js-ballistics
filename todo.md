@@ -12,14 +12,13 @@
   - [x] wind
   - [x] shot
 - [x] drag model
-- [ ] exceptions
+- [x] exceptions
 - [ ] helpers (partially)
-- [ ] interface
-- [ ] interface_config ?
-- [ ] trajectory calc
-  - [x] WindSock
-  - [x] TrajectoryDataFilter
-  - [ ] TrajectoryCalc
+- [x] interface
+- [x] interface_config ?
+- [x] base engine
+- [x] euler engine
+- [x] rk4 engine
 - [x] trajectory data
 - [x] unit
 

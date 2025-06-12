@@ -161,18 +161,18 @@ describe.each(calculators)("path_g1 %s", ({ engine }) => {
     });
 
     const calc = new Calculator({ engine });
-    const data = calc.fire({
+    const tData = calc.fire({
         shot: shot_info,
         trajectoryRange: UNew.Yard(1000),
         trajectoryStep: UNew.Yard(100),
     }).trajectory;
 
-    expect(data.length).toEqual(11);
+    expect(tData.length).toEqual(11);
 
     const data = [
-        [data[0], 0, 2750, 2.463, 2820.6, -2, 0, 0, 0, 0, 880, Unit.MOA],
+        [tData[0], 0, 2750, 2.463, 2820.6, -2, 0, 0, 0, 0, 880, Unit.MOA],
         [
-            data[1],
+            tData[1],
             100,
             2351.2,
             2.106,
@@ -186,7 +186,7 @@ describe.each(calculators)("path_g1 %s", ({ engine }) => {
             Unit.MOA,
         ],
         [
-            data[5],
+            tData[5],
             500,
             1169.1,
             1.047,
@@ -200,7 +200,7 @@ describe.each(calculators)("path_g1 %s", ({ engine }) => {
             Unit.MOA,
         ],
         [
-            data[10],
+            tData[10],
             1000,
             776.4,
             0.695,
@@ -251,18 +251,31 @@ describe.each(calculators)("path_g7 %s", ({ engine }) => {
     });
 
     const calc = new Calculator({ engine });
-    const data = calc.fire({
+    const tData = calc.fire({
         shot: shot_info,
         trajectoryRange: UNew.Yard(1000),
         trajectoryStep: UNew.Yard(100),
     }).trajectory;
 
-    expect(data.length).toEqual(11);
+    expect(tData.length).toEqual(11);
 
     const data = [
-        [data[0], 0, 2750, 2.46, 2821, -2.0, 0.0, 0.0, 0.0, 0.0, 880, Unit.MIL],
         [
-            data[1],
+            tData[0],
+            0,
+            2750,
+            2.46,
+            2821,
+            -2.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            880,
+            Unit.MIL,
+        ],
+        [
+            tData[1],
             100,
             2545,
             2.28,
@@ -276,7 +289,7 @@ describe.each(calculators)("path_g7 %s", ({ engine }) => {
             Unit.MIL,
         ],
         [
-            data[5],
+            tData[5],
             500,
             1814,
             1.62,
@@ -290,7 +303,7 @@ describe.each(calculators)("path_g7 %s", ({ engine }) => {
             Unit.MIL,
         ],
         [
-            data[10],
+            tData[10],
             1000,
             1086,
             0.97,
