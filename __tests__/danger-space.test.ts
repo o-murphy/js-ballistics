@@ -53,9 +53,7 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
         ammo.calcPowderSens(2723, 0);
 
         // Create current winds
-        const currentWinds = [
-            new Wind({ velocity: 2, directionFrom: 90 }),
-        ];
+        const currentWinds = [new Wind({ velocity: 2, directionFrom: 90 })];
 
         // Create Shot and Calculator
         const shot = new Shot({
