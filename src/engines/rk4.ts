@@ -13,8 +13,7 @@ import {
 
 class RK4IntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -61,7 +60,8 @@ class RK4IntegrationEngine
             Math.cos(barrelElevation) * Math.sin(barrelAzimuth),
         ).mulByConst(velocity);
 
-        const rkCalcStep = 4 * calcStep;
+        // const rkCalcStep = 4 * calcStep;
+        const rkCalcStep = calcStep ** (1 / 2);
         const minStep = Math.min(rkCalcStep, recordStep);
 
         const dataFilter = new _TrajectoryDataFilter(
