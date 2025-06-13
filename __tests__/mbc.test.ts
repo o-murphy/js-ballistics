@@ -32,7 +32,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         trajectoryStep: step,
     }).trajectory;
 
-    beforeEach(() => { });
+    beforeEach(() => {});
 
     test("mbc1", () => {
         let dmMulti = DragModelMultiBC({

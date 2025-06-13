@@ -362,8 +362,9 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
                     let lastDistanceFoot = e.lastDistance.In(Distance.Foot);
                     let proportion = lastDistanceFoot / zeroDistance;
                     height =
-                        e.incompleteTrajectory[e.incompleteTrajectory.length - 1].height.In(Distance.Foot) /
-                        proportion;
+                        e.incompleteTrajectory[
+                            e.incompleteTrajectory.length - 1
+                        ].height.In(Distance.Foot) / proportion;
                 } else {
                     throw e;
                 }
@@ -578,7 +579,7 @@ const createTrajectoryRow = (
         UNew.Foot(rangeVector.y),
         UNew.Foot(
             (rangeVector.y - rangeVector.x * Math.tan(lookAngle)) *
-            Math.cos(lookAngle),
+                Math.cos(lookAngle),
         ),
         UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),

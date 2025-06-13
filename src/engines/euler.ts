@@ -13,7 +13,8 @@ import {
 
 class EulerIntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig> {
+    implements EngineInterface<BaseEngineConfig>
+{
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -68,11 +69,7 @@ class EulerIntegrationEngine
             velocityVector,
             timeStep,
         );
-        dataFilter.setupSeenZero(
-            rangeVector.y,
-            barrelElevation,
-            lookAngle,
-        );
+        dataFilter.setupSeenZero(rangeVector.y, barrelElevation, lookAngle);
 
         while (rangeVector.x <= maximumRange + minStep) {
             dataFilter.clearCurrentFlag();
@@ -112,9 +109,9 @@ class EulerIntegrationEngine
                 }
             }
 
-            let velocityAdjusted = velocityVector.subtract(windVector);
+            const velocityAdjusted = velocityVector.subtract(windVector);
             velocity = velocityAdjusted.magnitude();
-            let deltaTime = calcStep / Math.max(1.0, velocity);
+            const deltaTime = calcStep / Math.max(1.0, velocity);
             drag = densityFactor * velocity * this.dragByMach(velocity / mach);
             velocityVector = velocityVector.subtract(
                 velocityAdjusted
@@ -122,7 +119,7 @@ class EulerIntegrationEngine
                     .subtract(this.gravityVector)
                     .mulByConst(deltaTime),
             );
-            let deltaRangeVector = velocityVector.mulByConst(deltaTime);
+            const deltaRangeVector = velocityVector.mulByConst(deltaTime);
             rangeVector = rangeVector.add(deltaRangeVector);
             velocity = velocityVector.magnitude();
             time += deltaTime;

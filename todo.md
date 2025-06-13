@@ -30,9 +30,9 @@
   - [ ] helpers
   - [ ] incomplete shots
   - [ ] issues
-  - [ ] mbc
+  - [x] mbc
   - [ ] sight ?
   - [ ] trajectory
   - [x] units
   - [x] vector
-  - [ ] zero finding
+  - [x] zero finding
