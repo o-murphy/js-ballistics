@@ -1,14 +1,14 @@
 import { Shot } from "../conditions";
+import { TrajectoryData, TrajFlag } from "../trajectory_data";
+import Vector from "../vector";
 import { TrajectoryRangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
-import { TrajFlag, TrajectoryData } from "../trajectory_data";
-import Vector from "../vector";
 import {
-    _TrajectoryDataFilter,
-    _WindSock,
     BaseEngineConfig,
     BaseIntegrationEngine,
     createTrajectoryRow,
+    _TrajectoryDataFilter,
+    _WindSock,
 } from "./base_engine";
 
 class RK4IntegrationEngine
@@ -27,8 +27,8 @@ class RK4IntegrationEngine
         const {
             muzzleVelocity,
             cantCosine,
-            cantSine,
             sightHeight,
+            cantSine,
             barrelElevation,
             barrelAzimuth,
             calcStep,
@@ -36,7 +36,6 @@ class RK4IntegrationEngine
             lookAngle,
             weight,
         } = this._tProps;
-
         let ranges: TrajectoryData[] = [];
         let time: number = 0.0;
         let drag: number = 0.0;
@@ -48,7 +47,6 @@ class RK4IntegrationEngine
         let windVector = windSock.currentVector();
 
         let velocity: number = muzzleVelocity;
-
         let rangeVector: Vector = new Vector(
             0.0,
             -cantCosine * sightHeight,
