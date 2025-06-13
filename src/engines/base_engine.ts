@@ -11,8 +11,6 @@ import {
     Pressure,
     Velocity,
     Temperature,
-    unitTypeCoerce,
-    preferredUnits,
 } from "../unit";
 // Vector module
 import Vector from "../vector";
@@ -579,7 +577,7 @@ const createTrajectoryRow = (
         UNew.Foot(rangeVector.y),
         UNew.Foot(
             (rangeVector.y - rangeVector.x * Math.tan(lookAngle)) *
-                Math.cos(lookAngle),
+            Math.cos(lookAngle),
         ),
         UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),

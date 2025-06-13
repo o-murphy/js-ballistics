@@ -4,8 +4,8 @@ import Vector from "../vector";
 import { TrajectoryRangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
 import {
-    BaseIntegrationEngine,
     BaseEngineConfig,
+    BaseIntegrationEngine,
     createTrajectoryRow,
     _TrajectoryDataFilter,
     _WindSock,
@@ -13,8 +13,7 @@ import {
 
 class EulerIntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -24,16 +23,6 @@ class EulerIntegrationEngine
     ): TrajectoryData[] {
         const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } =
             this._config;
-
-        let ranges: TrajectoryData[] = [];
-        let time: number = 0.0;
-        let drag: number = 0.0;
-
-        let mach: number = 0.0;
-        let densityFactor: number = 0.0;
-
-        const windSock = new _WindSock(shotInfo.winds);
-        let windVector = windSock.currentVector();
 
         const {
             muzzleVelocity,
@@ -47,9 +36,17 @@ class EulerIntegrationEngine
             lookAngle,
             weight,
         } = this._tProps;
+        let ranges: TrajectoryData[] = [];
+        let time: number = 0.0;
+        let drag: number = 0.0;
+
+        let mach: number = 0.0;
+        let densityFactor: number = 0.0;
+
+        const windSock = new _WindSock(shotInfo.winds);
+        let windVector = windSock.currentVector();
 
         let velocity: number = muzzleVelocity;
-
         let rangeVector: Vector = new Vector(
             0.0,
             -cantCosine * sightHeight,
@@ -71,7 +68,11 @@ class EulerIntegrationEngine
         );
         dataFilter.setupSeenZero(rangeVector.y, barrelElevation, lookAngle);
 
-        while (rangeVector.x <= maximumRange + minStep) {
+        let lastRecordedRange = 0.0;
+        while (
+            rangeVector.x <= maximumRange + minStep ||
+            (filterFlags && lastRecordedRange <= maximumRange - 1e-6)
+        ) {
             dataFilter.clearCurrentFlag();
 
             if (rangeVector.x >= windSock.nextRange) {
@@ -106,6 +107,7 @@ class EulerIntegrationEngine
                             dataFilter.currentFlag,
                         ),
                     );
+                    lastRecordedRange = data.position.x;
                 }
             }
 
@@ -174,10 +176,8 @@ class EulerIntegrationEngine
                 ),
             );
         }
-
         return ranges;
     }
 }
 
-// Export the classes and constants
 export default EulerIntegrationEngine;
