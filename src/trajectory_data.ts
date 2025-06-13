@@ -229,7 +229,8 @@ class DangerSpace {
 }
 
 class HitResult {
-    /** Results of the shot
+    /**
+     * Results of the shot
      * ! DATACLASS, USES AS RETURNED VALUE ONLY
      * @param {Shot} shot
      * @param {TrajectoryData[]} _trajectory
@@ -238,7 +239,7 @@ class HitResult {
 
     readonly shot: Shot;
     readonly trajectory: TrajectoryData[];
-    readonly extra: boolean = false;
+    readonly extra: boolean;
 
     constructor(
         shot: Shot,
@@ -251,15 +252,25 @@ class HitResult {
     }
 
     /**
-     * Returns a copy of the trajectory data as an array.
-     * @returns {TrajectoryData[]} - A new array containing the trajectory data.
+     * Returns an iterator for the trajectory data.
+     * Allows iterating over the HitResult object directly.
      */
-    toArray(): TrajectoryData[] {
-        return [...this.trajectory];
+    *[Symbol.iterator](): Iterator<TrajectoryData> {
+        yield* this.trajectory;
+    }
+
+    /**
+     * Allows accessing trajectory elements by index.
+     * @param {number} index - The index of the element.
+     * @returns {TrajectoryData} - Trajectory data at the specified index.
+     */
+    at(index: number): TrajectoryData {
+        return this.trajectory[index];
     }
 
     protected _checkExtra(): void {
         if (!this.extra) {
+            // Using a custom message similar to Python's __repr__
             throw new Error(
                 `${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`,
             );
@@ -275,7 +286,7 @@ class HitResult {
 
         const data = this.trajectory.filter((row) => row.flag & TrajFlag.ZERO);
         if (data.length < 1) {
-            throw new Error("Can't find zero crossing points");
+            throw new Error("Can't find zero crossing points"); // Equivalent to Python's ArithmeticError, here using generic Error
         }
 
         return data;
@@ -287,8 +298,10 @@ class HitResult {
      * @returns {number} - The index of the closest TrajectoryData item.
      */
     indexAtDistance(distance: Distance): number {
+        // Adding epsilon to avoid floating-point issues, similar to Python
+        const epsilon = 1e-8;
         return this.trajectory.findIndex(
-            (item) => item.distance.rawValue >= distance.rawValue,
+            (item) => item.distance.rawValue >= distance.rawValue - epsilon,
         );
     }
 
@@ -296,7 +309,7 @@ class HitResult {
         const index = this.indexAtDistance(d);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${d}`,
+                `Calculated trajectory doesn't reach requested distance ${d.rawValue}`, // Changed to d.rawValue for better output
             );
         }
         return this.trajectory[index];
@@ -342,7 +355,7 @@ class HitResult {
             );
         }
 
-        const findBeginDanger = (rowNum: number) => {
+        const findBeginDanger = (rowNum: number): TrajectoryData => {
             /**
              * Beginning of danger space is last .distance' < .distance where
              * (.drop' - target_center) >= target_height/2
@@ -351,6 +364,7 @@ class HitResult {
              */
             const centerRow = this.trajectory[rowNum];
 
+            // Iterate in reverse, similar to Python's reversed()
             for (let i = rowNum - 1; i >= 0; i--) {
                 const primeRow = this.trajectory[i];
                 if (
@@ -365,7 +379,7 @@ class HitResult {
             return this.trajectory[0];
         };
 
-        const findEndDanger = (rowNum: number) => {
+        const findEndDanger = (rowNum: number): TrajectoryData => {
             /**
              * End of danger space is first .distance' > .distance where
              * (target_center - .drop') >= target_height/2
@@ -374,6 +388,7 @@ class HitResult {
              */
             const centerRow = this.trajectory[rowNum];
 
+            // Iterate forwards, similar to Python's slicing
             for (let i = rowNum + 1; i < this.trajectory.length; i++) {
                 const primeRow = this.trajectory[i];
                 if (

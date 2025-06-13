@@ -35,7 +35,7 @@ class DragDataPoint {
     constructor(
         public Mach: number,
         public CD: number,
-    ) { }
+    ) {}
 }
 
 /**
@@ -78,13 +78,15 @@ class BCPoint {
             throw new Error("Ballistic coefficient must be positive");
         }
 
-        if (Mach !== null && V !== null) { // More explicit check for null
+        if (Mach !== null && V !== null) {
+            // More explicit check for null
             throw new Error(
                 "You cannot specify both 'Mach' and 'V' at the same time",
             );
         }
 
-        if (Mach === null && V === null) { // More explicit check for null
+        if (Mach === null && V === null) {
+            // More explicit check for null
             throw new Error("One of 'Mach' and 'V' must be specified");
         }
 
@@ -100,7 +102,9 @@ class BCPoint {
             // This branch should theoretically not be reached due to the earlier check,
             // but if it somehow is, ensure a clear error or defined state.
             // For safety, re-throwing the error here emphasizes the contract.
-            throw new Error("Internal error: Mach or V should have been specified but were not.");
+            throw new Error(
+                "Internal error: Mach or V should have been specified but were not.",
+            );
         }
     }
 
@@ -296,7 +300,9 @@ const DragModelMultiBC = ({
         // Consider adding a check here for bcInterp[index] being valid (not zero or NaN)
         // to prevent division by zero or NaN propagation if interpolation fails.
         if (bcInterp[index] === 0 || isNaN(bcInterp[index])) {
-            console.warn(`Warning: Interpolated BC factor at index ${index} is zero or NaN. CD calculation may result in Infinity/NaN.`);
+            console.warn(
+                `Warning: Interpolated BC factor at index ${index} is zero or NaN. CD calculation may result in Infinity/NaN.`,
+            );
             // You might want to handle this more robustly, e.g., throw an error or use a default value.
         }
         item.CD = item.CD / bcInterp[index];
@@ -327,9 +333,12 @@ const linearInterpolation = (
     if (xp.length !== yp.length) {
         throw new Error("xp and yp lists must have the same length");
     }
-    if (xp.length === 0) { // Add explicit check for empty xp/yp
+    if (xp.length === 0) {
+        // Add explicit check for empty xp/yp
         if (x.length > 0) {
-            throw new Error("Cannot interpolate with empty reference points (xp, yp) when x is not empty.");
+            throw new Error(
+                "Cannot interpolate with empty reference points (xp, yp) when x is not empty.",
+            );
         }
         return []; // If all inputs are empty, return empty
     }
@@ -346,7 +355,8 @@ const linearInterpolation = (
             let right = xp.length - 1;
 
             // Binary search to find the interval [xp[mid], xp[mid+1])
-            while (left < right - 1) { // Changed condition to ensure an interval of at least 2 points
+            while (left < right - 1) {
+                // Changed condition to ensure an interval of at least 2 points
                 const mid = Math.floor((left + right) / 2);
                 if (xi < xp[mid]) {
                     right = mid;

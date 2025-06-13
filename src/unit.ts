@@ -187,67 +187,69 @@ class Angular extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Radian) {
-            return value;
-        }
-        if (units === Unit.Degree) {
-            return (value / 180) * Math.PI;
-        }
-        if (units === Unit.MOA) {
-            return ((value / 180) * Math.PI) / 60;
-        }
-        if (units === Unit.MIL) {
-            return (value / 3200) * Math.PI;
-        }
-        if (units === Unit.MRad) {
-            return value / 1000;
-        }
-        if (units === Unit.Thousand) {
-            return (value / 3000) * Math.PI;
-        }
-        if (units === Unit.InchesPer100Yd) {
-            return Math.atan(value / 3600);
-        }
-        if (units === Unit.CmPer100M) {
-            return Math.atan(value / 10000);
-        }
-        if (units === Unit.OClock) {
-            return (value / 6) * Math.PI;
+        let result = 0;
+
+        switch (units) {
+            case Unit.Radian:
+                result = value;
+                break;
+            case Unit.Degree:
+                result = (value / 180) * Math.PI;
+                break;
+            case Unit.MOA:
+                result = ((value / 180) * Math.PI) / 60;
+                break;
+            case Unit.MIL:
+                result = (value / 3200) * Math.PI;
+                break;
+            case Unit.MRad:
+                result = value / 1000;
+                break;
+            case Unit.Thousand:
+                result = (value / 3000) * Math.PI;
+                break;
+            case Unit.InchesPer100Yd:
+                result = Math.atan(value / 3600);
+                break;
+            case Unit.CmPer100M:
+                result = Math.atan(value / 10000);
+                break;
+            case Unit.OClock:
+                result = (value / 6) * Math.PI;
+                break;
+            default:
+                return super.toRaw(value, units);
         }
 
-        return super.toRaw(value, units);
+        if (result > 2 * Math.PI) {
+            result = result % (2 * Math.PI);
+        }
+        return result;
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Radian) {
-            return value;
+        switch (units) {
+            case Unit.Radian:
+                return value;
+            case Unit.Degree:
+                return (value * 180) / Math.PI;
+            case Unit.MOA:
+                return ((value * 180) / Math.PI) * 60;
+            case Unit.MIL:
+                return (value * 3200) / Math.PI;
+            case Unit.MRad:
+                return value * 1000;
+            case Unit.Thousand:
+                return (value * 3000) / Math.PI;
+            case Unit.InchesPer100Yd:
+                return Math.tan(value) * 3600;
+            case Unit.CmPer100M:
+                return Math.tan(value) * 10000;
+            case Unit.OClock:
+                return (value * 6) / Math.PI;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.Degree) {
-            return (value * 180) / Math.PI;
-        }
-        if (units === Unit.MOA) {
-            return ((value * 180) / Math.PI) * 60;
-        }
-        if (units === Unit.MIL) {
-            return (value * 3200) / Math.PI;
-        }
-        if (units === Unit.MRad) {
-            return value * 1000;
-        }
-        if (units === Unit.Thousand) {
-            return (value * 3000) / Math.PI;
-        }
-        if (units === Unit.InchesPer100Yd) {
-            return Math.tan(value) * 3600;
-        }
-        if (units === Unit.CmPer100M) {
-            return Math.tan(value) * 10000;
-        }
-        if (units === Unit.OClock) {
-            return (value * 6) / Math.PI;
-        }
-
-        return super.fromRaw(value, units);
     }
 }
 
@@ -272,56 +274,56 @@ class Distance extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Inch) {
-            return value;
-        }
-        if (units === Unit.Foot) {
-            return value * 12;
-        } else if (units === Unit.Yard) {
-            return value * 36;
-        } else if (units === Unit.Mile) {
-            return value * 63360;
-        } else if (units === Unit.NauticalMile) {
-            return value * 72913.3858;
-        } else if (units === Unit.Line) {
-            return value / 10;
-        } else if (units === Unit.Millimeter) {
-            return value / 25.4;
-        } else if (units === Unit.Centimeter) {
-            return value / 2.54;
-        } else if (units === Unit.Meter) {
-            return (value / 25.4) * 1000;
-        } else if (units === Unit.Kilometer) {
-            return (value / 25.4) * 1000000;
-        } else {
-            return super.toRaw(value, units);
+        switch (units) {
+            case Unit.Inch:
+                return value;
+            case Unit.Foot:
+                return value * 12;
+            case Unit.Yard:
+                return value * 36;
+            case Unit.Mile:
+                return value * 63360;
+            case Unit.NauticalMile:
+                return value * 72913.3858;
+            case Unit.Line:
+                return value / 10;
+            case Unit.Millimeter:
+                return value / 25.4;
+            case Unit.Centimeter:
+                return value / 2.54;
+            case Unit.Meter:
+                return (value / 25.4) * 1000;
+            case Unit.Kilometer:
+                return (value / 25.4) * 1000000;
+            default:
+                return super.toRaw(value, units);
         }
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Inch) {
-            return value;
-        }
-        if (units === Unit.Foot) {
-            return value / 12;
-        } else if (units === Unit.Yard) {
-            return value / 36;
-        } else if (units === Unit.Mile) {
-            return value / 63360;
-        } else if (units === Unit.NauticalMile) {
-            return value / 72913.3858;
-        } else if (units === Unit.Line) {
-            return value * 10;
-        } else if (units === Unit.Millimeter) {
-            return value * 25.4;
-        } else if (units === Unit.Centimeter) {
-            return value * 2.54;
-        } else if (units === Unit.Meter) {
-            return (value * 25.4) / 1000;
-        } else if (units === Unit.Kilometer) {
-            return (value * 25.4) / 1000000;
-        } else {
-            return super.fromRaw(value, units);
+        switch (units) {
+            case Unit.Inch:
+                return value;
+            case Unit.Foot:
+                return value / 12;
+            case Unit.Yard:
+                return value / 36;
+            case Unit.Mile:
+                return value / 63360;
+            case Unit.NauticalMile:
+                return value / 72913.3858;
+            case Unit.Line:
+                return value * 10;
+            case Unit.Millimeter:
+                return value * 25.4;
+            case Unit.Centimeter:
+                return value * 2.54;
+            case Unit.Meter:
+                return (value * 25.4) / 1000;
+            case Unit.Kilometer:
+                return (value * 25.4) / 1000000;
+            default:
+                return super.fromRaw(value, units);
         }
     }
 }
@@ -342,41 +344,37 @@ class Velocity extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.MPS) {
-            return value;
+        switch (units) {
+            case Unit.MPS: // Meters Per Second
+                return value;
+            case Unit.KMH: // Kilometers Per Hour
+                return value / 3.6;
+            case Unit.FPS: // Feet Per Second
+                return value / 3.2808399;
+            case Unit.MPH: // Miles Per Hour
+                return value / 2.23693629;
+            case Unit.KT: // Knots
+                return value / 1.94384449;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.KMH) {
-            return value / 3.6;
-        }
-        if (units === Unit.FPS) {
-            return value / 3.2808399;
-        }
-        if (units === Unit.MPH) {
-            return value / 2.23693629;
-        }
-        if (units === Unit.KT) {
-            return value / 1.94384449;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.MPS) {
-            return value;
+        switch (units) {
+            case Unit.MPS: // Meters Per Second
+                return value;
+            case Unit.KMH: // Kilometers Per Hour
+                return value * 3.6;
+            case Unit.FPS: // Feet Per Second
+                return value * 3.2808399;
+            case Unit.MPH: // Miles Per Hour
+                return value * 2.23693629;
+            case Unit.KT: // Knots
+                return value * 1.94384449;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.KMH) {
-            return value * 3.6;
-        }
-        if (units === Unit.FPS) {
-            return value * 3.2808399;
-        }
-        if (units === Unit.MPH) {
-            return value * 2.23693629;
-        }
-        if (units === Unit.KT) {
-            return value * 1.94384449;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -397,47 +395,41 @@ class Weight extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Grain) {
-            return value;
+        switch (units) {
+            case Unit.Grain:
+                return value;
+            case Unit.Gram:
+                return value * 15.4323584;
+            case Unit.Kilogram:
+                return value * 15432.3584;
+            case Unit.Newton:
+                return value * 151339.73750336;
+            case Unit.Pound:
+                return value / 0.000142857143;
+            case Unit.Ounce:
+                return value * 437.5;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.Gram) {
-            return value * 15.4323584;
-        }
-        if (units === Unit.Kilogram) {
-            return value * 15432.3584;
-        }
-        if (units === Unit.Newton) {
-            return value * 151339.73750336;
-        }
-        if (units === Unit.Pound) {
-            return value / 0.000142857143;
-        }
-        if (units === Unit.Ounce) {
-            return value * 437.5;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Grain) {
-            return value;
+        switch (units) {
+            case Unit.Grain:
+                return value;
+            case Unit.Gram:
+                return value / 15.4323584;
+            case Unit.Kilogram:
+                return value / 15432.3584;
+            case Unit.Newton:
+                return value / 151339.73750336;
+            case Unit.Pound:
+                return value * 0.000142857143;
+            case Unit.Ounce:
+                return value / 437.5;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.Gram) {
-            return value / 15.4323584;
-        }
-        if (units === Unit.Kilogram) {
-            return value / 15432.3584;
-        }
-        if (units === Unit.Newton) {
-            return value / 151339.73750336;
-        }
-        if (units === Unit.Pound) {
-            return value * 0.000142857143;
-        }
-        if (units === Unit.Ounce) {
-            return value / 437.5;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -457,41 +449,37 @@ class Pressure extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.MmHg) {
-            return value;
+        switch (units) {
+            case Unit.MmHg: // Millimeters of Mercury (base unit)
+                return value;
+            case Unit.InHg: // Inches of Mercury
+                return value * 25.4;
+            case Unit.Bar:
+                return value * 750.061683;
+            case Unit.hPa: // Hectopascals
+                return (value * 750.061683) / 1000;
+            case Unit.PSI: // Pounds per Square Inch
+                return value * 51.714924102396;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.InHg) {
-            return value * 25.4;
-        }
-        if (units === Unit.Bar) {
-            return value * 750.061683;
-        }
-        if (units === Unit.hPa) {
-            return (value * 750.061683) / 1000;
-        }
-        if (units === Unit.PSI) {
-            return value * 51.714924102396;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.MmHg) {
-            return value;
+        switch (units) {
+            case Unit.MmHg: // Millimeters of Mercury (base unit)
+                return value;
+            case Unit.InHg: // Inches of Mercury
+                return value / 25.4;
+            case Unit.Bar:
+                return value / 750.061683;
+            case Unit.hPa: // Hectopascals
+                return (value / 750.061683) * 1000;
+            case Unit.PSI: // Pounds per Square Inch
+                return value / 51.714924102396;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.InHg) {
-            return value / 25.4;
-        }
-        if (units === Unit.Bar) {
-            return value / 750.061683;
-        }
-        if (units === Unit.hPa) {
-            return (value / 750.061683) * 1000;
-        }
-        if (units === Unit.PSI) {
-            return value / 51.714924102396;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -510,35 +498,33 @@ class Temperature extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Fahrenheit) {
-            return value;
+        switch (units) {
+            case Unit.Fahrenheit:
+                return value;
+            case Unit.Rankin:
+                return value - 459.67;
+            case Unit.Celsius:
+                return (value * 9) / 5 + 32;
+            case Unit.Kelvin:
+                return ((value - 273.15) * 9) / 5 + 32;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.Rankin) {
-            return value - 459.67;
-        }
-        if (units === Unit.Celsius) {
-            return (value * 9) / 5 + 32;
-        }
-        if (units === Unit.Kelvin) {
-            return ((value - 273.15) * 9) / 5 + 32;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Fahrenheit) {
-            return value;
+        switch (units) {
+            case Unit.Fahrenheit:
+                return value;
+            case Unit.Rankin:
+                return value + 459.67;
+            case Unit.Celsius:
+                return ((value - 32) * 5) / 9;
+            case Unit.Kelvin:
+                return ((value - 32) * 5) / 9 + 273.15;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.Rankin) {
-            return value + 459.67;
-        }
-        if (units === Unit.Celsius) {
-            return ((value - 32) * 5) / 9;
-        }
-        if (units === Unit.Kelvin) {
-            return ((value - 32) * 5) / 9 + 273.15;
-        }
-        return super.fromRaw(value, units);
     }
 }
 

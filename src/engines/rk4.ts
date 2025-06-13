@@ -25,6 +25,19 @@ class RK4IntegrationEngine
         const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } =
             this._config;
 
+        const {
+            muzzleVelocity,
+            cantCosine,
+            cantSine,
+            sightHeight,
+            barrelElevation,
+            barrelAzimuth,
+            calcStep,
+            alt0,
+            lookAngle,
+            weight,
+        } = this._tProps;
+
         let ranges: TrajectoryData[] = [];
         let time: number = 0.0;
         let drag: number = 0.0;
@@ -35,22 +48,20 @@ class RK4IntegrationEngine
         const windSock = new _WindSock(shotInfo.winds);
         let windVector = windSock.currentVector();
 
-        let velocity: number = this._tProps.muzzleVelocity;
+        let velocity: number = muzzleVelocity;
 
         let rangeVector: Vector = new Vector(
             0.0,
-            -this._tProps.cantCosine * this._tProps.sightHeight,
-            -this._tProps.cantSine * this._tProps.sightHeight,
+            -cantCosine * sightHeight,
+            -cantSine * sightHeight,
         );
         let velocityVector: Vector = new Vector(
-            Math.cos(this._tProps.barrelElevation) *
-                Math.cos(this._tProps.barrelAzimuth),
-            Math.sin(this._tProps.barrelElevation),
-            Math.cos(this._tProps.barrelElevation) *
-                Math.sin(this._tProps.barrelAzimuth),
+            Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
+            Math.sin(barrelElevation),
+            Math.cos(barrelElevation) * Math.sin(barrelAzimuth),
         ).mulByConst(velocity);
 
-        const rkCalcStep = 4 * this._tProps.calcStep;
+        const rkCalcStep = 4 * calcStep;
         const minStep = Math.min(rkCalcStep, recordStep);
 
         const dataFilter = new _TrajectoryDataFilter(
@@ -60,11 +71,7 @@ class RK4IntegrationEngine
             velocityVector,
             timeStep,
         );
-        dataFilter.setupSeenZero(
-            rangeVector.y,
-            this._tProps.barrelElevation,
-            this._tProps.lookAngle,
-        );
+        dataFilter.setupSeenZero(rangeVector.y, barrelElevation, lookAngle);
 
         let lastRecordedRange = 0.0;
         while (
@@ -79,7 +86,7 @@ class RK4IntegrationEngine
 
             [densityFactor, mach] =
                 shotInfo.atmo.getDensityFactorAndMachForAltitude(
-                    this._tProps.alt0 + rangeVector.y,
+                    alt0 + rangeVector.y,
                 );
 
             if (filterFlags) {
@@ -98,10 +105,10 @@ class RK4IntegrationEngine
                             data.velocity.magnitude(),
                             data.mach,
                             this.spinDrift(data.time),
-                            this._tProps.lookAngle,
+                            lookAngle,
                             densityFactor,
                             drag,
-                            this._tProps.weight,
+                            weight,
                             dataFilter.currentFlag,
                         ),
                     );
@@ -164,20 +171,20 @@ class RK4IntegrationEngine
             if (
                 velocity < cMinimumVelocity ||
                 rangeVector.y < cMaximumDrop ||
-                this._tProps.alt0 + rangeVector.y < cMinimumAltitude
+                alt0 + rangeVector.y < cMinimumAltitude
             ) {
                 ranges.push(
                     createTrajectoryRow(
                         time,
-                        velocityVector,
                         rangeVector,
+                        velocityVector,
                         velocity,
                         mach,
                         this.spinDrift(time),
-                        this._tProps.lookAngle,
+                        lookAngle,
                         densityFactor,
                         drag,
-                        this._tProps.weight,
+                        weight,
                         dataFilter.currentFlag,
                     ),
                 );
@@ -203,10 +210,10 @@ class RK4IntegrationEngine
                     velocity,
                     mach,
                     this.spinDrift(time),
-                    this._tProps.lookAngle,
+                    lookAngle,
                     densityFactor,
                     drag,
-                    this._tProps.weight,
+                    weight,
                     TrajFlag.NONE,
                 ),
             );

@@ -87,7 +87,6 @@ const calculators = [
 ];
 
 describe.each(calculators)("trajectory %s", ({ engine }) => {
-
     test("zero1", () => {
         const dm = new DragModel({
             bc: 0.365,
@@ -165,7 +164,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
             trajectoryStep: UNew.Yard(100),
         }).trajectory;
 
-        console.log(`Len1 ${tData.length}`)
+        console.log(`Len1 ${tData.length}`);
         expect(tData.length).toEqual(11);
 
         const data = [
