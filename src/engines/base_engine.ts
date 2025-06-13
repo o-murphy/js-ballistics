@@ -44,15 +44,15 @@ const cMaximumDrop: number = -15000;
 const cMaxIterations: number = 60;
 const cGravityConstant: number = -32.17405;
 const cMinimumAltitude: number = -1410.748; // ft
-const cMaxCalcStepSize: number = 0.5; // ft
+const cMaxCalcStepSizeFeet: number = 0.5; // ft
 
 /**
  * Represents a point in a curve with three coefficients.
  */
 type CurvePoint = {
-    a: number;
-    b: number;
-    c: number;
+    readonly a: number;
+    readonly b: number;
+    readonly c: number;
 };
 
 /**
@@ -81,7 +81,7 @@ type BaseEngineTrajectoryProps = {
 };
 
 interface BaseEngineConfig extends GenericConfig {
-    cMaxCalcStepSize: number;
+    cMaxCalcStepSizeFeet: number;
     cZeroFindingAccuracy: number;
     cMinimumVelocity: number;
     cMaximumDrop: number;
@@ -91,10 +91,10 @@ interface BaseEngineConfig extends GenericConfig {
 }
 
 type BaseTrajectoryData = {
-    time: number;
-    position: Vector;
-    velocity: Vector;
-    mach: number;
+    readonly time: number;
+    readonly position: Vector;
+    readonly velocity: Vector;
+    readonly mach: number;
 };
 
 class _TrajectoryDataFilter {
@@ -287,7 +287,7 @@ class _WindSock {
 }
 
 const defaultEngineConfig: BaseEngineConfig = {
-    cMaxCalcStepSize,
+    cMaxCalcStepSizeFeet,
     cZeroFindingAccuracy,
     cMinimumVelocity,
     cMaximumDrop,
@@ -362,7 +362,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
                     let lastDistanceFoot = e.lastDistance.In(Distance.Foot);
                     let proportion = lastDistanceFoot / zeroDistance;
                     height =
-                        e.incompleteTrajectory[-1].height.In(Distance.Foot) /
+                        e.incompleteTrajectory[e.incompleteTrajectory.length - 1].height.In(Distance.Foot) /
                         proportion;
                 } else {
                     throw e;
@@ -462,7 +462,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
      * @returns {number} The calculation step size.
      */
     getCalcStep(step: number = 0): number {
-        const preferredStep = this._config.cMaxCalcStepSize;
+        const preferredStep = this._config.cMaxCalcStepSizeFeet;
 
         if (step === 0) {
             return preferredStep / 2.0;
@@ -578,7 +578,7 @@ const createTrajectoryRow = (
         UNew.Foot(rangeVector.y),
         UNew.Foot(
             (rangeVector.y - rangeVector.x * Math.tan(lookAngle)) *
-                Math.cos(lookAngle),
+            Math.cos(lookAngle),
         ),
         UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),

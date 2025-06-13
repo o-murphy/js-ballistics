@@ -35,7 +35,7 @@ class DragDataPoint {
     constructor(
         public Mach: number,
         public CD: number,
-    ) {}
+    ) { }
 }
 
 /**
@@ -78,25 +78,30 @@ class BCPoint {
             throw new Error("Ballistic coefficient must be positive");
         }
 
-        if (Mach && V) {
+        if (Mach !== null && V !== null) { // More explicit check for null
             throw new Error(
                 "You cannot specify both 'Mach' and 'V' at the same time",
             );
         }
 
-        if (!Mach && !V) {
+        if (Mach === null && V === null) { // More explicit check for null
             throw new Error("One of 'Mach' and 'V' must be specified");
         }
 
         this.BC = BC;
-        this.V = V
-            ? unitTypeCoerce(V ?? 0, Velocity, preferredUnits.velocity)
-            : null;
-        this.Mach = this.V
-            ? this.V.In(Velocity.MPS) / cSpeedOfSoundMetric
-            : Mach
-              ? Mach
-              : 0;
+
+        if (V !== null) {
+            this.V = unitTypeCoerce(V, Velocity, preferredUnits.velocity); // Pass V directly, not V ?? 0, as V is already handled as null
+            this.Mach = this.V.In(Velocity.MPS) / BCPoint._machC(); // Call static method with class name
+        } else if (Mach !== null) {
+            this.V = null; // Ensure V is null if Mach is provided
+            this.Mach = Mach;
+        } else {
+            // This branch should theoretically not be reached due to the earlier check,
+            // but if it somehow is, ensure a clear error or defined state.
+            // For safety, re-throwing the error here emphasizes the contract.
+            throw new Error("Internal error: Mach or V should have been specified but were not.");
+        }
     }
 
     static _machC(): number {
@@ -264,9 +269,9 @@ const DragModelMultiBC = ({
     length?: number | Distance;
 }): DragModel => {
     let bc: number;
-    const _weight = unitTypeCoerce(weight ?? 0, Weight, preferredUnits.weight);
+    const _weight = unitTypeCoerce(weight, Weight, preferredUnits.weight); // Use default parameter, no need for ?? 0
     const _diameter = unitTypeCoerce(
-        diameter ?? 0,
+        diameter, // Use default parameter, no need for ?? 0
         Distance,
         preferredUnits.diameter,
     );
@@ -288,6 +293,12 @@ const DragModelMultiBC = ({
     );
 
     _dragTable.forEach((item, index) => {
+        // Consider adding a check here for bcInterp[index] being valid (not zero or NaN)
+        // to prevent division by zero or NaN propagation if interpolation fails.
+        if (bcInterp[index] === 0 || isNaN(bcInterp[index])) {
+            console.warn(`Warning: Interpolated BC factor at index ${index} is zero or NaN. CD calculation may result in Infinity/NaN.`);
+            // You might want to handle this more robustly, e.g., throw an error or use a default value.
+        }
         item.CD = item.CD / bcInterp[index];
     });
 
@@ -303,7 +314,7 @@ const DragModelMultiBC = ({
 /**
  * Performs linear interpolation based on the provided x-values, x-coordinates, and y-values.
  * @param {number[]} x - The x-values at which interpolation is to be performed.
- * @param {number[]} xp - The x-coordinates of the data points used for interpolation.
+ * @param {number[]} xp - The x-coordinates of the data points used for interpolation. Must be sorted in ascending order.
  * @param {number[]} yp - The y-values of the data points used for interpolation.
  * @returns {number[]} - An array of interpolated y-values corresponding to the x-values.
  * @throws {Error} - Throws an error if the lengths of `xp` and `yp` do not match, or if `x` is empty.
@@ -315,6 +326,12 @@ const linearInterpolation = (
 ): number[] => {
     if (xp.length !== yp.length) {
         throw new Error("xp and yp lists must have the same length");
+    }
+    if (xp.length === 0) { // Add explicit check for empty xp/yp
+        if (x.length > 0) {
+            throw new Error("Cannot interpolate with empty reference points (xp, yp) when x is not empty.");
+        }
+        return []; // If all inputs are empty, return empty
     }
 
     const y: number[] = [];
@@ -328,26 +345,20 @@ const linearInterpolation = (
             let left = 0;
             let right = xp.length - 1;
 
-            while (left < right) {
+            // Binary search to find the interval [xp[mid], xp[mid+1])
+            while (left < right - 1) { // Changed condition to ensure an interval of at least 2 points
                 const mid = Math.floor((left + right) / 2);
-
-                if (xp[mid] <= xi && xi < xp[mid + 1]) {
-                    const slope =
-                        (yp[mid + 1] - yp[mid]) / (xp[mid + 1] - xp[mid]);
-                    y.push(yp[mid] + slope * (xi - xp[mid]));
-                    break;
-                }
-
                 if (xi < xp[mid]) {
                     right = mid;
                 } else {
-                    left = mid + 1;
+                    left = mid; // Stay at mid or move right
                 }
             }
+            // At this point, left and right will be adjacent indices such that xp[left] <= xi < xp[right]
+            // or left === right-1
 
-            if (left === right) {
-                y.push(yp[left]);
-            }
+            const slope = (yp[right] - yp[left]) / (xp[right] - xp[left]);
+            y.push(yp[left] + slope * (xi - xp[left]));
         }
     }
 

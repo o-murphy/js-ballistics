@@ -55,13 +55,14 @@ describe("Unit test for zero finding in ballistic calculator", () => {
             console.log(
                 `${engine} - barrelElevation for ${distance}m: ${shot.barrelElevation.In(Unit.Degree)} degrees`,
             );
-            const hitResult = zeroMinVelocityCalc.fire({
+            const t = zeroMinVelocityCalc.fire({
                 shot,
                 trajectoryRange: UNew.Meter(distance),
                 extraData: true,
-            });
-            const finalHitDistance = hitResult[
-                hitResult.length - 1
+            }).trajectory;
+
+            const finalHitDistance = t[
+                t.length - 1
             ].distance.In(Unit.Meter);
             expect(Math.abs(finalHitDistance - distance)).toBeLessThanOrEqual(
                 1.0,

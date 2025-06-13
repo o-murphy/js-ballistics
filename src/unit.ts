@@ -730,19 +730,26 @@ const UNew = {
 };
 
 /**
- * Coerces the given instance to the specified class type or creates a new instance.
+ * Coerces the given instance to the specified unit class type or creates a new instance.
+ * This function is used to ensure that a value, which might be a raw number or an existing
+ * unit object, is consistently represented as an instance of a specific unit class.
  *
- * @param {AbstractUnit|Object} instance - The instance to coerce or create.
- * @param {AbstractUnit|Object|function} expectedClass - The expected class type.
- * @param {Unit|number} defaultUnit - The default unit for creating a new instance.
- * @returns {AbstractUnit} An instance of the expected class type.
- * @throws {TypeError} If the instance is not of the expected class type or 'number'.
+ * @template T - A type that extends `AbstractUnit`, representing the specific unit class (e.g., `Distance`, `Weight`).
+ * @param {number | T} instance - The value to coerce. It can be a raw number (which will be used to create a new instance)
+ * or an existing instance of the `expectedClass` (which will be returned directly).
+ * @param {new (value: number, unit: Unit) => T} expectedClass - The constructor function for the expected unit class (e.g., `Distance`, `Weight`).
+ * This is typically the class itself.
+ * @param {Unit} defaultUnit - The default unit to use when `instance` is a number and a new `expectedClass` instance needs to be created.
+ * This should be an enum value from the `Unit` type relevant to `expectedClass` (e.g., `Distance.Meter`, `Weight.Kilogram`).
+ * @returns {T} An instance of the `expectedClass` type, representing the coerced value.
+ * @throws {TypeError} If the `instance` is not a `number` and not an instance of the `expectedClass`,
+ * indicating an unsupported type for coercion.
  */
-function unitTypeCoerce(
-    instance: number | AbstractUnit,
-    expectedClass: typeof AbstractUnit | any,
+function unitTypeCoerce<T extends AbstractUnit>(
+    instance: number | T,
+    expectedClass: new (value: number, unit: Unit) => T, // Better type for constructor
     defaultUnit: Unit,
-): any {
+): T {
     if (instance instanceof expectedClass) {
         // If the instance is already of the expected class type, return it.
         return instance;
