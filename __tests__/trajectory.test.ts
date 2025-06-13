@@ -16,9 +16,9 @@ import {
 } from "../src";
 
 function customAssertEqual(a, b, accuracy, name) {
-    test(name, () => {
-        expect(Math.abs(a - b)).toBeLessThan(accuracy);
-    });
+    // test(name, () => {
+    expect(Math.abs(a - b)).toBeLessThan(accuracy);
+    // });
 }
 
 function validateOne(
@@ -76,9 +76,7 @@ function validateOne(
         );
     }
 
-    test("Flag check", () => {
-        expect(data.flag & TrajFlag.RANGE).toBeTruthy();
-    });
+    expect(data.flag & TrajFlag.RANGE).toBeTruthy();
 }
 
 const calculators = [
@@ -214,9 +212,9 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
         ];
 
         data.forEach((item) => {
-            describe(`validateOne ${data.indexOf(item)}`, () => {
-                validateOne(...item);
-            });
+            // describe(`validateOne ${data.indexOf(item)}`, () => {
+            validateOne(...item);
+            // });
         });
     });
 
@@ -317,9 +315,9 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
         ];
 
         data.forEach((item) => {
-            describe(`validateOne ${data.indexOf(item)}`, () => {
-                validateOne(...item);
-            });
+            // describe(`validateOne ${data.indexOf(item)}`, () => {
+            validateOne(...item);
+            // });
         });
     });
 });
