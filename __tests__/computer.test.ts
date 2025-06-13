@@ -46,7 +46,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         trajectoryStep: step,
     }).trajectory;
 
-    beforeEach(() => { });
+    beforeEach(() => {});
 
     // region Cant_angle
 
@@ -70,12 +70,12 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         console.log(baselineTrajectory[5].height.rawValue);
         expect(
             cantedTrajectory[5].height.rawValue -
-            baselineShot.weapon.sightHeight.rawValue,
+                baselineShot.weapon.sightHeight.rawValue,
         ).toBeCloseTo(baselineTrajectory[5].height.rawValue, 1e-2);
 
         expect(
             cantedTrajectory[5].windage.rawValue +
-            baselineShot.weapon.sightHeight.rawValue,
+                baselineShot.weapon.sightHeight.rawValue,
         ).toBeCloseTo(baselineTrajectory[5].windage.rawValue, 1e-2);
     });
 

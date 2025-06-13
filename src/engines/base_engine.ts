@@ -141,10 +141,6 @@ class _TrajectoryDataFilter {
         this.lookAngle = lookAngle;
     }
 
-    clearCurrentFlag() {
-        this.currentFlag = TrajFlag.NONE;
-    }
-
     shouldRecord(
         position: Vector,
         velocity: Vector,
@@ -152,6 +148,7 @@ class _TrajectoryDataFilter {
         time: number,
     ): BaseTrajectoryData | null {
         let data: BaseTrajectoryData | null = null;
+        this.currentFlag = TrajFlag.NONE;
         if (this.rangeStep > 0 && position.x >= this.nextRecordDistance) {
             while (this.nextRecordDistance + this.rangeStep < position.x) {
                 this.nextRecordDistance += this.rangeStep;
@@ -577,7 +574,7 @@ const createTrajectoryRow = (
         UNew.Foot(rangeVector.y),
         UNew.Foot(
             (rangeVector.y - rangeVector.x * Math.tan(lookAngle)) *
-            Math.cos(lookAngle),
+                Math.cos(lookAngle),
         ),
         UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),

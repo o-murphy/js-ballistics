@@ -13,7 +13,8 @@ import {
 
 class EulerIntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig> {
+    implements EngineInterface<BaseEngineConfig>
+{
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -73,8 +74,6 @@ class EulerIntegrationEngine
             rangeVector.x <= maximumRange + minStep ||
             (filterFlags && lastRecordedRange <= maximumRange - 1e-6)
         ) {
-            dataFilter.clearCurrentFlag();
-
             if (rangeVector.x >= windSock.nextRange) {
                 windVector = windSock.vectorForRange(rangeVector.x);
             }
