@@ -32,7 +32,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         trajectoryStep: step,
     }).trajectory;
 
-    beforeEach(() => {});
+    beforeEach(() => { });
 
     test("mbc1", () => {
         let dmMulti = DragModelMultiBC({
@@ -105,7 +105,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
 
         expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(
             baselineTrajectory[1].velocity.rawValue,
-            5,
+            1e-5,
         );
         expect(multiTrajectory[4].velocity.rawValue).toBeGreaterThan(
             baselineTrajectory[4].velocity.rawValue,

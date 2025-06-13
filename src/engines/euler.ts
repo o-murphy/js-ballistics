@@ -13,8 +13,7 @@ import {
 
 class EulerIntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -35,22 +34,33 @@ class EulerIntegrationEngine
         const windSock = new _WindSock(shotInfo.winds);
         let windVector = windSock.currentVector();
 
-        let velocity: number = this._tProps.muzzleVelocity;
+        const {
+            muzzleVelocity,
+            cantCosine,
+            sightHeight,
+            cantSine,
+            barrelElevation,
+            barrelAzimuth,
+            calcStep,
+            alt0,
+            lookAngle,
+            weight,
+        } = this._tProps;
+
+        let velocity: number = muzzleVelocity;
 
         let rangeVector: Vector = new Vector(
             0.0,
-            -this._tProps.cantCosine * this._tProps.sightHeight,
-            -this._tProps.cantSine * this._tProps.sightHeight,
+            -cantCosine * sightHeight,
+            -cantSine * sightHeight,
         );
         let velocityVector: Vector = new Vector(
-            Math.cos(this._tProps.barrelElevation) *
-                Math.cos(this._tProps.barrelAzimuth),
-            Math.sin(this._tProps.barrelElevation),
-            Math.cos(this._tProps.barrelElevation) *
-                Math.sin(this._tProps.barrelAzimuth),
+            Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
+            Math.sin(barrelElevation),
+            Math.cos(barrelElevation) * Math.sin(barrelAzimuth),
         ).mulByConst(velocity);
 
-        const minStep = Math.min(this._tProps.calcStep, recordStep);
+        const minStep = Math.min(calcStep, recordStep);
         const dataFilter = new _TrajectoryDataFilter(
             filterFlags,
             recordStep,
@@ -60,8 +70,8 @@ class EulerIntegrationEngine
         );
         dataFilter.setupSeenZero(
             rangeVector.y,
-            this._tProps.barrelElevation,
-            this._tProps.lookAngle,
+            barrelElevation,
+            lookAngle,
         );
 
         while (rangeVector.x <= maximumRange + minStep) {
@@ -73,7 +83,7 @@ class EulerIntegrationEngine
 
             [densityFactor, mach] =
                 shotInfo.atmo.getDensityFactorAndMachForAltitude(
-                    this._tProps.alt0 + rangeVector.y,
+                    alt0 + rangeVector.y,
                 );
 
             if (filterFlags) {
@@ -92,10 +102,10 @@ class EulerIntegrationEngine
                             data.velocity.magnitude(),
                             data.mach,
                             this.spinDrift(data.time),
-                            this._tProps.lookAngle,
+                            lookAngle,
                             densityFactor,
                             drag,
-                            this._tProps.weight,
+                            weight,
                             dataFilter.currentFlag,
                         ),
                     );
@@ -104,7 +114,7 @@ class EulerIntegrationEngine
 
             let velocityAdjusted = velocityVector.subtract(windVector);
             velocity = velocityAdjusted.magnitude();
-            let deltaTime = this._tProps.calcStep / Math.max(1.0, velocity);
+            let deltaTime = calcStep / Math.max(1.0, velocity);
             drag = densityFactor * velocity * this.dragByMach(velocity / mach);
             velocityVector = velocityVector.subtract(
                 velocityAdjusted
@@ -120,20 +130,20 @@ class EulerIntegrationEngine
             if (
                 velocity < cMinimumVelocity ||
                 rangeVector.y < cMaximumDrop ||
-                this._tProps.alt0 + rangeVector.y < cMinimumAltitude
+                alt0 + rangeVector.y < cMinimumAltitude
             ) {
                 ranges.push(
                     createTrajectoryRow(
                         time,
-                        velocityVector,
                         rangeVector,
+                        velocityVector,
                         velocity,
                         mach,
                         this.spinDrift(time),
-                        this._tProps.lookAngle,
+                        lookAngle,
                         densityFactor,
                         drag,
-                        this._tProps.weight,
+                        weight,
                         dataFilter.currentFlag,
                     ),
                 );
@@ -159,14 +169,15 @@ class EulerIntegrationEngine
                     velocity,
                     mach,
                     this.spinDrift(time),
-                    this._tProps.lookAngle,
+                    lookAngle,
                     densityFactor,
                     drag,
-                    this._tProps.weight,
+                    weight,
                     TrajFlag.NONE,
                 ),
             );
         }
+
         return ranges;
     }
 }
