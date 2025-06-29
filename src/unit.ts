@@ -1,6 +1,5 @@
 // Use-full types for units of measurement conversion for ballistics calculations
 
-
 // Unit types enum
 enum Unit {
     Radian = 0,
@@ -46,7 +45,6 @@ enum Unit {
     Newton = 75,
 }
 
-
 class AbstractUnit {
     /**
      * Abstract class for unit of measure instance definition.
@@ -57,8 +55,8 @@ class AbstractUnit {
      */
 
     ["constructor"]: typeof AbstractUnit;
-    _value: number
-    _definedUnits: Unit
+    _value: number;
+    _definedUnits: Unit;
 
     constructor(value: number, units: Unit) {
         // this["constructor"] = this.constructor;
@@ -93,14 +91,15 @@ class AbstractUnit {
      * @throws {Error} When the provided units are not supported.
      */
     protected _unit_support_error(value: number, units: any): number {
-
         if (!(units instanceof this.constructor)) {
             const err_msg = `Type expected: ${this.constructor.name}, ${typeof units} found: ${units} (${value})`;
             throw new TypeError(err_msg);
         }
 
         if (!Object.values(this).includes(units)) {
-            throw new Error(`${this.constructor.name}: unit ${units} is not supported`);
+            throw new Error(
+                `${this.constructor.name}: unit ${units} is not supported`,
+            );
         }
 
         return 0;
@@ -172,7 +171,6 @@ class AbstractUnit {
  * Angular unit
  */
 class Angular extends AbstractUnit {
-
     // Angular unit constants
     static Radian = Unit.Radian;
     static Degree = Unit.Degree;
@@ -189,67 +187,69 @@ class Angular extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Radian) {
-            return value;
-        }
-        if (units === Unit.Degree) {
-            return (value / 180) * Math.PI;
-        }
-        if (units === Unit.MOA) {
-            return (value / 180) * Math.PI / 60;
-        }
-        if (units === Unit.MIL) {
-            return (value / 3200) * Math.PI;
-        }
-        if (units === Unit.MRad) {
-            return value / 1000;
-        }
-        if (units === Unit.Thousand) {
-            return (value / 3000) * Math.PI;
-        }
-        if (units === Unit.InchesPer100Yd) {
-            return Math.atan(value / 3600);
-        }
-        if (units === Unit.CmPer100M) {
-            return Math.atan(value / 10000);
-        }
-        if (units === Unit.OClock) {
-            return (value / 6) * Math.PI;
+        let result = 0;
+
+        switch (units) {
+            case Unit.Radian:
+                result = value;
+                break;
+            case Unit.Degree:
+                result = (value / 180) * Math.PI;
+                break;
+            case Unit.MOA:
+                result = ((value / 180) * Math.PI) / 60;
+                break;
+            case Unit.MIL:
+                result = (value / 3200) * Math.PI;
+                break;
+            case Unit.MRad:
+                result = value / 1000;
+                break;
+            case Unit.Thousand:
+                result = (value / 3000) * Math.PI;
+                break;
+            case Unit.InchesPer100Yd:
+                result = Math.atan(value / 3600);
+                break;
+            case Unit.CmPer100M:
+                result = Math.atan(value / 10000);
+                break;
+            case Unit.OClock:
+                result = (value / 6) * Math.PI;
+                break;
+            default:
+                return super.toRaw(value, units);
         }
 
-        return super.toRaw(value, units);
+        if (result > 2 * Math.PI) {
+            result = result % (2 * Math.PI);
+        }
+        return result;
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Radian) {
-            return value;
+        switch (units) {
+            case Unit.Radian:
+                return value;
+            case Unit.Degree:
+                return (value * 180) / Math.PI;
+            case Unit.MOA:
+                return ((value * 180) / Math.PI) * 60;
+            case Unit.MIL:
+                return (value * 3200) / Math.PI;
+            case Unit.MRad:
+                return value * 1000;
+            case Unit.Thousand:
+                return (value * 3000) / Math.PI;
+            case Unit.InchesPer100Yd:
+                return Math.tan(value) * 3600;
+            case Unit.CmPer100M:
+                return Math.tan(value) * 10000;
+            case Unit.OClock:
+                return (value * 6) / Math.PI;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.Degree) {
-            return (value * 180) / Math.PI;
-        }
-        if (units === Unit.MOA) {
-            return (value * 180) / Math.PI * 60;
-        }
-        if (units === Unit.MIL) {
-            return (value * 3200) / Math.PI;
-        }
-        if (units === Unit.MRad) {
-            return value * 1000;
-        }
-        if (units === Unit.Thousand) {
-            return (value * 3000) / Math.PI;
-        }
-        if (units === Unit.InchesPer100Yd) {
-            return Math.tan(value) * 3600;
-        }
-        if (units === Unit.CmPer100M) {
-            return Math.tan(value) * 10000;
-        }
-        if (units === Unit.OClock) {
-            return (value * 6) / Math.PI;
-        }
-
-        return super.fromRaw(value, units);
     }
 }
 
@@ -257,7 +257,6 @@ class Angular extends AbstractUnit {
  * Distance unit
  */
 class Distance extends AbstractUnit {
-
     // Distance unit constants
     static Inch = Unit.Inch;
     static Foot = Unit.Foot;
@@ -275,56 +274,56 @@ class Distance extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Inch) {
-            return value;
-        }
-        if (units === Unit.Foot) {
-            return value * 12;
-        } else if (units === Unit.Yard) {
-            return value * 36;
-        } else if (units === Unit.Mile) {
-            return value * 63360;
-        } else if (units === Unit.NauticalMile) {
-            return value * 72913.3858;
-        } else if (units === Unit.Line) {
-            return value / 10;
-        } else if (units === Unit.Millimeter) {
-            return value / 25.4;
-        } else if (units === Unit.Centimeter) {
-            return value / 2.54;
-        } else if (units === Unit.Meter) {
-            return value / 25.4 * 1000;
-        } else if (units === Unit.Kilometer) {
-            return value / 25.4 * 1000000;
-        } else {
-            return super.toRaw(value, units);
+        switch (units) {
+            case Unit.Inch:
+                return value;
+            case Unit.Foot:
+                return value * 12;
+            case Unit.Yard:
+                return value * 36;
+            case Unit.Mile:
+                return value * 63360;
+            case Unit.NauticalMile:
+                return value * 72913.3858;
+            case Unit.Line:
+                return value / 10;
+            case Unit.Millimeter:
+                return value / 25.4;
+            case Unit.Centimeter:
+                return value / 2.54;
+            case Unit.Meter:
+                return (value / 25.4) * 1000;
+            case Unit.Kilometer:
+                return (value / 25.4) * 1000000;
+            default:
+                return super.toRaw(value, units);
         }
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Inch) {
-            return value;
-        }
-        if (units === Unit.Foot) {
-            return value / 12;
-        } else if (units === Unit.Yard) {
-            return value / 36;
-        } else if (units === Unit.Mile) {
-            return value / 63360;
-        } else if (units === Unit.NauticalMile) {
-            return value / 72913.3858;
-        } else if (units === Unit.Line) {
-            return value * 10;
-        } else if (units === Unit.Millimeter) {
-            return value * 25.4;
-        } else if (units === Unit.Centimeter) {
-            return value * 2.54;
-        } else if (units === Unit.Meter) {
-            return value * 25.4 / 1000;
-        } else if (units === Unit.Kilometer) {
-            return value * 25.4 / 1000000;
-        } else {
-            return super.fromRaw(value, units);
+        switch (units) {
+            case Unit.Inch:
+                return value;
+            case Unit.Foot:
+                return value / 12;
+            case Unit.Yard:
+                return value / 36;
+            case Unit.Mile:
+                return value / 63360;
+            case Unit.NauticalMile:
+                return value / 72913.3858;
+            case Unit.Line:
+                return value * 10;
+            case Unit.Millimeter:
+                return value * 25.4;
+            case Unit.Centimeter:
+                return value * 2.54;
+            case Unit.Meter:
+                return (value * 25.4) / 1000;
+            case Unit.Kilometer:
+                return (value * 25.4) / 1000000;
+            default:
+                return super.fromRaw(value, units);
         }
     }
 }
@@ -333,7 +332,6 @@ class Distance extends AbstractUnit {
  * Velocity unit
  */
 class Velocity extends AbstractUnit {
-
     // Velocity unit constants
     static MPS = Unit.MPS;
     static KMH = Unit.KMH;
@@ -346,41 +344,37 @@ class Velocity extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.MPS) {
-            return value;
+        switch (units) {
+            case Unit.MPS: // Meters Per Second
+                return value;
+            case Unit.KMH: // Kilometers Per Hour
+                return value / 3.6;
+            case Unit.FPS: // Feet Per Second
+                return value / 3.2808399;
+            case Unit.MPH: // Miles Per Hour
+                return value / 2.23693629;
+            case Unit.KT: // Knots
+                return value / 1.94384449;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.KMH) {
-            return value / 3.6;
-        }
-        if (units === Unit.FPS) {
-            return value / 3.2808399;
-        }
-        if (units === Unit.MPH) {
-            return value / 2.23693629;
-        }
-        if (units === Unit.KT) {
-            return value / 1.94384449;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.MPS) {
-            return value;
+        switch (units) {
+            case Unit.MPS: // Meters Per Second
+                return value;
+            case Unit.KMH: // Kilometers Per Hour
+                return value * 3.6;
+            case Unit.FPS: // Feet Per Second
+                return value * 3.2808399;
+            case Unit.MPH: // Miles Per Hour
+                return value * 2.23693629;
+            case Unit.KT: // Knots
+                return value * 1.94384449;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.KMH) {
-            return value * 3.6;
-        }
-        if (units === Unit.FPS) {
-            return value * 3.2808399;
-        }
-        if (units === Unit.MPH) {
-            return value * 2.23693629;
-        }
-        if (units === Unit.KT) {
-            return value * 1.94384449;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -388,7 +382,6 @@ class Velocity extends AbstractUnit {
  * Weight unit
  */
 class Weight extends AbstractUnit {
-
     // Weight unit constants
     static Grain = Unit.Grain;
     static Ounce = Unit.Ounce;
@@ -402,47 +395,41 @@ class Weight extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Grain) {
-            return value;
+        switch (units) {
+            case Unit.Grain:
+                return value;
+            case Unit.Gram:
+                return value * 15.4323584;
+            case Unit.Kilogram:
+                return value * 15432.3584;
+            case Unit.Newton:
+                return value * 151339.73750336;
+            case Unit.Pound:
+                return value / 0.000142857143;
+            case Unit.Ounce:
+                return value * 437.5;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.Gram) {
-            return value * 15.4323584;
-        }
-        if (units === Unit.Kilogram) {
-            return value * 15432.3584;
-        }
-        if (units === Unit.Newton) {
-            return value * 151339.73750336;
-        }
-        if (units === Unit.Pound) {
-            return value / 0.000142857143;
-        }
-        if (units === Unit.Ounce) {
-            return value * 437.5;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Grain) {
-            return value;
+        switch (units) {
+            case Unit.Grain:
+                return value;
+            case Unit.Gram:
+                return value / 15.4323584;
+            case Unit.Kilogram:
+                return value / 15432.3584;
+            case Unit.Newton:
+                return value / 151339.73750336;
+            case Unit.Pound:
+                return value * 0.000142857143;
+            case Unit.Ounce:
+                return value / 437.5;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.Gram) {
-            return value / 15.4323584;
-        }
-        if (units === Unit.Kilogram) {
-            return value / 15432.3584;
-        }
-        if (units === Unit.Newton) {
-            return value / 151339.73750336;
-        }
-        if (units === Unit.Pound) {
-            return value * 0.000142857143;
-        }
-        if (units === Unit.Ounce) {
-            return value / 437.5;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -450,7 +437,6 @@ class Weight extends AbstractUnit {
  * Pressure unit
  */
 class Pressure extends AbstractUnit {
-
     // Pressure unit constants
     static MmHg = Unit.MmHg;
     static InHg = Unit.InHg;
@@ -463,41 +449,37 @@ class Pressure extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.MmHg) {
-            return value;
+        switch (units) {
+            case Unit.MmHg: // Millimeters of Mercury (base unit)
+                return value;
+            case Unit.InHg: // Inches of Mercury
+                return value * 25.4;
+            case Unit.Bar:
+                return value * 750.061683;
+            case Unit.hPa: // Hectopascals
+                return (value * 750.061683) / 1000;
+            case Unit.PSI: // Pounds per Square Inch
+                return value * 51.714924102396;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.InHg) {
-            return value * 25.4;
-        }
-        if (units === Unit.Bar) {
-            return value * 750.061683;
-        }
-        if (units === Unit.hPa) {
-            return value * 750.061683 / 1000;
-        }
-        if (units === Unit.PSI) {
-            return value * 51.714924102396;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.MmHg) {
-            return value;
+        switch (units) {
+            case Unit.MmHg: // Millimeters of Mercury (base unit)
+                return value;
+            case Unit.InHg: // Inches of Mercury
+                return value / 25.4;
+            case Unit.Bar:
+                return value / 750.061683;
+            case Unit.hPa: // Hectopascals
+                return (value / 750.061683) * 1000;
+            case Unit.PSI: // Pounds per Square Inch
+                return value / 51.714924102396;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.InHg) {
-            return value / 25.4;
-        }
-        if (units === Unit.Bar) {
-            return value / 750.061683;
-        }
-        if (units === Unit.hPa) {
-            return value / 750.061683 * 1000;
-        }
-        if (units === Unit.PSI) {
-            return value / 51.714924102396;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -505,7 +487,6 @@ class Pressure extends AbstractUnit {
  * Temperature unit
  */
 class Temperature extends AbstractUnit {
-
     // Temperature unit constants
     static Fahrenheit = Unit.Fahrenheit;
     static Celsius = Unit.Celsius;
@@ -517,35 +498,33 @@ class Temperature extends AbstractUnit {
     }
 
     protected toRaw(value: number, units: Unit): number {
-        if (units === Unit.Fahrenheit) {
-            return value;
+        switch (units) {
+            case Unit.Fahrenheit:
+                return value;
+            case Unit.Rankin:
+                return value - 459.67;
+            case Unit.Celsius:
+                return (value * 9) / 5 + 32;
+            case Unit.Kelvin:
+                return ((value - 273.15) * 9) / 5 + 32;
+            default:
+                return super.toRaw(value, units);
         }
-        if (units === Unit.Rankin) {
-            return value - 459.67;
-        }
-        if (units === Unit.Celsius) {
-            return value * 9 / 5 + 32;
-        }
-        if (units === Unit.Kelvin) {
-            return (value - 273.15) * 9 / 5 + 32;
-        }
-        return super.toRaw(value, units);
     }
 
     protected fromRaw(value: number, units: Unit): number {
-        if (units === Unit.Fahrenheit) {
-            return value;
+        switch (units) {
+            case Unit.Fahrenheit:
+                return value;
+            case Unit.Rankin:
+                return value + 459.67;
+            case Unit.Celsius:
+                return ((value - 32) * 5) / 9;
+            case Unit.Kelvin:
+                return ((value - 32) * 5) / 9 + 273.15;
+            default:
+                return super.fromRaw(value, units);
         }
-        if (units === Unit.Rankin) {
-            return value + 459.67;
-        }
-        if (units === Unit.Celsius) {
-            return (value - 32) * 5 / 9;
-        }
-        if (units === Unit.Kelvin) {
-            return (value - 32) * 5 / 9 + 273.15;
-        }
-        return super.fromRaw(value, units);
     }
 }
 
@@ -553,7 +532,6 @@ class Temperature extends AbstractUnit {
  * Energy unit
  */
 class Energy extends AbstractUnit {
-
     // Energy unit constants
     static FootPound = Unit.FootPound;
     static Joule = Unit.Joule;
@@ -583,58 +561,60 @@ class Energy extends AbstractUnit {
     }
 }
 
-
 // Dict of properties of the Unit enum type
 const UnitProps = {
-    [Unit.Radian]: { name: 'radian', accuracy: 6, symbol: 'rad' },
-    [Unit.Degree]: { name: 'degree', accuracy: 4, symbol: '°' },
-    [Unit.MOA]: { name: 'MOA', accuracy: 2, symbol: 'MOA' },
-    [Unit.MIL]: { name: 'MIL', accuracy: 2, symbol: 'MIL' },
-    [Unit.MRad]: { name: 'MRAD', accuracy: 2, symbol: 'MRAD' },
-    [Unit.Thousand]: { name: 'thousand', accuracy: 2, symbol: 'ths' },
-    [Unit.InchesPer100Yd]: { name: 'inches/100yd', accuracy: 2, symbol: 'in/100yd' },
-    [Unit.CmPer100M]: { name: 'cm/100m', accuracy: 2, symbol: 'cm/100m' },
-    [Unit.OClock]: { name: 'hour', accuracy: 2, symbol: 'h' },
+    [Unit.Radian]: { name: "radian", accuracy: 6, symbol: "rad" },
+    [Unit.Degree]: { name: "degree", accuracy: 4, symbol: "°" },
+    [Unit.MOA]: { name: "MOA", accuracy: 2, symbol: "MOA" },
+    [Unit.MIL]: { name: "MIL", accuracy: 2, symbol: "MIL" },
+    [Unit.MRad]: { name: "MRAD", accuracy: 2, symbol: "MRAD" },
+    [Unit.Thousand]: { name: "thousand", accuracy: 2, symbol: "ths" },
+    [Unit.InchesPer100Yd]: {
+        name: "inches/100yd",
+        accuracy: 2,
+        symbol: "in/100yd",
+    },
+    [Unit.CmPer100M]: { name: "cm/100m", accuracy: 2, symbol: "cm/100m" },
+    [Unit.OClock]: { name: "hour", accuracy: 2, symbol: "h" },
 
-    [Unit.Inch]: { name: 'inch', accuracy: 3, symbol: 'inch' },
-    [Unit.Foot]: { name: 'foot', accuracy: 2, symbol: 'ft' },
-    [Unit.Yard]: { name: 'yard', accuracy: 3, symbol: 'yd' },
-    [Unit.Mile]: { name: 'mile', accuracy: 3, symbol: 'mi' },
-    [Unit.NauticalMile]: { name: 'nautical mile', accuracy: 3, symbol: 'nm' },
-    [Unit.Millimeter]: { name: 'millimeter', accuracy: 3, symbol: 'mm' },
-    [Unit.Centimeter]: { name: 'centimeter', accuracy: 3, symbol: 'cm' },
-    [Unit.Meter]: { name: 'meter', accuracy: 3, symbol: 'm' },
-    [Unit.Kilometer]: { name: 'kilometer', accuracy: 3, symbol: 'km' },
-    [Unit.Line]: { name: 'line', accuracy: 3, symbol: 'ln' },
+    [Unit.Inch]: { name: "inch", accuracy: 3, symbol: "inch" },
+    [Unit.Foot]: { name: "foot", accuracy: 2, symbol: "ft" },
+    [Unit.Yard]: { name: "yard", accuracy: 3, symbol: "yd" },
+    [Unit.Mile]: { name: "mile", accuracy: 3, symbol: "mi" },
+    [Unit.NauticalMile]: { name: "nautical mile", accuracy: 3, symbol: "nm" },
+    [Unit.Millimeter]: { name: "millimeter", accuracy: 3, symbol: "mm" },
+    [Unit.Centimeter]: { name: "centimeter", accuracy: 3, symbol: "cm" },
+    [Unit.Meter]: { name: "meter", accuracy: 3, symbol: "m" },
+    [Unit.Kilometer]: { name: "kilometer", accuracy: 3, symbol: "km" },
+    [Unit.Line]: { name: "line", accuracy: 3, symbol: "ln" },
 
-    [Unit.FootPound]: { name: 'foot * pound', accuracy: 0, symbol: 'ft·lb' },
-    [Unit.Joule]: { name: 'joule', accuracy: 0, symbol: 'J' },
+    [Unit.FootPound]: { name: "foot * pound", accuracy: 0, symbol: "ft·lb" },
+    [Unit.Joule]: { name: "joule", accuracy: 0, symbol: "J" },
 
-    [Unit.MmHg]: { name: 'mmHg', accuracy: 0, symbol: 'mmHg' },
-    [Unit.InHg]: { name: 'inHg', accuracy: 6, symbol: 'inHg' },
-    [Unit.Bar]: { name: 'bar', accuracy: 2, symbol: 'bar' },
-    [Unit.hPa]: { name: 'hPa', accuracy: 4, symbol: 'hPa' },
-    [Unit.PSI]: { name: 'psi', accuracy: 4, symbol: 'psi' },
+    [Unit.MmHg]: { name: "mmHg", accuracy: 0, symbol: "mmHg" },
+    [Unit.InHg]: { name: "inHg", accuracy: 6, symbol: "inHg" },
+    [Unit.Bar]: { name: "bar", accuracy: 2, symbol: "bar" },
+    [Unit.hPa]: { name: "hPa", accuracy: 4, symbol: "hPa" },
+    [Unit.PSI]: { name: "psi", accuracy: 4, symbol: "psi" },
 
-    [Unit.Fahrenheit]: { name: 'fahrenheit', accuracy: 1, symbol: '°F' },
-    [Unit.Celsius]: { name: 'celsius', accuracy: 1, symbol: '°C' },
-    [Unit.Kelvin]: { name: 'kelvin', accuracy: 1, symbol: '°K' },
-    [Unit.Rankin]: { name: 'rankin', accuracy: 1, symbol: '°R' },
+    [Unit.Fahrenheit]: { name: "fahrenheit", accuracy: 1, symbol: "°F" },
+    [Unit.Celsius]: { name: "celsius", accuracy: 1, symbol: "°C" },
+    [Unit.Kelvin]: { name: "kelvin", accuracy: 1, symbol: "°K" },
+    [Unit.Rankin]: { name: "rankin", accuracy: 1, symbol: "°R" },
 
-    [Unit.MPS]: { name: 'mps', accuracy: 0, symbol: 'm/s' },
-    [Unit.KMH]: { name: 'kmh', accuracy: 1, symbol: 'km/h' },
-    [Unit.FPS]: { name: 'fps', accuracy: 1, symbol: 'ft/s' },
-    [Unit.MPH]: { name: 'mph', accuracy: 1, symbol: 'mph' },
-    [Unit.KT]: { name: 'knots', accuracy: 1, symbol: 'kt' },
+    [Unit.MPS]: { name: "mps", accuracy: 0, symbol: "m/s" },
+    [Unit.KMH]: { name: "kmh", accuracy: 1, symbol: "km/h" },
+    [Unit.FPS]: { name: "fps", accuracy: 1, symbol: "ft/s" },
+    [Unit.MPH]: { name: "mph", accuracy: 1, symbol: "mph" },
+    [Unit.KT]: { name: "knots", accuracy: 1, symbol: "kt" },
 
-    [Unit.Grain]: { name: 'grain', accuracy: 1, symbol: 'gr' },
-    [Unit.Ounce]: { name: 'ounce', accuracy: 1, symbol: 'oz' },
-    [Unit.Gram]: { name: 'gram', accuracy: 1, symbol: 'g' },
-    [Unit.Pound]: { name: 'pound', accuracy: 3, symbol: 'lb' },
-    [Unit.Kilogram]: { name: 'kilogram', accuracy: 3, symbol: 'kg' },
-    [Unit.Newton]: { name: 'newton', accuracy: 3, symbol: 'N' },
+    [Unit.Grain]: { name: "grain", accuracy: 1, symbol: "gr" },
+    [Unit.Ounce]: { name: "ounce", accuracy: 1, symbol: "oz" },
+    [Unit.Gram]: { name: "gram", accuracy: 1, symbol: "g" },
+    [Unit.Pound]: { name: "pound", accuracy: 3, symbol: "lb" },
+    [Unit.Kilogram]: { name: "kilogram", accuracy: 3, symbol: "kg" },
+    [Unit.Newton]: { name: "newton", accuracy: 3, symbol: "N" },
 };
-
 
 const Measure = {
     Angular: Angular,
@@ -644,8 +624,7 @@ const Measure = {
     Temperature: Temperature,
     Pressure: Pressure,
     Energy: Energy,
-}
-
+};
 
 const UNew = {
     Radian: (value: number) => new Angular(value, Unit.Radian),
@@ -696,14 +675,16 @@ const UNew = {
     [Unit.MIL]: (value: number) => new Angular(value, Unit.MIL),
     [Unit.MRad]: (value: number) => new Angular(value, Unit.MRad),
     [Unit.Thousand]: (value: number) => new Angular(value, Unit.Thousand),
-    [Unit.InchesPer100Yd]: (value: number) => new Angular(value, Unit.InchesPer100Yd),
+    [Unit.InchesPer100Yd]: (value: number) =>
+        new Angular(value, Unit.InchesPer100Yd),
     [Unit.CmPer100M]: (value: number) => new Angular(value, Unit.CmPer100M),
     [Unit.OClock]: (value: number) => new Angular(value, Unit.OClock),
     [Unit.Inch]: (value: number) => new Distance(value, Unit.Inch),
     [Unit.Foot]: (value: number) => new Distance(value, Unit.Foot),
     [Unit.Yard]: (value: number) => new Distance(value, Unit.Yard),
     [Unit.Mile]: (value: number) => new Distance(value, Unit.Mile),
-    [Unit.NauticalMile]: (value: number) => new Distance(value, Unit.NauticalMile),
+    [Unit.NauticalMile]: (value: number) =>
+        new Distance(value, Unit.NauticalMile),
     [Unit.Millimeter]: (value: number) => new Distance(value, Unit.Millimeter),
     [Unit.Centimeter]: (value: number) => new Distance(value, Unit.Centimeter),
     [Unit.Meter]: (value: number) => new Distance(value, Unit.Meter),
@@ -716,7 +697,8 @@ const UNew = {
     [Unit.Bar]: (value: number) => new Pressure(value, Unit.Bar),
     [Unit.hPa]: (value: number) => new Pressure(value, Unit.hPa),
     [Unit.PSI]: (value: number) => new Pressure(value, Unit.PSI),
-    [Unit.Fahrenheit]: (value: number) => new Temperature(value, Unit.Fahrenheit),
+    [Unit.Fahrenheit]: (value: number) =>
+        new Temperature(value, Unit.Fahrenheit),
     [Unit.Celsius]: (value: number) => new Temperature(value, Unit.Celsius),
     [Unit.Kelvin]: (value: number) => new Temperature(value, Unit.Kelvin),
     [Unit.Rankin]: (value: number) => new Temperature(value, Unit.Rankin),
@@ -730,38 +712,43 @@ const UNew = {
     [Unit.Gram]: (value: number) => new Weight(value, Unit.Gram),
     [Unit.Pound]: (value: number) => new Weight(value, Unit.Pound),
     [Unit.Kilogram]: (value: number) => new Weight(value, Unit.Kilogram),
-    [Unit.Newton]: (value: number) => new Weight(value, Unit.Newton)
+    [Unit.Newton]: (value: number) => new Weight(value, Unit.Newton),
 };
 
-
 /**
- * Coerces the given instance to the specified class type or creates a new instance.
+ * Coerces the given instance to the specified unit class type or creates a new instance.
+ * This function is used to ensure that a value, which might be a raw number or an existing
+ * unit object, is consistently represented as an instance of a specific unit class.
  *
- * @param {AbstractUnit|Object} instance - The instance to coerce or create.
- * @param {AbstractUnit|Object|function} expectedClass - The expected class type.
- * @param {Unit|number} defaultUnit - The default unit for creating a new instance.
- * @returns {AbstractUnit} An instance of the expected class type.
- * @throws {TypeError} If the instance is not of the expected class type or 'number'.
+ * @template T - A type that extends `AbstractUnit`, representing the specific unit class (e.g., `Distance`, `Weight`).
+ * @param {number | T} instance - The value to coerce. It can be a raw number (which will be used to create a new instance)
+ * or an existing instance of the `expectedClass` (which will be returned directly).
+ * @param {new (value: number, unit: Unit) => T} expectedClass - The constructor function for the expected unit class (e.g., `Distance`, `Weight`).
+ * This is typically the class itself.
+ * @param {Unit} defaultUnit - The default unit to use when `instance` is a number and a new `expectedClass` instance needs to be created.
+ * This should be an enum value from the `Unit` type relevant to `expectedClass` (e.g., `Distance.Meter`, `Weight.Kilogram`).
+ * @returns {T} An instance of the `expectedClass` type, representing the coerced value.
+ * @throws {TypeError} If the `instance` is not a `number` and not an instance of the `expectedClass`,
+ * indicating an unsupported type for coercion.
  */
-function unitTypeCoerce(
-    instance: (number | AbstractUnit),
-    expectedClass: (typeof AbstractUnit | any),
-    defaultUnit: Unit
-): any {
+function unitTypeCoerce<T extends AbstractUnit>(
+    instance: number | T,
+    expectedClass: new (value: number, unit: Unit) => T, // Better type for constructor
+    defaultUnit: Unit,
+): T {
     if (instance instanceof expectedClass) {
         // If the instance is already of the expected class type, return it.
         return instance;
-    } else if (typeof instance === 'number') {
+    } else if (typeof instance === "number") {
         // If the instance is a number, create a new instance using the default unit.
         return new expectedClass(instance, defaultUnit);
-    }
-    else {
+    } else {
         // If the instance is not of the expected type, throw a TypeError.
-        throw new TypeError(`Instance must be a type of ${expectedClass.name
-            } or 'number'`);
+        throw new TypeError(
+            `Instance must be a type of ${expectedClass.name} or 'number'`,
+        );
     }
 }
-
 
 export interface IPreferredUnits {
     angular: Unit;
@@ -837,6 +824,18 @@ export class PreferredUnits implements IPreferredUnits {
 const preferredUnits = new PreferredUnits();
 
 export {
-    AbstractUnit, Angular, Distance, Velocity, Weight, Temperature, Pressure, Energy,
-    Unit, UnitProps, unitTypeCoerce, UNew, Measure, preferredUnits
-}
+    AbstractUnit,
+    Angular,
+    Distance,
+    Velocity,
+    Weight,
+    Temperature,
+    Pressure,
+    Energy,
+    Unit,
+    UnitProps,
+    unitTypeCoerce,
+    UNew,
+    Measure,
+    preferredUnits,
+};

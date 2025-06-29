@@ -2,6 +2,7 @@
 ## ISC library for small arms ballistic calculations (JavaScript ES6+)
 ![NPM version](https://img.shields.io/npm/v/js-ballistics?style=flat-square&logo=npm)
 ![License](https://img.shields.io/npm/l/js-ballistics?style=flat-square)
+[![Node.js Unittests](https://github.com/o-murphy/js-ballistics/actions/workflows/tests.yml/badge.svg)](https://github.com/o-murphy/js-ballistics/actions/workflows/tests.yml)
 
 [![SWUbanner]][SWUdocs]
 
