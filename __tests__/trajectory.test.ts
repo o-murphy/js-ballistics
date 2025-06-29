@@ -162,7 +162,6 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
             trajectoryStep: UNew.Yard(100),
         }).trajectory;
 
-        console.log(`Len1 ${tData.length}`);
         expect(tData.length).toEqual(11);
 
         const data = [

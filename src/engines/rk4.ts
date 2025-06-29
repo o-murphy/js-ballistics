@@ -13,8 +13,18 @@ import {
 
 class RK4IntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
+
+
+    /**
+     * Retrieves the calculation step size for trajectory calculations.
+     * @param {number} [step=0] - The step size to retrieve.
+     * @returns {number} The calculation step size.
+     */
+    getCalcStep(step: number = 0): number {
+        return Math.pow(super.getCalcStep(step), 0.5);
+    }
+
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -59,9 +69,7 @@ class RK4IntegrationEngine
             Math.cos(barrelElevation) * Math.sin(barrelAzimuth),
         ).mulByConst(velocity);
 
-        // const rkCalcStep = 4 * calcStep;
-        const rkCalcStep = calcStep ** (1 / 2);
-        const minStep = Math.min(rkCalcStep, recordStep);
+        const minStep = Math.min(calcStep, recordStep);
 
         const dataFilter = new _TrajectoryDataFilter(
             filterFlags,
@@ -115,7 +123,7 @@ class RK4IntegrationEngine
 
             const relativeVelocity = velocityVector.subtract(windVector);
             const relativeSpeed = relativeVelocity.magnitude();
-            const deltaTime = rkCalcStep / Math.max(1.0, relativeSpeed);
+            const deltaTime = calcStep / Math.max(1.0, relativeSpeed);
             const km = densityFactor * this.dragByMach(relativeSpeed / mach);
             drag = km * relativeSpeed;
 
@@ -126,22 +134,12 @@ class RK4IntegrationEngine
             };
 
             const v1: Vector = f(relativeVelocity).mulByConst(deltaTime);
-            const v2: Vector = f(
-                relativeVelocity.add(v1.mulByConst(0.5)),
-            ).mulByConst(deltaTime);
-            const v3: Vector = f(
-                relativeVelocity.add(v2.mulByConst(0.5)),
-            ).mulByConst(deltaTime);
-            const v4: Vector = f(relativeVelocity.add(v3)).mulByConst(
-                deltaTime,
-            );
-            const p1: Vector = velocityVector;
-            const p2: Vector = velocityVector
-                .add(p1.mulByConst(0.5))
-                .mulByConst(deltaTime);
-            const p3: Vector = velocityVector
-                .add(p2.mulByConst(0.5))
-                .mulByConst(deltaTime);
+            const v2: Vector = f(relativeVelocity.add(v1.mulByConst(0.5))).mulByConst(deltaTime);
+            const v3: Vector = f(relativeVelocity.add(v2.mulByConst(0.5))).mulByConst(deltaTime);
+            const v4: Vector = f(relativeVelocity.add(v3)).mulByConst(deltaTime);
+            const p1: Vector = velocityVector.mulByConst(deltaTime);
+            const p2: Vector = velocityVector.add(p1.mulByConst(0.5)).mulByConst(deltaTime);
+            const p3: Vector = velocityVector.add(p2.mulByConst(0.5)).mulByConst(deltaTime);
             const p4: Vector = velocityVector.add(p3).mulByConst(deltaTime);
 
             velocityVector = velocityVector.add(
