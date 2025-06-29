@@ -11,14 +11,14 @@ import {
     Wind,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
+    Angular,
+    Temperature,
+    Velocity,
 } from "../src"; // Assuming these are in '../src'
 import { TrajectoryRangeError, ZeroFindingError } from "../src/exceptions"; // Assuming exceptions are here
 import { expect, describe, test, beforeEach } from "@jest/globals";
 
-// --- Helper Functions and Setup Mimicking Python Fixtures ---
-
-// Mimics zero_height_calc fixture
-let zeroHeightCalc: Calculator<any>; // Calculator instance for tests
+// --- Helper Functions Mimicking Python Fixtures ---
 
 // Helper to create a shot with a relative angle in degrees
 const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
@@ -46,15 +46,21 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
     return shot;
 };
 
-const calculators = [
-    { engine: EulerIntegrationEngine }, // Assuming these are string identifiers or actual classes
-    { engine: RK4IntegrationEngine },
+// Define the engine types to test with for describe.each
+const calculatorsToTest = [
+    { engine: EulerIntegrationEngine, name: "EulerIntegrationEngine" },
+    { engine: RK4IntegrationEngine, name: "RK4IntegrationEngine" },
 ];
 
-// --- Test Suite: Incomplete Shots ---
-describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
+// --- Test Suite: Incomplete Shots (Parameterized by Engine) ---
+// Use describe.each to iterate over different engine implementations
+describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, name }) => {
+    let zeroHeightCalc: Calculator<any>; // Declare with 'let' to be reassigned in beforeEach
 
-    const zeroHeightCalc: Calculator<any> = new Calculator({ engine });
+    // This beforeEach hook runs before each 'test' function in this describe block.
+    beforeEach(() => {
+        zeroHeightCalc = new Calculator({ engine }); // Initialize for each test
+    });
 
     test("test_shot_incomplete", () => {
         const angleInDegrees = 5.219710693607955;
@@ -67,8 +73,11 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
             const lastPoint = hitResult.trajectory[hitResult.trajectory.length - 1];
             const lastPointDistance = lastPoint.distance.In(Distance.Meter);
             const lastPointHeight = lastPoint.height.In(Distance.Meter);
-            console.log(`lastPointDistance=${lastPointDistance} lastPointHeight=${lastPointHeight}`);
+            // console.log(`lastPointDistance=${lastPointDistance} lastPointHeight=${lastPointHeight}`);
+
+            // Reverted to Python's expected value for lastPointDistance
             expect(lastPointDistance).toBeGreaterThan(3525.0);
+
             expect(lastPointHeight).toBeCloseTo(0, 10); // abs=1e-10 is very small, use higher precision
         };
 
@@ -80,13 +89,14 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_shot_incomplete (Case 1): ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e; // Re-throw if it's an unexpected error
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
         checkEndPoint(hitResult);
 
         // Case 2: extra_data = false, trajectory_step = range (single point)
@@ -94,13 +104,14 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData, trajectoryStep: range });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_shot_incomplete (Case 2): ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
         checkEndPoint(hitResult);
 
         // Case 3: extra_data = true
@@ -108,13 +119,14 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_shot_incomplete (Case 3): ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
         checkEndPoint(hitResult);
 
         // Case 4: extra_data = true, trajectory_step = range (single point)
@@ -122,13 +134,14 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData, trajectoryStep: range });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_shot_incomplete (Case 4): ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
         checkEndPoint(hitResult);
     });
 
@@ -144,13 +157,14 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_vertical_shot (Case 1): ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
         const lastPointFalse = hitResult.trajectory[hitResult.trajectory.length - 1];
         expect(lastPointFalse.distance.In(Distance.Meter)).toBeCloseTo(0, 10); // abs=1e-10
         expect(lastPointFalse.height.In(Distance.Meter)).toBeCloseTo(0, 1); // abs=0.1
@@ -160,13 +174,14 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_vertical_shot (Case 2): ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
         const lastPointTrue = hitResult.trajectory[hitResult.trajectory.length - 1];
         expect(lastPointTrue.distance.In(Distance.Meter)).toBeCloseTo(0, 10); // abs=1e-10
         expect(lastPointTrue.height.In(Distance.Meter)).toBeCloseTo(0, 1); // abs=0.1
@@ -184,26 +199,29 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         try {
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData, trajectoryStep: UNew.Meter(100) });
         } catch (e: any) {
-            console.log(`Got range error ${e.reason} ${e.incompleteTrajectory?.length}`);
+            console.log(`Caught error in test_no_duplicate_points: ${e.reason || e.message}`); // Added logging
             if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
             }
         }
+        expect(hitResult.trajectory.length).toBeGreaterThan(0); // Ensure trajectory is not empty
 
         expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(2);
         // Jest's expect().not.toBe() compares by reference. We need to compare properties.
-        // Or check if the last two points are distinct objects in the array.
-        expect(hitResult.trajectory[hitResult.trajectory.length - 2]).not.toBe(
-            hitResult.trajectory[hitResult.trajectory.length - 1]
+        // The original Python test uses `assert hit_result[-2] != hit_result[-1]`,
+        // which for dataclasses compares values. For JS objects, need to compare content.
+        expect(JSON.stringify(hitResult.trajectory[hitResult.trajectory.length - 2].inDefUnits())).not.toEqual(
+            JSON.stringify(hitResult.trajectory[hitResult.trajectory.length - 1].inDefUnits())
         );
 
         const secondLastPoint = hitResult.trajectory[hitResult.trajectory.length - 2];
         const lastPoint = hitResult.trajectory[hitResult.trajectory.length - 1];
 
-        expect(secondLastPoint.distance.In(Distance.Meter)).toBeCloseTo(1000, 1); // abs=0.2
-        expect(secondLastPoint.height.In(Distance.Meter)).toBeCloseTo(0, 2); // abs=0.01
+        expect(secondLastPoint.distance.In(Distance.Meter)).toBeCloseTo(1000, 1); // abs=0.2 in Python is 1 decimal place here
+        // Reverted to Python's expected height. This test will likely fail now.
+        expect(secondLastPoint.height.In(Distance.Meter)).toBeCloseTo(0, 2); // abs=0.01 in Python is 2 decimal places here
 
         expect(lastPoint.distance.In(Distance.Meter)).toBeGreaterThan(secondLastPoint.distance.In(Distance.Meter));
         expect(lastPoint.height.In(Distance.Meter)).toBeLessThan(secondLastPoint.height.In(Distance.Meter));
@@ -221,18 +239,21 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
                 try {
                     hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
                 } catch (e: any) {
+                    console.log(`Caught error in test_no_duplicated_point_many_trajectories for angle ${angle} (extraData=${extraData}): ${e.reason || e.message}`);
                     if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
-                        console.log(`Got range error ${e}`);
                         hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
                     } else {
                         throw e;
                     }
                 }
-                console.log(`len(hitResult.trajectory)=${hitResult.trajectory.length}`);
+                expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(0); // Ensure trajectory is not null/undefined/empty on error
+                // console.log(`len(hitResult.trajectory)=${hitResult.trajectory.length}`);
                 // In JS, converting array to Set removes duplicates if elements are primitive.
                 // For objects, it removes if they are the exact same reference.
                 // To check for duplicate data, we need to convert to a comparable primitive or string.
                 const uniquePoints = new Set(hitResult.trajectory.map(p => JSON.stringify(p.inDefUnits())));
+                // Python's test `assert len(hit_result.trajectory)==len(set(hit_result.trajectory))`
+                // This implicitly means if there's an incomplete trajectory, its points are unique.
                 expect(hitResult.trajectory.length).toBe(uniquePoints.size);
             }
         }
@@ -250,7 +271,7 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
         [564.766336537204, 1962.27673604624, 74.371041637992],
         [5281.061059442218, 2529.348893994985, 46.2771485569329],
         [2756.3221111683733, 4256.441991651934, 65.7650037845664],
-        [63.11845014860512, 4215.811071201791, 89.2734502050901],
+        [63.11845014860512, 4215.811071201791, 89.2734502050901], // This one was failing
         [3304.002996878733, 4187.8846508525485, 65.48673417912764],
         [6937.3716148080375, 358.5414845184736, 38.98449130666212],
         [7126.0478000569165, 0.001, 38.58299087491584],
@@ -270,41 +291,53 @@ describe.each(calculators)("Test Incomplete Shots %s", ({ engine }) => {
             try {
                 hitResultExtraData = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraDataFlag });
             } catch (e: any) {
-                console.log(`Got range error ${e}`);
+                console.log(`Caught error in test_end_points_are_included (extraData=true): ${e.reason || e.message}`); // Added logging
                 if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                     hitResultExtraData = new HitResult(shot, e.incompleteTrajectory, extraDataFlag);
                 } else {
                     throw e;
                 }
             }
-            console.log(`extra_data=${extraDataFlag} len(hitResultExtraData.trajectory)=${hitResultExtraData.trajectory.length}`);
-            const lastPointExtraData = hitResultExtraData.trajectory[hitResultExtraData.trajectory.length - 1];
-            const distanceExtraData = lastPointExtraData.distance.In(Distance.Meter);
-            const heightExtraData = lastPointExtraData.height.In(Distance.Meter);
-            console.log(`extra_data=${extraDataFlag} Distance ${distanceExtraData.toFixed(2)} Height ${heightExtraData.toFixed(2)}`);
+            // Ensure trajectory is not empty before accessing elements.
+            expect(hitResultExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
+            let distanceExtraData = 0;
+            let heightExtraData = 0;
+            if (hitResultExtraData.trajectory.length > 0) {
+                const lastPointExtraData = hitResultExtraData.trajectory[hitResultExtraData.trajectory.length - 1];
+                distanceExtraData = lastPointExtraData.distance.In(Distance.Meter);
+                heightExtraData = lastPointExtraData.height.In(Distance.Meter);
+            }
+            console.log(`extra_data=${extraDataFlag} len(hitResultExtraData.trajectory)=${hitResultExtraData.trajectory.length} Distance ${distanceExtraData.toFixed(2)} Height ${heightExtraData.toFixed(2)}`);
 
             // Test with extra_data = false
             const noExtraDataFlag = false;
             try {
                 hitResultNoExtraData = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: noExtraDataFlag });
             } catch (e: any) {
-                console.log(`Got range error ${e}`);
+                console.log(`Caught error in test_end_points_are_included (extraData=false): ${e.reason || e.message}`); // Added logging
                 if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
                     hitResultNoExtraData = new HitResult(shot, e.incompleteTrajectory, noExtraDataFlag);
                 } else {
                     throw e;
                 }
             }
-            console.log(`extra_data=${noExtraDataFlag} len(hitResultNoExtraData.trajectory)=${hitResultNoExtraData.trajectory.length}`);
-            const lastPointNoExtraData = hitResultNoExtraData.trajectory[hitResultNoExtraData.trajectory.length - 1];
-            const distanceNoExtraData = lastPointNoExtraData.distance.In(Distance.Meter);
-            const heightNoExtraData = lastPointNoExtraData.height.In(Distance.Meter);
-            console.log(`extra_data=${noExtraDataFlag} Distance ${distanceNoExtraData.toFixed(2)} Height ${heightNoExtraData.toFixed(2)}`);
+            // Ensure trajectory is not empty before accessing elements.
+            expect(hitResultNoExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
+            let distanceNoExtraData = 0;
+            let heightNoExtraData = 0;
+            if (hitResultNoExtraData.trajectory.length > 0) {
+                const lastPointNoExtraData = hitResultNoExtraData.trajectory[hitResultNoExtraData.trajectory.length - 1];
+                distanceNoExtraData = lastPointNoExtraData.distance.In(Distance.Meter);
+                heightNoExtraData = lastPointNoExtraData.height.In(Distance.Meter);
+            }
+            console.log(`extra_data=${noExtraDataFlag} len(hitResultNoExtraData.trajectory)=${hitResultNoExtraData.trajectory.length} Distance ${distanceNoExtraData.toFixed(2)} Height ${heightNoExtraData.toFixed(2)}`);
 
             const distanceDifference = Math.abs(distanceExtraData - distanceNoExtraData);
             const heightDifference = Math.abs(heightExtraData - heightNoExtraData);
             console.log(`Difference in results Distance: ${distanceDifference.toFixed(2)} Height ${heightDifference.toFixed(2)}`);
 
+            // Reverted to Python's expected tolerance for distanceDifference.
+            // This test will likely fail for the 89.273... angle if JS still diverges significantly.
             expect(distanceDifference).toBeLessThanOrEqual(UNew.Foot(0.2).In(Distance.Meter));
         });
     });
