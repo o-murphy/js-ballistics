@@ -21,8 +21,8 @@ enum TrajFlag {
     MACH = 1 << 2,
     RANGE = 1 << 3,
     ZERO = ZERO_UP | ZERO_DOWN,
-    ALL = ZERO | MACH | RANGE,
-    APEX = 16,
+    APEX = 1 << 4, // Corrected APEX bit value
+    ALL = ZERO | MACH | RANGE | APEX, // Corrected ALL value
 }
 
 const trajFlagNames: Record<number, string> = {
@@ -53,16 +53,25 @@ const trajFlagName = (value: TrajFlag) => {
         }
     }
 
-    if (parts.includes("ZERO_UP") && parts.includes("ZERO_DOWN")) {
-        // Filter out both specific parts to keep the combined logic
+    // This block handles the special case where both ZERO_UP and ZERO_DOWN are present,
+    // and you want to represent it as "ZERO".
+    if (
+        (value & TrajFlag.ZERO_UP) === TrajFlag.ZERO_UP &&
+        (value & TrajFlag.ZERO_DOWN) === TrajFlag.ZERO_DOWN
+    ) {
+        // If ZERO_UP and ZERO_DOWN are both in parts, replace them with "ZERO"
         parts = parts.filter(
             (part) => part !== "ZERO_UP" && part !== "ZERO_DOWN",
         );
-        // If you had a specific combined name like `ZERO_TOGGLE` in _TrajFlagNames for `ZERO_UP | ZERO_DOWN`,
-        // that would have been caught by the direct lookup, so this step might be simpler.
-        // If the combination is dynamic, you might add a specific combined name here.
-        // e.g., parts.push("ZERO_TOGGLE"); // If you want a specific combined name
+        // Only add "ZERO" if it's not already implicitly handled by direct lookup
+        // and if it makes sense as a combined flag.
+        if (!parts.includes("ZERO")) {
+            parts.push("ZERO");
+        }
     }
+
+    // Sort parts to ensure consistent output, useful for testing
+    parts.sort();
 
     return parts.length > 0 ? parts.join("|") : "UNKNOWN";
 };
@@ -86,7 +95,7 @@ class TrajectoryData {
      * @param {Angular} angle - The angle of the trajectory.
      * @param {number} densityFactor - Factor representing air density effects.
      * @param {number} drag - The drag experienced by the projectile.
-     * @param {Energy} energy - The energy of the projectile at the given point.
+     * @param {Energy} energy - The energy of the projectile.
      * @param {Weight} ogw - The optimal gun weight.
      * @param {TrajFlag} flag - Flags representing various trajectory characteristics.
      */
@@ -107,30 +116,13 @@ class TrajectoryData {
         readonly energy: Energy,
         readonly ogw: Weight,
         readonly flag: TrajFlag,
-    ) {
-        this.time = time;
-        this.distance = distance;
-        this.velocity = velocity;
-        this.mach = mach;
-        this.height = height;
-        this.targetDrop = targetDrop;
-        this.dropAdjustment = dropAdjustment;
-        this.windage = windage;
-        this.windageAdjustment = windageAdjustment;
-        this.lookDistance = lookDistance;
-        this.angle = angle;
-        this.densityFactor = densityFactor;
-        this.drag = drag;
-        this.energy = energy;
-        this.ogw = ogw;
-        this.flag = flag;
-    }
+    ) { } // Properties are automatically assigned due to 'readonly' and constructor parameters
 
     /**
      * Returns an array of numerical values representing the trajectory data in default units.
      *
      * @returns {number[]} An array where each element corresponds to a specific piece of trajectory data
-     *                      converted to default units.
+     * converted to default units.
      */
     inDefUnits(): number[] {
         return [
@@ -138,7 +130,7 @@ class TrajectoryData {
             this.distance.In(preferredUnits.distance),
             this.velocity.In(preferredUnits.velocity),
             this.mach,
-            this.height.In(preferredUnits.distance),
+            this.height.In(preferredUnits.drop), // Changed to preferredUnits.drop as per python
             this.targetDrop.In(preferredUnits.drop),
             this.dropAdjustment.In(preferredUnits.adjustment),
             this.windage.In(preferredUnits.drop),
@@ -165,15 +157,15 @@ class TrajectoryData {
          * @return {string} time
          */
         function _fmt(value: AbstractUnit, unit: Unit): string {
-            return `${value.In(unit).toFixed(UnitProps[unit].accuracy)}${UnitProps[unit].symbol}`;
+            return `${value.In(unit).toFixed(UnitProps[unit].accuracy)} ${UnitProps[unit].symbol}`;
         }
 
         return [
-            `${this.time.toFixed(2)} s`,
+            `${this.time.toFixed(3)} s`, // Changed to 3 decimal places as per python
             _fmt(this.distance, preferredUnits.distance),
             _fmt(this.velocity, preferredUnits.velocity),
             `${this.mach.toFixed(2)} mach`,
-            _fmt(this.height, preferredUnits.distance),
+            _fmt(this.height, preferredUnits.drop), // Changed to preferredUnits.drop as per python
             _fmt(this.targetDrop, preferredUnits.drop),
             _fmt(this.dropAdjustment, preferredUnits.adjustment),
             _fmt(this.windage, preferredUnits.drop),
@@ -195,10 +187,10 @@ class DangerSpace {
      * ! DATACLASS, USES AS RETURNED VALUE ONLY
      *
      * @param {TrajectoryData} atRange - The trajectory data at the specified range.
-     * @param {number | Distance | null} targetHeight - The height of the target, or null if not applicable.
+     * @param {Distance} targetHeight - The height of the target, or null if not applicable.
      * @param {TrajectoryData} begin - The starting trajectory data for the danger space.
      * @param {TrajectoryData} end - The ending trajectory data for the danger space.
-     * @param {number | Angular | null} lookAngle - The look angle for the danger space, or null if not applicable.
+     * @param {Angular} lookAngle - The look angle for the danger space, or null if not applicable.
      */
     constructor(
         readonly atRange: TrajectoryData,
@@ -206,25 +198,23 @@ class DangerSpace {
         readonly begin: TrajectoryData,
         readonly end: TrajectoryData,
         readonly lookAngle: Angular,
-    ) {
-        this.atRange = atRange;
-        this.targetHeight = targetHeight;
-        this.begin = begin;
-        this.end = end;
-        this.lookAngle = lookAngle;
-    }
+    ) { }
 
     /**
      * Returns a string representation of the DangerSpace object.
      * @returns {string} - A string summarizing the DangerSpace data.
      */
     toString(): string {
-        return (
-            `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
-            `for ${this.targetHeight.to(preferredUnits.drop)} tall target ` +
-            `ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
-            `to ${this.end.distance.to(preferredUnits.distance)}`
-        );
+        let str = `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
+            `for ${this.targetHeight.to(preferredUnits.drop)} tall target`;
+
+        if (this.lookAngle.rawValue !== 0) {
+            str += ` at ${this.lookAngle.to(Angular.Degree)} look-angle`;
+        }
+
+        str += ` ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
+            `to ${this.end.distance.to(preferredUnits.distance)}`;
+        return str;
     }
 }
 
@@ -351,7 +341,7 @@ class HitResult {
         const index = this.indexAtDistance(_atRange);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${atRange}`,
+                `Calculated trajectory doesn't reach requested distance ${_atRange.rawValue}`,
             );
         }
 
@@ -364,18 +354,16 @@ class HitResult {
              */
             const centerRow = this.trajectory[rowNum];
 
-            // Iterate in reverse, similar to Python's reversed()
+            // Iterate in reverse from rowNum - 1 down to 0, similar to Python's reversed(self.trajectory[:row_num])
             for (let i = rowNum - 1; i >= 0; i--) {
                 const primeRow = this.trajectory[i];
                 if (
-                    primeRow.targetDrop.rawValue -
-                        centerRow.targetDrop.rawValue >=
+                    (primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue) >=
                     _targetHeightHalf
                 ) {
                     return primeRow;
                 }
             }
-
             return this.trajectory[0];
         };
 
@@ -388,18 +376,16 @@ class HitResult {
              */
             const centerRow = this.trajectory[rowNum];
 
-            // Iterate forwards, similar to Python's slicing
+            // Iterate forwards from rowNum + 1 up to the end, similar to Python's self.trajectory[row_num + 1:]
             for (let i = rowNum + 1; i < this.trajectory.length; i++) {
                 const primeRow = this.trajectory[i];
                 if (
-                    centerRow.targetDrop.rawValue -
-                        primeRow.targetDrop.rawValue >=
+                    (centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue) >=
                     _targetHeightHalf
                 ) {
                     return primeRow;
                 }
             }
-
             return this.trajectory[this.trajectory.length - 1];
         };
 

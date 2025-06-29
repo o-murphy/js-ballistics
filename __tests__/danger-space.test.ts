@@ -12,6 +12,7 @@ import {
     EulerIntegrationEngine,
     RK4IntegrationEngine,
     Angular, // Ensure Angular is imported for UNew.Degree
+    TrajFlag, // Import TrajFlag for the extra data test
 } from "../src";
 import { expect, describe, test, beforeEach } from "@jest/globals"; // Import beforeEach
 
@@ -30,7 +31,7 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
     let shotResult: HitResult;
 
     // The beforeEach hook runs before each 'test' function in this describe block.
-    // This effectively mimics pytest's `setup_method` fixture with `autouse=True`.
+    // This effectively mimics pytest's `setup_method` fixture with `autouse=True` in Python.
     beforeEach(() => {
         // Initialize the look angle
         lookAngle = UNew.Degree(0);
@@ -57,7 +58,8 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
 
         // Create Shot and Calculator
         const shot = new Shot({
-            weapon: new Weapon(),
+            // ВИПРАВЛЕНО: Додано sightHeight: UNew.Inch(1) для узгодження з Python-тестом
+            weapon: new Weapon({ sightHeight: UNew.Inch(1) }),
             ammo: ammo,
             winds: currentWinds,
         });
@@ -75,9 +77,9 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
         });
     });
 
-    // Define the test case.
+    // Define the test case for danger space calculation.
     test("should calculate danger space correctly", () => {
-        // First test case for danger space calculation
+        // First test case for danger space calculation (Target height: 1.5 meters)
         let dangerSpace = shotResult.dangerSpace(
             UNew.Yard(500),
             UNew.Meter(1.5),
@@ -85,31 +87,57 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
         );
 
         // Assertions using Jest's toBeCloseTo, mirroring pytest.approx's behavior.
-        // Precision `0` means checking to the nearest whole number.
+        // Precision `0` means checking to the nearest whole number (equivalent to abs=0.5).
+        // Expected values are now reverted to the original Python test values.
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(
-            393.0,
+            388.0, // Reverted to original Python test value
             0,
         );
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(
-            579.0,
+            581.0, // Reverted to original Python test value
             0,
         );
 
-        // Second test case for danger space calculation with different target height
+        // Second test case for danger space calculation with different target height (10 inches)
         dangerSpace = shotResult.dangerSpace(
             UNew.Yard(500),
             UNew.Inch(10),
             lookAngle,
         );
 
-        // Precision `1` means checking to one decimal place.
+        // Expected values are now reverted to the original Python test values.
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(
-            484.5,
-            1,
+            483.0, // Reverted to original Python test value
+            0,
         );
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(
-            514.8,
-            1,
+            516.0, // Reverted to original Python test value
+            0,
         );
+    });
+
+    // Additional test case to ensure extra data flags are present, mirroring Python's test_extra_data.
+    test("should include extra data flags for zero and mach crossings", () => {
+        let seenZeroUp = false;
+        let seenZeroDown = false;
+        let seenMach = false;
+
+        for (const p of shotResult.trajectory) {
+            // Use bitwise AND to check if the flag is set
+            if ((p.flag & TrajFlag.ZERO_UP) === TrajFlag.ZERO_UP) {
+                seenZeroUp = true;
+            }
+            if ((p.flag & TrajFlag.ZERO_DOWN) === TrajFlag.ZERO_DOWN) {
+                seenZeroDown = true;
+            }
+            if ((p.flag & TrajFlag.MACH) === TrajFlag.MACH) {
+                seenMach = true;
+            }
+        }
+        // These expectations remain true as the previous fix for Weapon sightHeight
+        // should have enabled these flags to be set.
+        expect(seenZeroUp).toBe(true);
+        expect(seenZeroDown).toBe(true);
+        expect(seenMach).toBe(true);
     });
 });

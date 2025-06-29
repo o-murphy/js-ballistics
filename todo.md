@@ -25,14 +25,14 @@
 
 - [tests]
   - [x] atmosphere
-  - [ ] computer
+  - [x] computer
   - [ ] danger space
   - [ ] helpers
   - [ ] incomplete shots
   - [ ] issues
   - [x] mbc
   - [ ] sight ?
-  - [ ] trajectory
+  - [x] trajectory
   - [x] units
   - [x] vector
   - [x] zero finding

@@ -65,9 +65,9 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         }).trajectory;
 
         // Perform the assertion comparing height and windage adjustments
-        console.log(cantedTrajectory[5].height.rawValue);
-        console.log(baselineShot.weapon.sightHeight.rawValue);
-        console.log(baselineTrajectory[5].height.rawValue);
+        // console.log(cantedTrajectory[5].height.rawValue);
+        // console.log(baselineShot.weapon.sightHeight.rawValue);
+        // console.log(baselineTrajectory[5].height.rawValue);
         expect(
             cantedTrajectory[5].height.rawValue -
                 baselineShot.weapon.sightHeight.rawValue,
