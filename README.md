@@ -2,14 +2,15 @@
 ## ISC library for small arms ballistic calculations (JavaScript ES6+)
 ![NPM version](https://img.shields.io/npm/v/js-ballistics?style=flat-square&logo=npm)
 ![License](https://img.shields.io/npm/l/js-ballistics?style=flat-square)
-[![Node.js Unittests](https://github.com/o-murphy/js-ballistics/actions/workflows/tests.yml/badge.svg)](https://github.com/o-murphy/js-ballistics/actions/workflows/tests.yml)
+[![Jest](https://github.com/o-murphy/js-ballistics/actions/workflows/tests.yml/badge.svg)](https://github.com/o-murphy/js-ballistics/actions/workflows/tests.yml)
 
-[![SWUbanner]][SWUdocs]
+[![SWUbanner]][SWUBadge]
 
 [SWUbanner]:
-https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg
-[SWUdocs]:
-https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md
+https://img.shields.io/badge/made_in-Ukraine-ffd700.svg?labelColor=0057b7&style=flat-square
+
+[SWUBadge]:
+https://stand-with-ukraine.pp.ua
 
 ### Table of contents
 * **[Installation](#installation)**
