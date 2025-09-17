@@ -1,4 +1,4 @@
-name: Node.js Unittests
+name: Jest
 
 on:
   pull_request:
