@@ -26,7 +26,7 @@
 - [tests]
   - [x] atmosphere
   - [x] computer
-  - [ ] danger space
+  - [ч] danger space
   - [ ] helpers
   - [ ] incomplete shots
   - [ ] issues
