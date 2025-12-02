@@ -176,8 +176,8 @@ class Atmo {
             this._p0 *
             Math.pow(
                 1 +
-                    (cLapseRateKperFoot * (altitude - this._a0)) /
-                        (this._t0 + cDegreesCtoK),
+                (cLapseRateKperFoot * (altitude - this._a0)) /
+                (this._t0 + cDegreesCtoK),
                 cPressureExponent,
             )
         );
@@ -204,19 +204,19 @@ class Atmo {
     static standardTemperature(altitude: Distance): Temperature {
         return UNew.Fahrenheit(
             cStandardTemperatureF +
-                altitude.In(Distance.Foot) * cLapseRateImperial,
+            altitude.In(Distance.Foot) * cLapseRateImperial,
         );
     }
 
     static standardPressure(altitude: Distance): Pressure {
         return UNew.hPa(
             cStandardPressureMetric *
-                Math.pow(
-                    1 +
-                        (cLapseRateMetric * altitude.In(Distance.Meter)) /
-                            (cStandardTemperatureC + cDegreesCtoK),
-                    cPressureExponent,
-                ),
+            Math.pow(
+                1 +
+                (cLapseRateMetric * altitude.In(Distance.Meter)) /
+                (cStandardTemperatureC + cDegreesCtoK),
+                cPressureExponent,
+            ),
         );
     }
 
@@ -305,11 +305,11 @@ class Atmo {
             const Z =
                 1 -
                 (p / T) *
-                    (a0 +
-                        a1 * t +
-                        a2 * t ** 2 +
-                        (b0 + b1 * t) * x_v +
-                        (c0 + c1 * t) * x_v ** 2) +
+                (a0 +
+                    a1 * t +
+                    a2 * t ** 2 +
+                    (b0 + b1 * t) * x_v +
+                    (c0 + c1 * t) * x_v ** 2) +
                 (p / T) ** 2 * (d + e * x_v ** 2);
             return Z;
         };
@@ -358,7 +358,7 @@ class Vacuum extends Atmo {
         this._densityRatio = 0;
     }
 
-    updateDensityRatio() {}
+    updateDensityRatio() { }
 }
 
 class Wind {
@@ -504,9 +504,9 @@ class Shot {
     get barrelElevation(): Angular {
         return UNew.Radian(
             this.lookAngle.In(Angular.Radian) +
-                Math.cos(this.cantAngle.In(Angular.Radian)) *
-                    (this.weapon.zeroElevation.In(Angular.Radian) +
-                        this.relativeAngle.In(Angular.Radian)),
+            Math.cos(this.cantAngle.In(Angular.Radian)) *
+            (this.weapon.zeroElevation.In(Angular.Radian) +
+                this.relativeAngle.In(Angular.Radian)),
         );
     }
 
@@ -521,8 +521,8 @@ class Shot {
     get barrelAzimuth(): Angular {
         return UNew.Radian(
             Math.sin(this.cantAngle.In(Angular.Radian)) *
-                (this.weapon.zeroElevation.In(Angular.Radian) +
-                    this.relativeAngle.In(Angular.Radian)),
+            (this.weapon.zeroElevation.In(Angular.Radian) +
+                this.relativeAngle.In(Angular.Radian)),
         );
     }
 }

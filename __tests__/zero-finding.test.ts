@@ -7,7 +7,7 @@ import {
     EulerIntegrationEngine,
     RK4IntegrationEngine,
     Shot,
-    Table,
+    DragTables,
     UNew,
     Unit,
     Weapon,
@@ -16,7 +16,7 @@ import {
 const createShot = () => {
     const dm = new DragModel({
         bc: 0.759,
-        dragTable: Table.G1,
+        dragTable: DragTables.G1,
         weight: UNew.Gram(108),
         diameter: UNew.Millimeter(23),
         length: UNew.Millimeter(108.2),

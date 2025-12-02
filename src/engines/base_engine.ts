@@ -14,8 +14,8 @@ import {
 } from "../unit";
 // Vector module
 import Vector from "../vector";
-import type { DragTable } from "../drag_model";
-import { TrajectoryRangeError, ZeroFindingError } from "../exceptions";
+import type { DragTable } from "../drag_tables";
+import { IntegrationRangeError, ZeroFindingError } from "../exceptions";
 import { EngineInterface, GenericConfig } from "../generics/engine";
 
 // Export the classes and constants
@@ -162,12 +162,12 @@ class _TrajectoryDataFilter {
                         this.previousTime + (time - this.previousTime) * ratio,
                     position: this.previousPosition.add(
                         position
-                            .subtract(this.previousPosition)
+                            .sub(this.previousPosition)
                             .mulByConst(ratio),
                     ),
                     velocity: this.previousVelocity.add(
                         velocity
-                            .subtract(this.previousVelocity)
+                            .sub(this.previousVelocity)
                             .mulByConst(ratio),
                     ),
                     mach:
@@ -181,7 +181,7 @@ class _TrajectoryDataFilter {
             this.checkNextTime(time);
         }
         this.checkZeroCrossing(position);
-        this.checkMachCrossing(velocity.magnitude(), mach);
+        this.checkMachCrossing(velocity.mag(), mach);
 
         if (Boolean(this.currentFlag & this.filter) && data === null) {
             data = {
@@ -347,7 +347,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
                 )[0];
                 height = t.height.In(Distance.Foot);
             } catch (e: unknown) {
-                if (e instanceof TrajectoryRangeError) {
+                if (e instanceof IntegrationRangeError) {
                     if (
                         e.lastDistance === null ||
                         e.lastDistance == undefined
@@ -574,7 +574,7 @@ const createTrajectoryRow = (
         UNew.Foot(rangeVector.y),
         UNew.Foot(
             (rangeVector.y - rangeVector.x * Math.tan(lookAngle)) *
-                Math.cos(lookAngle),
+            Math.cos(lookAngle),
         ),
         UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),

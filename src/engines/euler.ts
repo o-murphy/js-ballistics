@@ -1,7 +1,7 @@
 import { Shot } from "../conditions";
 import { TrajectoryData, TrajFlag } from "../trajectory_data";
 import Vector from "../vector";
-import { TrajectoryRangeError } from "../exceptions";
+import { IntegrationRangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
 import {
     BaseEngineConfig,
@@ -13,8 +13,7 @@ import {
 
 class EulerIntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
@@ -96,7 +95,7 @@ class EulerIntegrationEngine
                             data.time,
                             data.position,
                             data.velocity,
-                            data.velocity.magnitude(),
+                            data.velocity.mag(),
                             data.mach,
                             this.spinDrift(data.time),
                             lookAngle,
@@ -110,19 +109,19 @@ class EulerIntegrationEngine
                 }
             }
 
-            const velocityAdjusted = velocityVector.subtract(windVector);
-            velocity = velocityAdjusted.magnitude();
+            const velocityAdjusted = velocityVector.sub(windVector);
+            velocity = velocityAdjusted.mag();
             const deltaTime = calcStep / Math.max(1.0, velocity);
             drag = densityFactor * velocity * this.dragByMach(velocity / mach);
-            velocityVector = velocityVector.subtract(
+            velocityVector = velocityVector.sub(
                 velocityAdjusted
                     .mulByConst(drag)
-                    .subtract(this.gravityVector)
+                    .sub(this.gravityVector)
                     .mulByConst(deltaTime),
             );
             const deltaRangeVector = velocityVector.mulByConst(deltaTime);
             rangeVector = rangeVector.add(deltaRangeVector);
-            velocity = velocityVector.magnitude();
+            velocity = velocityVector.mag();
             time += deltaTime;
 
             if (
@@ -148,13 +147,13 @@ class EulerIntegrationEngine
 
                 let reason = "";
                 if (velocity < cMinimumVelocity) {
-                    reason = TrajectoryRangeError.MinimumVelocityReached;
+                    reason = IntegrationRangeError.MinimumVelocityReached;
                 } else if (rangeVector.y < cMaximumDrop) {
-                    reason = TrajectoryRangeError.MaximumDropReached;
+                    reason = IntegrationRangeError.MaximumDropReached;
                 } else {
-                    reason = TrajectoryRangeError.MinimumAltitudeReached;
+                    reason = IntegrationRangeError.MinimumAltitudeReached;
                 }
-                throw new TrajectoryRangeError(reason, ranges);
+                throw new IntegrationRangeError(reason, ranges);
             }
         }
 

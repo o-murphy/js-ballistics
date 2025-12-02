@@ -4,7 +4,7 @@ import {
     Ammo,
     Atmo,
     DragModel,
-    Table,
+    DragTables,
     Shot,
     UNew,
     Unit,
@@ -88,7 +88,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
     test("zero1", () => {
         const dm = new DragModel({
             bc: 0.365,
-            dragTable: Table.G1,
+            dragTable: DragTables.G1,
             weight: 69,
             diameter: 0.223,
             length: 0.9,
@@ -109,7 +109,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
     test("zero2", () => {
         const dm = new DragModel({
             bc: 0.223,
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 69,
             diameter: 0.223,
             length: 0.9,
@@ -131,7 +131,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
     test("path_g1", () => {
         const dm = new DragModel({
             bc: 0.223,
-            dragTable: Table.G1,
+            dragTable: DragTables.G1,
             weight: 168,
             diameter: 0.308,
             length: 1.282,
@@ -220,7 +220,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
     test("path_g7", () => {
         const dm = new DragModel({
             bc: 0.223,
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 168,
             diameter: 0.308,
             length: 1.282,

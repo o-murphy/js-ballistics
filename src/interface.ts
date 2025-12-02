@@ -1,6 +1,6 @@
 import EulerIntegrationEngine from "./engines/euler";
 import { Shot } from "./conditions";
-import { DragTable } from "./drag_model";
+import { DragTable } from "./drag_tables";
 import { HitResult } from "./trajectory_data";
 import {
     UNew,
@@ -85,7 +85,7 @@ class Calculator<C extends GenericConfig> {
         const totalElevation = this._calc.zeroAngle(shot, _targetDistance);
         return UNew.Radian(
             totalElevation.In(Angular.Radian) -
-                shot.lookAngle.In(Angular.Radian),
+            shot.lookAngle.In(Angular.Radian),
         );
     }
 

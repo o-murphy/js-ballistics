@@ -7,7 +7,7 @@ import {
     UNew,
     Ammo,
     DragModel,
-    Table,
+    DragTables,
     Weapon,
     Shot,
     EulerIntegrationEngine,
@@ -93,7 +93,7 @@ describe("Atmo Class Tests", () => {
     test.each(calculators)("trajectory effects %s", ({ engine }) => {
         const check_distance = UNew.Yard(1000);
         const ammo = new Ammo({
-            dm: new DragModel({ bc: 0.22, dragTable: Table.G7 }),
+            dm: new DragModel({ bc: 0.22, dragTable: DragTables.G7 }),
             mv: UNew.FPS(3000),
         });
         const weapon = new Weapon();

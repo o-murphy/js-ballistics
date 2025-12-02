@@ -5,14 +5,14 @@ import {
     Wind,
     Atmo,
     DragModel,
-    Table,
+    DragTables,
     UNew,
     Weapon,
     Shot,
     HitResult,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
-    TrajectoryRangeError,
+    IntegrationRangeError,
     TrajectoryData,
 } from "../src";
 
@@ -27,7 +27,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
     const step: number = 100;
     const dm: DragModel = new DragModel({
         bc: 0.22,
-        dragTable: Table.G7,
+        dragTable: DragTables.G7,
         weight: 168,
         diameter: 0.308,
         length: 1.22,
@@ -624,7 +624,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
                 trajectoryStep: step,
             });
         } catch (e: unknown) {
-            if (e instanceof TrajectoryRangeError) {
+            if (e instanceof IntegrationRangeError) {
                 console.log("Passing");
             } else {
                 throw e;

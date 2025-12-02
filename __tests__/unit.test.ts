@@ -97,7 +97,7 @@ describe("Unit coercion", () => {
         // @ts-ignore
         expect(() =>
             unitTypeCoerce("invalid", Measure.Distance, Unit.Yard),
-        ).toThrowError(
+        ).toThrow(
             `Instance must be a type of ${Measure.Distance.name} or 'number'`,
         );
     });
@@ -106,7 +106,7 @@ describe("Unit coercion", () => {
         //@ts-ignore
         expect(() =>
             unitTypeCoerce(undefined, Measure.Distance, Unit.Yard),
-        ).toThrowError(
+        ).toThrow(
             `Instance must be a type of ${Measure.Distance.name} or 'number'`,
         );
     });
