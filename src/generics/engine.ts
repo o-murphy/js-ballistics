@@ -1,5 +1,5 @@
 import { Shot } from "../conditions";
-import { DragTable } from "../drag_model";
+import { DragTable } from "../drag_tables";
 import { TrajectoryData } from "../trajectory_data";
 import { Angular, Distance } from "../unit";
 
@@ -8,7 +8,7 @@ interface GenericConfig {
 }
 
 interface EngineConstructor<C extends GenericConfig> {
-    new (config: Partial<C>): EngineInterface<C>;
+    new(config: Partial<C>): EngineInterface<C>;
 }
 
 interface EngineInterface<C extends GenericConfig> {

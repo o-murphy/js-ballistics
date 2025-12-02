@@ -5,14 +5,15 @@ import {
     UNew,
     DragModel,
     Shot,
-    Table,
+    DragTable,
     Distance,
     Weapon,
     Wind,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
     Angular, // Ensure Angular is imported for UNew.Degree
-    TrajFlag, // Import TrajFlag for the extra data test
+    TrajFlag,
+    DragTables, // Import TrajFlag for the extra data test
 } from "../src";
 import { expect, describe, test, beforeEach } from "@jest/globals"; // Import beforeEach
 
@@ -39,7 +40,7 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
         // Create the DragModel
         const dm = new DragModel({
             bc: 0.223,
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 168,
             diameter: 0.308,
             length: UNew.Inch(1.282),

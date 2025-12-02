@@ -1,12 +1,14 @@
 import { Atmo, Vacuum, Wind, Shot } from "./conditions";
 import {
-    DragModel,
     DragDataPoint,
+    DragTables,
+    DragTableVariant,
+    DragTable,
+} from "./drag_tables"
+import {
+    DragModel,
     BCPoint,
     DragModelMultiBC,
-    DragTable,
-    DragTableDataType,
-    Table,
 } from "./drag_model";
 import {
     _TrajectoryDataFilter,
@@ -30,8 +32,10 @@ import {
     UnitTypeError,
     UnitConversionError,
     UnitAliasError,
+    SolverRuntimeError,
     ZeroFindingError,
-    TrajectoryRangeError,
+    IntegrationRangeError,
+    OutOfRangeError,
 } from "./exceptions";
 import Calculator from "./interface";
 import { Weapon, Ammo } from "./munition";
@@ -81,10 +85,10 @@ export {
     _TrajectoryDataFilter,
     Curve,
     CurvePoint,
-    Table,
-    DragModel,
     DragTable,
-    DragTableDataType,
+    DragTableVariant,
+    DragTables,
+    DragModel,
     DragDataPoint,
     BCPoint,
     DragModelMultiBC,
@@ -92,8 +96,10 @@ export {
     UnitTypeError,
     UnitConversionError,
     UnitAliasError,
+    SolverRuntimeError,
     ZeroFindingError,
-    TrajectoryRangeError,
+    IntegrationRangeError,
+    OutOfRangeError,
     Calculator,
     Weapon,
     Ammo,

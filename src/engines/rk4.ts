@@ -1,7 +1,7 @@
 import { Shot } from "../conditions";
 import { TrajectoryData, TrajFlag } from "../trajectory_data";
 import Vector from "../vector";
-import { TrajectoryRangeError } from "../exceptions";
+import { IntegrationRangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
 import {
     BaseEngineConfig,
@@ -107,7 +107,7 @@ class RK4IntegrationEngine
                             data.time,
                             data.position,
                             data.velocity,
-                            data.velocity.magnitude(),
+                            data.velocity.mag(),
                             data.mach,
                             this.spinDrift(data.time),
                             lookAngle,
@@ -121,15 +121,15 @@ class RK4IntegrationEngine
                 }
             }
 
-            const relativeVelocity = velocityVector.subtract(windVector);
-            const relativeSpeed = relativeVelocity.magnitude();
+            const relativeVelocity = velocityVector.sub(windVector);
+            const relativeSpeed = relativeVelocity.mag();
             const deltaTime = calcStep / Math.max(1.0, relativeSpeed);
             const km = densityFactor * this.dragByMach(relativeSpeed / mach);
             drag = km * relativeSpeed;
 
             const f = (v: Vector): Vector => {
-                return this.gravityVector.subtract(
-                    v.mulByConst(km).mulByConst(v.magnitude()),
+                return this.gravityVector.sub(
+                    v.mulByConst(km).mulByConst(v.mag()),
                 );
             };
 
@@ -160,7 +160,7 @@ class RK4IntegrationEngine
                 ).mulByConst(1 / 6.0),
             );
 
-            velocity = velocityVector.magnitude();
+            velocity = velocityVector.mag();
             time += deltaTime;
 
             if (
@@ -186,13 +186,13 @@ class RK4IntegrationEngine
 
                 let reason = "";
                 if (velocity < cMinimumVelocity) {
-                    reason = TrajectoryRangeError.MinimumVelocityReached;
+                    reason = IntegrationRangeError.MinimumVelocityReached;
                 } else if (rangeVector.y < cMaximumDrop) {
-                    reason = TrajectoryRangeError.MaximumDropReached;
+                    reason = IntegrationRangeError.MaximumDropReached;
                 } else {
-                    reason = TrajectoryRangeError.MinimumAltitudeReached;
+                    reason = IntegrationRangeError.MinimumAltitudeReached;
                 }
-                throw new TrajectoryRangeError(reason, ranges);
+                throw new IntegrationRangeError(reason, ranges);
             }
         }
 

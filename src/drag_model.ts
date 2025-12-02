@@ -7,7 +7,10 @@ import {
     preferredUnits,
 } from "./unit";
 // @ts-ignore
-import Table from "./drag_tables.js";
+import {
+    DragDataPoint,
+    DragTable,
+} from "./drag_tables"
 import {
     cDegreesCtoK,
     cSpeedOfSoundMetric,
@@ -15,39 +18,10 @@ import {
 } from "./constants";
 
 export {
-    Table,
     DragModel,
-    DragTable,
-    DragTableDataType,
-    DragDataPoint,
     BCPoint,
     DragModelMultiBC,
 };
-
-/**
- * Represents a data point for drag calculation.
- */
-class DragDataPoint {
-    /**
-     * @param {number} Mach - Mach number at the data point.
-     * @param {number} CD - Drag coefficient at the data point.
-     */
-    constructor(
-        public Mach: number,
-        public CD: number,
-    ) {}
-}
-
-/**
- * Type alias for drag table data.
- * Can be an array of objects with Mach and CD properties or DragDataPoint instances.
- */
-type DragTableDataType = Array<{ Mach: number; CD: number } | DragDataPoint>;
-
-/**
- * Type alias for an array of DragDataPoint instances.
- */
-type DragTable = DragDataPoint[];
 
 /**
  * Represents a ballistic coefficient point.
@@ -153,7 +127,7 @@ class DragModel {
         length = 0,
     }: {
         bc: number;
-        dragTable: DragTableDataType;
+        dragTable: DragTable;
         weight?: number | Weight;
         diameter?: number | Distance;
         length?: number | Distance;
@@ -223,7 +197,7 @@ class DragModel {
  * @returns {DragDataPoint[]} - An array of `DragDataPoint` objects.
  * @throws {TypeError} - If any item in the drag table is not a `DragDataPoint` or an object with `Mach` and `CD` properties.
  */
-const makeDataPoints = (dragTable: DragTableDataType): DragDataPoint[] => {
+const makeDataPoints = (dragTable: DragTable): DragDataPoint[] => {
     return dragTable.map((point) => {
         if (point instanceof DragDataPoint) {
             return point; // If already a DragDataPoint, return it
@@ -267,7 +241,7 @@ const DragModelMultiBC = ({
     length = 0,
 }: {
     bcPoints: BCPoint[];
-    dragTable: DragTableDataType;
+    dragTable: DragTable;
     weight?: number | Weight;
     diameter?: number | Distance;
     length?: number | Distance;

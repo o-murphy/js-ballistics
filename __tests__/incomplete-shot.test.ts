@@ -5,17 +5,14 @@ import {
     UNew,
     DragModel,
     Shot,
-    Table,
+    DragTables,
     Distance,
     Weapon,
     Wind,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
-    Angular,
-    Temperature,
-    Velocity,
 } from "../src"; // Assuming these are in '../src'
-import { TrajectoryRangeError, ZeroFindingError } from "../src/exceptions"; // Assuming exceptions are here
+import { IntegrationRangeError } from "../src/exceptions"; // Assuming exceptions are here
 import { expect, describe, test, beforeEach } from "@jest/globals";
 
 // --- Helper Functions Mimicking Python Fixtures ---
@@ -24,7 +21,7 @@ import { expect, describe, test, beforeEach } from "@jest/globals";
 const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
     const dm = new DragModel({
         bc: 0.223,
-        dragTable: Table.G7,
+        dragTable: DragTables.G7,
         weight: 168,
         diameter: 0.308,
         length: UNew.Inch(1.282),
@@ -90,7 +87,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
             console.log(`Caught error in test_shot_incomplete (Case 1): ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e; // Re-throw if it's an unexpected error
@@ -105,7 +102,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData, trajectoryStep: range });
         } catch (e: any) {
             console.log(`Caught error in test_shot_incomplete (Case 2): ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
@@ -120,7 +117,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
             console.log(`Caught error in test_shot_incomplete (Case 3): ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
@@ -135,7 +132,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData, trajectoryStep: range });
         } catch (e: any) {
             console.log(`Caught error in test_shot_incomplete (Case 4): ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
@@ -158,7 +155,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
             console.log(`Caught error in test_vertical_shot (Case 1): ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
@@ -175,7 +172,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
         } catch (e: any) {
             console.log(`Caught error in test_vertical_shot (Case 2): ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
@@ -200,7 +197,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
             hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData, trajectoryStep: UNew.Meter(100) });
         } catch (e: any) {
             console.log(`Caught error in test_no_duplicate_points: ${e.reason || e.message}`); // Added logging
-            if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+            if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                 hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
             } else {
                 throw e;
@@ -240,7 +237,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
                     hitResult = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraData });
                 } catch (e: any) {
                     console.log(`Caught error in test_no_duplicated_point_many_trajectories for angle ${angle} (extraData=${extraData}): ${e.reason || e.message}`);
-                    if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+                    if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                         hitResult = new HitResult(shot, e.incompleteTrajectory, extraData);
                     } else {
                         throw e;
@@ -292,7 +289,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
                 hitResultExtraData = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: extraDataFlag });
             } catch (e: any) {
                 console.log(`Caught error in test_end_points_are_included (extraData=true): ${e.reason || e.message}`); // Added logging
-                if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+                if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                     hitResultExtraData = new HitResult(shot, e.incompleteTrajectory, extraDataFlag);
                 } else {
                     throw e;
@@ -315,7 +312,7 @@ describe.each(calculatorsToTest)("Test Incomplete Shots with %s", ({ engine, nam
                 hitResultNoExtraData = zeroHeightCalc.fire({ shot, trajectoryRange: range, extraData: noExtraDataFlag });
             } catch (e: any) {
                 console.log(`Caught error in test_end_points_are_included (extraData=false): ${e.reason || e.message}`); // Added logging
-                if (e instanceof TrajectoryRangeError && [TrajectoryRangeError.MaximumDropReached, TrajectoryRangeError.MinimumAltitudeReached].includes(e.reason)) {
+                if (e instanceof IntegrationRangeError && [IntegrationRangeError.MaximumDropReached, IntegrationRangeError.MinimumAltitudeReached].includes(e.reason)) {
                     hitResultNoExtraData = new HitResult(shot, e.incompleteTrajectory, noExtraDataFlag);
                 } else {
                     throw e;

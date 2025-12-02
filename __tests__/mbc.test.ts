@@ -3,7 +3,7 @@ import {
     Calculator,
     UNew,
     DragModel,
-    Table,
+    DragTables,
     Ammo,
     Weapon,
     Shot,
@@ -21,7 +21,7 @@ const calculators = [
 describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
     let range = 1000;
     let step = 100;
-    let dm = new DragModel({ bc: 0.22, dragTable: Table.G7 });
+    let dm = new DragModel({ bc: 0.22, dragTable: DragTables.G7 });
     let ammo = new Ammo({ dm: dm, mv: UNew.FPS(2600) });
     let weapon = new Weapon({ sightHeight: 4, twist: 12 });
     let calc = new Calculator({ engine });
@@ -32,7 +32,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         trajectoryStep: step,
     }).trajectory;
 
-    beforeEach(() => {});
+    beforeEach(() => { });
 
     test("mbc1", () => {
         let dmMulti = DragModelMultiBC({
@@ -41,7 +41,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
                 new BCPoint({ BC: 0.22, V: UNew.FPS(1500) }),
                 new BCPoint({ BC: 0.22, Mach: 3 }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
         });
         let multiShot = new Shot({
             weapon: weapon,
@@ -66,7 +66,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
                 new BCPoint({ BC: 0.22, V: UNew.FPS(2700) }),
                 new BCPoint({ BC: 0.5, V: UNew.FPS(3500) }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
         });
         let multiShot = new Shot({
             weapon: weapon,
@@ -91,7 +91,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
                 new BCPoint({ BC: 0.5, V: baselineTrajectory[3].velocity }),
                 new BCPoint({ BC: 0.22, V: baselineTrajectory[2].velocity }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
         });
         let multiShot = new Shot({
             weapon: weapon,
@@ -119,7 +119,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
                 new BCPoint({ BC: 0.255, V: UNew.MPS(500) }),
                 new BCPoint({ BC: 0.26, V: UNew.MPS(700) }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 178,
             diameter: 0.308,
         });
@@ -138,7 +138,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
                 new BCPoint({ BC: 0.409, V: UNew.MPS(662) }),
                 new BCPoint({ BC: 0.4, V: UNew.MPS(580) }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 285,
             diameter: 0.338,
         });
