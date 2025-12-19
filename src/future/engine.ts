@@ -1,5 +1,5 @@
 import { Vector } from "./vector";
-import { Config, create_config, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
+import { Config, createConfig, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
 import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq, TrajectoryData } from "./traj_data";
 import { ValueError } from "../exceptions";
 
@@ -36,7 +36,7 @@ class BaseEngine {
     public integration_step_count: number = 0;
 
     constructor(
-        public config: Config = create_config(),
+        public config: Config = createConfig(),
         public integrate_func?: IntegrateFunc = undefined,
     ) { };
 
