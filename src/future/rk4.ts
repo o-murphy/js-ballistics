@@ -2,27 +2,32 @@ import { Vector, VectorAllocator } from "./vector";
 import { BaseTrajDataHandlerInterface } from "./traj_data";
 import { Termination, TerminationReason } from "./base_types";
 import { BaseEngine } from "./engine";
+import { ValueError } from "../exceptions";
 
 
-const calculate_dvdt = (
+const calculateDvdt = (
     v: Readonly<Vector>,
     gravity_plus_coriolis: Readonly<Vector>,
     km_coeff: number,
     v_mag: number,
     acceleration: Vector
 ): void => {
-    acceleration.linear_combination(gravity_plus_coriolis, 1.0, v, -km_coeff * v_mag);
+    acceleration.linearCombination(gravity_plus_coriolis, 1.0, v, -km_coeff * v_mag);
 }
 
 /**
  * Fourth-order Runge-Kutta trajectory integration
  * Explicit memory layout for optimal cache performance
  */
-const integrate_rk4 = (
+const integrateRK4 = (
     eng: BaseEngine,
     handler: BaseTrajDataHandlerInterface,
     termination: Termination,
 ): void => {
+    if (!eng.shot) {
+        throw new ValueError("Invalid ShotProps");
+    }
+
     // Scalars
     let velocity = 0.0;
     let delta_time = 0.0;
@@ -125,7 +130,7 @@ const integrate_rk4 = (
 
         // Calculate drag
         const inv_mach = (mach !== 0.0) ? (1.0 / mach) : 1.0;
-        km = density_ratio * eng.shot.drag_by_mach(relative_speed * inv_mach);
+        km = density_ratio * eng.shot.dragByMach(relative_speed * inv_mach);
 
         // Gravity + Coriolis
         gravity_plus_coriolis.assign(gravity_vector);
@@ -138,38 +143,38 @@ const integrate_rk4 = (
         // === RK4 Integration ===
 
         // K1
-        calculate_dvdt(relative_velocity, gravity_plus_coriolis, km, relative_speed, k1_v);
+        calculateDvdt(relative_velocity, gravity_plus_coriolis, km, relative_speed, k1_v);
         k1_p.assign(velocity_vector);
 
         // K2
         v_temp.assignAndFMA(relative_velocity, k1_v, dt_half);
-        calculate_dvdt(v_temp, gravity_plus_coriolis, km, v_temp.mag(), k2_v);
+        calculateDvdt(v_temp, gravity_plus_coriolis, km, v_temp.mag(), k2_v);
         p_temp.assignAndFMA(velocity_vector, k1_v, dt_half);
         k2_p.assign(p_temp);
 
         // K3
         v_temp.assignAndFMA(relative_velocity, k2_v, dt_half);
-        calculate_dvdt(v_temp, gravity_plus_coriolis, km, v_temp.mag(), k3_v);
+        calculateDvdt(v_temp, gravity_plus_coriolis, km, v_temp.mag(), k3_v);
         p_temp.assignAndFMA(velocity_vector, k2_v, dt_half);
         k3_p.assign(p_temp);
 
         // K4
         v_temp.assignAndFMA(relative_velocity, k3_v, delta_time);
-        calculate_dvdt(v_temp, gravity_plus_coriolis, km, v_temp.mag(), k4_v);
+        calculateDvdt(v_temp, gravity_plus_coriolis, km, v_temp.mag(), k4_v);
         p_temp.assignAndFMA(velocity_vector, k3_v, delta_time);
         k4_p.assign(p_temp);
 
         // Update velocity
-        velocity_vector.fused_multiply_add(k1_v, dt_sixth);
-        velocity_vector.fused_multiply_add(k2_v, dt_sixth_2);
-        velocity_vector.fused_multiply_add(k3_v, dt_sixth_2);
-        velocity_vector.fused_multiply_add(k4_v, dt_sixth);
+        velocity_vector.fusedMultiplyAdd(k1_v, dt_sixth);
+        velocity_vector.fusedMultiplyAdd(k2_v, dt_sixth_2);
+        velocity_vector.fusedMultiplyAdd(k3_v, dt_sixth_2);
+        velocity_vector.fusedMultiplyAdd(k4_v, dt_sixth);
 
         // Update position
-        range_vector.fused_multiply_add(k1_p, dt_sixth);
-        range_vector.fused_multiply_add(k2_p, dt_sixth_2);
-        range_vector.fused_multiply_add(k3_p, dt_sixth_2);
-        range_vector.fused_multiply_add(k4_p, dt_sixth);
+        range_vector.fusedMultiplyAdd(k1_p, dt_sixth);
+        range_vector.fusedMultiplyAdd(k2_p, dt_sixth_2);
+        range_vector.fusedMultiplyAdd(k3_p, dt_sixth_2);
+        range_vector.fusedMultiplyAdd(k4_p, dt_sixth);
 
         velocity = velocity_vector.mag();
         time += delta_time;
@@ -178,4 +183,4 @@ const integrate_rk4 = (
     handler.handle(time, range_vector, velocity_vector, mach);
 }
 
-export { integrate_rk4 };
+export { integrateRK4 };

@@ -146,7 +146,7 @@ class Vector {
         return this;
     }
 
-    linear_combination(
+    linearCombination(
         vec_a: Readonly<Vector>,
         scalar_a: number,
         vec_b: Readonly<Vector>,
@@ -161,7 +161,7 @@ class Vector {
         return this;
     }
 
-    fused_multiply_add(other: Readonly<Vector>, scalar: number): this {
+    fusedMultiplyAdd(other: Readonly<Vector>, scalar: number): this {
         const d = this.data;
         const o = other.data;
         d[0] += o[0] * scalar;

@@ -46,55 +46,68 @@ class BaseEngine {
         handler: BaseTrajDataHandlerInterface,
         reason: Termination): void { };
 
-    integrate_at(key: keyof BaseTrajData,
+    integrateAt(key: keyof BaseTrajData,
         target_value: number,
         raw_data: BaseTrajData,
         full_data: TrajectoryData): void { };
 
-    integrate_filtered(
+    /**
+     * @brief Integrates the projectile trajectory using filters and optional dense trajectory storage.
+     *
+     * @param range_limit_ft Maximum range for integration in feet.
+     * @param range_step_ft Step size along the range in feet for recording data.
+     * @param time_step Integration timestep in seconds.
+     * @param filter_flags Flags specifying which trajectory points to record.
+     * @param records Vector to store filtered trajectory data.
+     * @param termination Reference to store the termination reason.
+     * @param dense_trajectory Optional pointer to store full dense trajectory data.
+     *
+     * @throws std::logic_error if integrate_func is null.
+     */
+    integrateFiltered(
         range_limit_ft: number,
         range_step_ft: number,
         time_step: number,
         filter_flags: TrajFlag,
         records: TrajectoryData[],
         termination: Termination,
-        dense_trajectory: BaseTrajSeq): void { };
+        dense_trajectory: BaseTrajSeq): void {... };
 
-    find_apex(apex_out: BaseTrajData): void { };
+    findApex(apex_out: BaseTrajData): void {... };
 
-    error_at_distance(angle_rad: number,
+    errorAtDistance(angle_rad: number,
         target_x_ft: number,
-        target_y_ft: number): number { };
+        target_y_ft: number): number {... };
 
-    init_zero_calculation(
+    initZeroCalculation(
         distance: number,
         APEX_IS_MAX_RANGE_RADIANS: number,
-        ALLOWED_ZERO_ERROR_FEET: number): ZeroInitialData { };
+        ALLOWED_ZERO_ERROR_FEET: number): ZeroInitialData {... };
 
-    find_max_range(
+    findMaxRange(
         low_angle_deg: number,
         high_angle_deg: number,
-        APEX_IS_MAX_RANGE_RADIANS: number): MaxRangeResult { };
+        APEX_IS_MAX_RANGE_RADIANS: number): MaxRangeResult {... };
 
-    zero_angle_with_fallback(
+    zeroAngleWithFallback(
         distance: number,
         APEX_IS_MAX_RANGE_RADIANS: number,
-        ALLOWED_ZERO_ERROR_FEET: number): number { };
+        ALLOWED_ZERO_ERROR_FEET: number): number {... };
 
-    zero_angle(
+    zeroAngle(
         distance: number,
         APEX_IS_MAX_RANGE_RADIANS: number,
-        ALLOWED_ZERO_ERROR_FEET: number): number { };
+        ALLOWED_ZERO_ERROR_FEET: number): number {... };
 
-    range_for_angle(angle_rad: number): number { };
+    rangeForAngle(angle_rad: number): number {... };
 
-    find_zero_angle(
+    findZeroAngle(
         distance: number,
         lofted: boolean,
         APEX_IS_MAX_RANGE_RADIANS: number,
-        ALLOWED_ZERO_ERROR_FEET: number): number { };
+        ALLOWED_ZERO_ERROR_FEET: number): number {... };
 
-    private integrate_func_not_empty(): void { };
+    private integrateFuncNotEmpty(): void {... };
 }
 
 export { BaseEngine };

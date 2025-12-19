@@ -112,7 +112,7 @@ class Atmosphere {
 
     }
 
-    density_factor_and_mach_for_altitude(altitude: number, density_ratio_out: number): number { };
+    getDensityFactorAndMachForAltitude(altitude: number, density_ratio_out: number): number { };
 
 
 }
@@ -135,7 +135,7 @@ class ShotProps extends Shot {
     coriolis: Coriolis;
     atmo: Atmo;
     alt0: number;
-    drag_by_mach: (mach: number) => number;
+    dragByMach: (mach: number) => number;
 }
 
 export { Termination, TerminationReason, TrajFlag, Config, Coriolis, ShotProps };

@@ -201,9 +201,6 @@ class BaseTrajData {
     *    - If field == key_kind: set directly to key_value
     *    - Otherwise: perform PCHIP interpolation
     *
-    * OPTIMIZATION: Caches key values and uses direct field access instead of
-    * repeated get_key_val() calls. Avoids creating intermediate vector objects.
-    *
     * @param key The field to use as independent variable (TIME, MACH, POS_X, etc.).
     * @param value Target value for interpolation.
     * @param p0 First data point (before target).
@@ -271,7 +268,7 @@ class BaseTrajData {
      * @note Positive slant height means target is above line of sight.
      * @note This is projection onto line perpendicular to sight line.
      */
-    slant_val_buf(ca: number, sa: number): number {
+    slantValBuf(ca: number, sa: number): number {
         return this.py * ca - this.px * sa;
     }
 
@@ -301,14 +298,14 @@ class BaseTrajData {
      *
      * @example
      * // Interpolate at distance = 1000ft using cached distance values
-     * BaseTrajData::interpolate3pt_vectorized(
+     * BaseTrajData::interpolate3ptVectorized(
      *     1000.0, 900.0, 1000.0, 1100.0,  // x, ox0, ox1, ox2
      *     p0, p1, p2, result,
      *     BaseTrajData_InterpKey::POS_X
      * );
      * // result.px will be 1000.0, other fields interpolated
      */
-    interpolate3pt_vectorized(
+    interpolate3ptVectorized(
         x: number,
         ox0: number, ox1: number, ox2: number,
         p0: Readonly<BaseTrajData>,
@@ -368,7 +365,7 @@ interface BaseTrajDataHandlerInterface {
  * .add(new BaseTrajSeq())
  *     .add(new TrajectoryAnalyzer())
  *    .add(new TrajectoryLogger());
- * integrate_rk4(engine, compositor);
+ * integrateRK4(engine, compositor);
  */
 class BaseTrajDataHandlerCompositor implements BaseTrajDataHandlerInterface {
     private handlers: BaseTrajDataHandlerInterface[] = [];
@@ -519,7 +516,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
 
     *[Symbol.iterator](): Iterator<BaseTrajData> {
         for (let i = 0; i < this._length; i++) {
-            yield this.get_item(i);
+            yield this.getItem(i);
         }
     }
 
@@ -535,7 +532,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @return Const reference to trajectory data at index.
      * @throws std::out_of_range if index is out of bounds after normalization.
      */
-    get_item(idx: number): BaseTrajData {
+    getItem(idx: number): BaseTrajData {
         const actualIndex = idx < 0 ? this._length + idx : idx;
         if (actualIndex < 0 || actualIndex >= this._length) {
             throw new RangeError(`Index ${idx} out of bounds [0, ${this._length})`);
@@ -573,7 +570,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note For TIME key, start_from_time is ignored (would be circular).
      * @note Uses try_get_exact internally which throws on no-match (control flow exception pattern).
      */
-    get_at(
+    getAt(
         key: BaseTrajDataInterpKey,
         value: number,
         start_from_time: number = 0.0,
@@ -606,7 +603,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note Slant height may be non-monotonic, binary search assumes local monotonicity.
      * @note Uses POS_Y as dummy skip_key (not actually relevant for slant interpolation).
      */
-    get_at_slant_height(
+    getAtSlantHeight(
         look_angle_rad: number,
         value: number,
         out: BaseTrajData
@@ -634,7 +631,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      *
      * @note All fields interpolated except key_kind, which is set directly to key_value.
      */
-    interpolate_at(
+    interpolateAt(
         idx: number,
         key: BaseTrajDataInterpKey,
         value: number,
@@ -661,10 +658,10 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @throws std::runtime_error if key value does not match within tolerance.
      *
      * @note Uses exception for control flow (try_get pattern).
-     * @note Primarily used internally by get_at() to optimize exact lookups.
+     * @note Primarily used internally by getAt() to optimize exact lookups.
      * @note Consider refactoring to return bool instead of throwing for cleaner API.
      */
-    try_get_exact(
+    tryGetExact(
         idx: number,
         key: BaseTrajData_InterpKey,
         value: number,
@@ -696,7 +693,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note Assumes sequence is monotonic in key_kind (no validation).
      * @note For non-monotonic sequences, result is undefined.
      */
-    bisect_center_idx_buf(
+    bisectCenterIdxBuf(
         key: BaseTrajDataInterpKey,
         value: number
     ): number {
@@ -720,7 +717,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note Slant height computed on-the-fly during search.
      * @note Assumes slant values are locally monotonic.
      */
-    bisect_center_idx_slant_buf(ca: number, sa: number, value: number): number {
+    bisectCenterIdxSlantBuf(ca: number, sa: number, value: number): number {
         ...
     }
 
@@ -740,7 +737,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note Returns n-1 (last index) if all points have time < start_time.
      * @note Linear search used for small/non-monotonic sequences for simplicity.
      */
-    find_start_index(start_time: number): number {
+    findStartIndex(start_time: number): number {
         ...
     }
 
@@ -764,7 +761,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note start_idx parameter currently ignored (TODO: optimize to use it).
      * @note Extrapolation is clamped to valid interpolation range.
      */
-    find_target_index(
+    findTargetIndex(
         key: BaseTrajDataInterpKey,
         value: number,
         start_idx: number
@@ -796,7 +793,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         const result: BaseTrajData[] = new Array(this._length) as BaseTrajData[];
         for (let i = 0; i < this._length; i++) {
             const point = new BaseTrajData();
-            point.assign(this.get_item(i));
+            point.assign(this.getItem(i));
             result[i] = point;
         }
         return result;
