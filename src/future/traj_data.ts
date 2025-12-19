@@ -604,7 +604,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
             try {
                 this.tryGetExact(start_idx, key, value, out);
                 return;
-            } catch (error: Error) {
+            } catch (error) {
                 // Not an exact match, continue to interpolation
             }
 
@@ -696,7 +696,8 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
 
         // Perform vectorized interpolation
         BaseTrajData.interpolate3ptVectorized(
-            value, ox0, ox1, ox2, p0, p1, p2, out, "px"); // Dummy skip key
+            value, ox0, ox1, ox2, p0, p1, p2, out, undefined
+        ); // Dummy skip key
     }
 
     /**
@@ -727,11 +728,11 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
 
         // Handle negative indices
         if (idx < 0) {
-            idx += length;
+            idx += n;
         }
 
         // Validate interpolation range
-        if (idx < 1 || idx >= length - 1) {
+        if (idx < 1 || idx >= n - 1) {
             throw new Error("Index outside valid interpolation range [1, n-2]");
         }
 
@@ -792,7 +793,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
 
         if (BaseTrajSeq.isClose(this.getItem(idx)[key], value, epsilon)) {
             console.debug("Exact match found at index %zd", idx);
-            out = this.getItem(idx);
+            out.assign(this.getItem(idx));
             return;
         }
 
@@ -1273,7 +1274,8 @@ class RawTrajectoryData {
         const x2 = p2[key];
 
         // Initialize output with p0 as base (fills derived fields)
-        const interpolated_data: RawTrajectoryData = new RawTrajectoryData();
+        const interpolated_data = Object.create(RawTrajectoryData.prototype);
+        Object.assign(interpolated_data, p0);
 
         // Interpolate all fields
         for (let field_key of TRAJECTORY_DATA_INTERP_KEY_ACTIVE) {
@@ -1305,7 +1307,7 @@ class RawTrajectoryData {
                 }
             }
 
-            interpolated_data[key] = interpolated_value;
+            interpolated_data[field_key] = interpolated_value;
         }
 
         interpolated_data.flag = flag;
