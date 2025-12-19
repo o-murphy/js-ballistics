@@ -81,20 +81,20 @@ const integrateRK4 = (
     wind_vector.assign(initial_wind);
 
     // Initialize projectile state
-    velocity = eng.shot.muzzleVelocity;
-    delta_time = eng.shot.calcStep;
+    velocity = eng.shot.muzzle_velocity;
+    delta_time = eng.shot.calc_step;
 
     range_vector.set(
         0,
-        -eng.shot.cantCosine * eng.shot.sightHeight,
-        -eng.shot.cantSine * eng.shot.sightHeight
+        -eng.shot.cant_cosine * eng.shot.sight_height,
+        -eng.shot.cant_sine * eng.shot.sight_height
     );
 
     // Calculate initial direction
-    const cos_elev = Math.cos(eng.shot.barrelElevation);
-    const sin_elev = Math.sin(eng.shot.barrelElevation);
-    const cos_az = Math.cos(eng.shot.barrelAzimuth);
-    const sin_az = Math.sin(eng.shot.barrelAzimuth);
+    const cos_elev = Math.cos(eng.shot.barrel_elevation);
+    const sin_elev = Math.sin(eng.shot.barrel_elevation);
+    const cos_az = Math.cos(eng.shot.barrel_azimuth);
+    const sin_az = Math.sin(eng.shot.barrel_azimuth);
 
     velocity_vector.set(
         cos_elev * cos_az * velocity,
@@ -112,7 +112,7 @@ const integrateRK4 = (
         eng.integration_step_count++;
 
         // Update wind if needed
-        if (range_vector.x >= eng.shot.wind_sock.nextRange) {
+        if (range_vector.x >= eng.shot.wind_sock.next_range) {
             const new_wind = eng.shot.wind_sock.vectorForRange(range_vector.x);
             wind_vector.assign(new_wind);
         }

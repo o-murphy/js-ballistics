@@ -1,5 +1,3 @@
-import { Shot, Atmo } from "../conditions";
-import { _WindSock } from "../engines";
 import { Vector } from "./vector";
 
 
@@ -58,6 +56,15 @@ const cMaxWindDistanceFeet: number = 1e8;
 const cGravityImperial: number = 32.17405;
 
 
+const cZeroFindingAccuracy = 0.000005  // Max allowed slant-error in feet to end zero search
+const cMaxIterations = 40  // maximum number of iterations for zero search
+const cMinimumAltitude = -1500  // feet, below sea level
+const cMaximumDrop = -10000  // feet, maximum drop from the muzzle to continue trajectory
+const cMinimumVelocity = 50.0  // fps, minimum velocity to continue trajectory
+const cGravityConstant = -cGravityImperial  // feet per second squared
+const cStepMultiplier = 1.0
+
+
 enum TerminationReason {
     // Solver specific flags (always include RANGE_ERROR)
     NO_TERMINATE,
@@ -67,6 +74,14 @@ enum TerminationReason {
     MINIMUM_ALTITUDE_REACHED,
     // Special flag to terminate integration via handler's request
     HANDLER_REQUESTED_STOP,
+}
+
+class Termination {
+    private _reason: TerminationReason = TerminationReason.NO_TERMINATE;
+    constructor() { };
+    get reason(): TerminationReason { return this._reason };
+    set reason(reason: TerminationReason) { this._reason = reason };
+    match(reason: TerminationReason): boolean { return this._reason === reason };
 }
 
 enum TrajFlag {
@@ -91,6 +106,20 @@ type Config = {
     cMinimumAltitude: number;
 }
 
+const DEFAULT_CONFIG_DATA: Config = {
+    cZeroFindingAccuracy: cZeroFindingAccuracy,
+    cMaxIterations: cMaxIterations,
+    cMinimumAltitude: cMinimumAltitude,
+    cMaximumDrop: cMaximumDrop,
+    cMinimumVelocity: cMinimumVelocity,
+    cGravityConstant: cGravityConstant,
+    cStepMultiplier: cStepMultiplier,
+}
+
+const create_config = (config: Partial<Config> = {}) => {
+    return { ...DEFAULT_CONFIG_DATA, ...config }
+}
+
 type CurvePoint = {
     readonly a: number;
     readonly b: number;
@@ -101,41 +130,103 @@ type Curve = CurvePoint[];
 type MachList = number[];
 
 class Atmosphere {
-    public _t0: number;
-    public _a0: number;
-    public _p0: number;
-    public _mach: number;
-    public density_ratio: number;
-    public cLowestTempC: number;
+    constructor(
+        public _t0: number = 0.0,
+        public _a0: number = 0.0,
+        public _p0: number = 0.0,
+        public _mach: number = 0.0,
+        public density_ratio: number = 0.0,
+        public cLowestTempC: number = 0.0,
+    ) { }
+    getDensityFactorAndMachForAltitude(altitude: number): [number, number] { };
+}
 
-    constructor() {
 
-    }
+class Coriolis {
+    constructor(
+        public sin_lat: number = 0.0,
+        public cos_lat: number = 0.0,
+        public sin_az: number = 0.0,
+        public cos_az: number = 0.0,
+        public range_east: number = 0.0,
+        public range_north: number = 0.0,
+        public cross_east: number = 0.0,
+        public cross_north: number = 0.0,
+        public flat_fire_only: boolean = false,
+        public muzzle_velocity_fps: number = 0.0,
+    ) { };
+    flatFireOffsets(
+        time: number,
+        distance_ft: number,
+        drop_ft: number,
+    ): [number, number] { };
+    adjustRange(time: number, range_vector: Readonly<Vector>): Vector { };
+    coriolisAccelerationLocal(velocity_vector: Readonly<Vector>, coriolis_acc: Vector): void { };
+}
 
-    getDensityFactorAndMachForAltitude(altitude: number, density_ratio_out: number): number { };
+class Wind {
+    constructor(
+        public velocity: number = 0.0,
+        public direction_from: number = 0.0,
+        public until_distance: number = 0.0,
+        public MAX_DISTANCE_FEET: number = 0.0
+    ) { }
 
+    toVector(): Vector { }
+}
+
+class WindSock {
+    constructor(
+        public winds: Wind[] = [],
+        public current: number = 0,
+        public next_range: number = 0.0,
+        public last_vector_cache: Vector = new Vector()
+    ) { }
+    updateCache(): void { };
+    currentVector(): Vector { };
+    vectorForRange(next_range_param: number): Vector { };
+}
+
+class ShotProps {
+
+    constructor(
+        public bc: number = 0.0,
+        public look_angle: number = 0.0,
+        public twist: number = 0.0,
+        public length: number = 0.0,
+        public diameter: number = 0.0,
+        public weight: number = 0.0,
+        public barrel_elevation: number = 0.0,
+        public barrel_azimuth: number = 0.0,
+        public sight_height: number = 0.0,
+        public cant_cosine: number = 0.0,
+        public cant_sine: number = 0.0,
+        public alt0: number = 0.0,
+        public calc_step: number = 0.0,
+        public muzzle_velocity: number = 0.0,
+        public stability_coefficient: number = 0.0,
+        public curve: Curve = [],
+        public mach_list: MachList = [],
+        public atmo: Atmosphere = new Atmosphere(),
+        public coriolis: Coriolis = new Coriolis(),
+        public wind_sock: WindSock = new WindSock(),
+        public filter_flags: TrajFlag = TrajFlag.NONE,
+    ) { }
+    updateStabilityCoefficient(): void { };
+    spinDrift(time: number): number { };
+    dragByMach(mach: number): number { };
+}
+
+const getCorrection = (distance: number, double: number): number => {
 
 }
 
-class Termination {
-    private _reason: TerminationReason = TerminationReason.NO_TERMINATE;
-    constructor() { }
-    get reason(): TerminationReason { return this._reason };
-    set reason(reason: TerminationReason) { this._reason = reason };
-    match(reason: TerminationReason): boolean { return this._reason === reason };
+const calculateEnergy = (bullet_weight: number, velocity: number): number => {
+
 }
 
-type Coriolis = {
-    flat_fire_only: boolean;
-    coriolisAccelerationLocal: (velocity_vector: Readonly<Vector>, coriolis_acc: Readonly<Vector>) => void;
+const calculateOgw = (bullet_weight: number, velocity: number): number => {
+
 }
 
-class ShotProps extends Shot {
-    wind_sock: _WindSock;
-    coriolis: Coriolis;
-    atmo: Atmo;
-    alt0: number;
-    dragByMach: (mach: number) => number;
-}
-
-export { Termination, TerminationReason, TrajFlag, Config, Coriolis, ShotProps };
+export { Termination, TerminationReason, TrajFlag, Config, create_config, Wind, WindSock, Coriolis, ShotProps, getCorrection, calculateEnergy, calculateOgw };

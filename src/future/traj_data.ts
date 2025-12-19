@@ -1,5 +1,5 @@
 import { TrajFlag } from "../trajectory_data";
-import { ShotProps } from "./base_types";
+import { calculateEnergy, calculateOgw, getCorrection, ShotProps } from "./base_types";
 import { InterpMethod, interpolate2pt, interpolate3pt } from "./interp";
 import { Vector } from "./vector";
 

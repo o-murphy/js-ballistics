@@ -1,5 +1,5 @@
 import { Vector } from "./vector";
-import { Config, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
+import { Config, create_config, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
 import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq, TrajectoryData } from "./traj_data";
 import { ValueError } from "../exceptions";
 
@@ -31,17 +31,14 @@ type IntegrateFunc = (
 class BaseEngine {
     static readonly MAX_INTEGRATION_RANGE = 9e9;
 
-    public integration_step_count: number;
-    public gravity_vector: Vector;
-    public config?: Config;
-    public shot?: ShotProps;
-    public integrate_func?: IntegrateFunc;
+    public gravity_vector: Vector
+    public shot: ShotProps
+    public integration_step_count: number = 0;
 
-    constructor() {
-        this.integration_step_count = 0;
-        this.gravity_vector = new Vector();
-        this.integrate_func = undefined;
-    }
+    constructor(
+        public config: Config = create_config(),
+        public integrate_func?: IntegrateFunc = undefined,
+    ) { };
 
     /**
      * @brief Calls the underlying integration function for the projectile trajectory.
