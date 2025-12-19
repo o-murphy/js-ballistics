@@ -235,7 +235,16 @@ class BaseEngine {
     zeroAngleWithFallback(
         distance: number,
         APEX_IS_MAX_RANGE_RADIANS: number,
-        ALLOWED_ZERO_ERROR_FEET: number): number {... };
+        ALLOWED_ZERO_ERROR_FEET: number): number {
+        try {
+            return this.zeroAngle(distance, APEX_IS_MAX_RANGE_RADIANS, ALLOWED_ZERO_ERROR_FEET);
+        } catch (error) {
+            if (error instanceof ZeroFindingError) {
+                return this.findZeroAngle(distance, false, APEX_IS_MAX_RANGE_RADIANS, ALLOWED_ZERO_ERROR_FEET);
+            }
+            throw error;
+        }
+    };
 
     zeroAngle(
         distance: number,
