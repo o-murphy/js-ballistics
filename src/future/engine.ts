@@ -1,7 +1,6 @@
-import { BaseEngineConfig } from "../engines";
 import { Vector } from "./vector";
-import { ShotProps, Termination, TrajFlag } from "./base_types";
-import { BaseTrajData, BaseTrajDataHandlerInterface } from "./traj_data";
+import { Config, ShotProps, Termination, TrajFlag } from "./base_types";
+import { BaseTrajData, BaseTrajDataHandlerInterface, BaseTrajSeq } from "./traj_data";
 import { TrajectoryData } from "../trajectory_data";
 
 enum ZeroInitialStatus {
@@ -34,7 +33,7 @@ class BaseEngine {
 
     public integration_step_count: number;
     public gravity_vector: Vector;
-    public config?: BaseEngineConfig;
+    public config?: Config;
     public shot?: ShotProps;
     public integrate_func?: IntegrateFunc;
 

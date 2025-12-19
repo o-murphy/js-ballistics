@@ -1,49 +1,853 @@
-import { Vector } from "./vector"
+import { ValueError } from "../exceptions";
+import { TrajFlag } from "../trajectory_data";
+import { Vector } from "./vector";
 
+type BaseTrajDataJSON = {
+    time: number;
+    position: [number, number, number];
+    velocity: [number, number, number];
+    mach: number;
+}
+
+type BaseTrajDataInterpKey = 'time' | 'px' | 'py' | 'pz' | 'vx' | 'vy' | 'vz' | 'mach'
 
 class BaseTrajData {
-    time: number;
-    px: number;
-    py: number;
-    pz: number;
-    vx: number;
-    vy: number;
-    vz: number;
-    mach: number;
+    readonly data: Float64Array;
 
     constructor(
+        time: number = 0,
+        px: number = 0, py: number = 0, pz: number = 0,
+        vx: number = 0, vy: number = 0, vz: number = 0,
+        mach: number = 0
+    ) {
+        this.data = new Float64Array([
+            time,
+            px, py, pz,
+            vx, vy, vz,
+            mach
+        ]);
+    }
+
+    // Scalars
+    get time(): number {
+        return this.data[0];
+    }
+
+    set time(value: number) {
+        this.data[0] = value;
+    }
+
+    get px(): number {
+        return this.data[1];
+    }
+
+    set px(value: number) {
+        this.data[1] = value;
+    }
+
+    get py(): number {
+        return this.data[2];
+    }
+
+    set py(value: number) {
+        this.data[2] = value;
+    }
+
+    get pz(): number {
+        return this.data[3];
+    }
+
+    set pz(value: number) {
+        this.data[3] = value;
+    }
+
+    get vx(): number {
+        return this.data[4];
+    }
+
+    set vx(value: number) {
+        this.data[4] = value;
+    }
+
+    get vy(): number {
+        return this.data[5];
+    }
+
+    set vy(value: number) {
+        this.data[5] = value;
+    }
+
+    get vz(): number {
+        return this.data[6];
+    }
+
+    set vz(value: number) {
+        this.data[6] = value;
+    }
+
+    get mach(): number {
+        return this.data[7];
+    }
+
+    set mach(value: number) {
+        this.data[7] = value;
+    }
+
+    // Vector views
+    get position(): Vector {
+        return Vector.fromBuffer(this.data, 1);
+    }
+
+    set position(value: Readonly<Vector>) {
+        const d = this.data;
+        const v = value.data;
+        d[1] = v[0];
+        d[2] = v[1];
+        d[3] = v[2];
+    }
+
+    get velocity(): Vector {
+        return Vector.fromBuffer(this.data, 4);
+    }
+
+    set velocity(value: Readonly<Vector>) {
+        const d = this.data;
+        const v = value.data;
+        d[4] = v[0];
+        d[5] = v[1];
+        d[6] = v[2];
+    }
+
+    static fromBuffer(
+        buffer: Float64Array,
+        offset: number
+    ): BaseTrajData {
+        const v = Object.create(BaseTrajData.prototype);
+        v.data = buffer.subarray(offset, offset + 8);
+        return v;
+    }
+
+    static fromVectors(
         time: number,
-        px: number,
-        py: number,
-        pz: number,
-        vx: number,
-        vy: number,
-        vz: number,
-        mach: number,
-    ) { }
+        position: Readonly<Vector>,
+        velocity: Readonly<Vector>,
+        mach: number
+    ): BaseTrajData {
+        const data = new BaseTrajData();
+        data.setFromVectors(time, position, velocity, mach);
+        return data;
+    }
 
-    get position(): Vector { return new Vector(this.px, this.py, this.pz) };
-    get velocity(): Vector { return new Vector(this.vx, this.vy, this.vz) };
+    set(
+        time: number = 0,
+        px: number = 0, py: number = 0, pz: number = 0,
+        vx: number = 0, vy: number = 0, vz: number = 0,
+        mach: number = 0
+    ): void {
+        const d = this.data;
+        d[0] = time;
+        d[1] = px;
+        d[2] = py;
+        d[3] = pz;
+        d[4] = vx;
+        d[5] = vy;
+        d[6] = vz;
+        d[7] = mach;
+    }
 
-    get_key_val(key_kind: keyof BaseTrajData): number { };
-    slant_val_buf(ca: number, sa: number): number { };
+    setFromVectors(
+        time: number,
+        position: Readonly<Vector>,
+        velocity: Readonly<Vector>,
+        mach: number
+    ): void {
+        const d = this.data;
+        const p = position.data;
+        const v = velocity.data;
 
+        d[0] = time;
+        d[1] = p[0];
+        d[2] = p[1];
+        d[3] = p[2];
+        d[4] = v[0];
+        d[5] = v[1];
+        d[6] = v[2];
+        d[7] = mach;
+    }
+
+    assign(other: Readonly<BaseTrajData>): void {
+        this.data.set(other.data);
+    }
+
+    toJSON(): BaseTrajDataJSON {
+        return {
+            time: this.data[0],
+            position: [this.data[1], this.data[2], this.data[3]],
+            velocity: [this.data[4], this.data[5], this.data[6]],
+            mach: this.data[7],
+        }
+    }
+
+    /**
+    * @brief Interpolates trajectory data using 3-point PCHIP method.
+    *
+    * Performs monotone-preserving cubic Hermite interpolation on all trajectory
+    * components based on a specified key (independent variable).
+    *
+    * ALGORITHM:
+    * 1. Extract and cache key values from p0, p1, p2
+    * 2. Validate non-degenerate (no duplicate key values)
+    * 3. For each field:
+    *    - If field == key_kind: set directly to key_value
+    *    - Otherwise: perform PCHIP interpolation
+    *
+    * OPTIMIZATION: Caches key values and uses direct field access instead of
+    * repeated get_key_val() calls. Avoids creating intermediate vector objects.
+    *
+    * @param key The field to use as independent variable (TIME, MACH, POS_X, etc.).
+    * @param value Target value for interpolation.
+    * @param p0 First data point (before target).
+    * @param p1 Second data point (center).
+    * @param p2 Third data point (after target).
+    * @param out Output parameter - populated with interpolated result.
+    *
+    * @throws std::domain_error if any two key values are equal (degenerate segment).
+    *
+    * @note This is equivalent to interpolate3pt_vectorized but with skip_key logic.
+    */
     interpolate(
-        key_kind: keyof BaseTrajData,
-        key_value: number,
+        key: BaseTrajDataInterpKey,
+        value: number,
         p0: Readonly<BaseTrajData>,
         p1: Readonly<BaseTrajData>,
-        p2: Readonly<BaseTrajData>): BaseTrajData { };
+        p2: Readonly<BaseTrajData>,
+        out: BaseTrajData
+    ): void {
+        const x0 = p0[key];
+        const x1 = p1[key];
+        const x2 = p2[key];
 
+        // Validate non-degenerate segments
+        if (x0 == x1 || x0 == x2 || x1 == x2) {
+            throw new ValueError("Degenerate interpolation segment: duplicate key values")
+        }
+
+        // Interpolate all fields directly without creating intermediate vectors
+        // This avoids 6 vector constructions compared to original code
+
+        out.set(
+            // Time: use value directly if interpolating by time
+            key === "time" ? value : interpolate3pt(value, x0, x1, x2, p0.time, p1.time, p2.time),
+
+            // Position components
+            interpolate3pt(value, x0, x1, x2, p0.px, p1.px, p2.px),
+            interpolate3pt(value, x0, x1, x2, p0.py, p1.py, p2.py),
+            interpolate3pt(value, x0, x1, x2, p0.pz, p1.pz, p2.pz),
+
+            // Velocity components
+            interpolate3pt(value, x0, x1, x2, p0.vx, p1.vx, p2.vx),
+            interpolate3pt(value, x0, x1, x2, p0.vy, p1.vy, p2.vy),
+            interpolate3pt(value, x0, x1, x2, p0.vz, p1.vz, p2.vz),
+
+            // Mach: use value directly if interpolating by mach
+            key === "mach" ? value : interpolate3pt(value, x0, x1, x2, p0.mach, p1.mach, p2.mach),
+        )
+    }
+
+    /**
+     * @brief Computes slant height relative to a look angle.
+     *
+     * Slant height represents the perpendicular distance from the line of sight.
+     * This is used for ballistic calculations where the shooter is at an angle.
+     *
+     * Formula: slant_height = py * cos(angle) - px * sin(angle)
+     *
+     * OPTIMIZATION: Takes precomputed cos/sin to avoid repeated trig calculations.
+     *
+     * @param ca Cosine of look angle.
+     * @param sa Sine of look angle.
+     * @return Computed slant height value.
+     *
+     * @note Positive slant height means target is above line of sight.
+     * @note This is projection onto line perpendicular to sight line.
+     */
+    slant_val_buf(ca: number, sa: number): number {
+        return this.py * ca - this.px * sa;
+    }
+
+    /**
+     * @brief Vectorized 3-point interpolation for all trajectory fields.
+     *
+     * OPTIMIZATION: Performs all interpolations in a single function call,
+     * avoiding overhead of multiple function calls and improving cache locality.
+     * All 8 trajectory components are interpolated in one pass.
+     *
+     * KEY DIFFERENCE vs interpolate(): The independent variable values (ox0, ox1, ox2)
+     * are provided directly instead of being extracted via key_kind lookup.
+     *
+     * @param x Target interpolation value (on independent variable axis).
+     * @param ox0 Independent variable value at point 0.
+     * @param ox1 Independent variable value at point 1.
+     * @param ox2 Independent variable value at point 2.
+     * @param p0 Trajectory point 0.
+     * @param p1 Trajectory point 1.
+     * @param p2 Trajectory point 2.
+     * @param out Output trajectory data - populated with interpolated values.
+     * @param skip_key Key being used as independent variable - this field is set
+     *                 directly to x instead of being interpolated (TIME or MACH typically).
+     *
+     * @note Static method - can be called without instance.
+     * @note Assumes caller has validated non-degenerate segments (ox0 != ox1 != ox2).
+     *
+     * @example
+     * // Interpolate at distance = 1000ft using cached distance values
+     * BaseTrajData::interpolate3pt_vectorized(
+     *     1000.0, 900.0, 1000.0, 1100.0,  // x, ox0, ox1, ox2
+     *     p0, p1, p2, result,
+     *     BaseTrajData_InterpKey::POS_X
+     * );
+     * // result.px will be 1000.0, other fields interpolated
+     */
     interpolate3pt_vectorized(
-        x: number, ox0: number, ox1: number, ox2: number,
-        p0: Readonly<BaseTrajData>, p1: Readonly<BaseTrajData>, p2: Readonly<BaseTrajData>,
-        skip_key: keyof BaseTrajData): BaseTrajData { };
+        x: number,
+        ox0: number, ox1: number, ox2: number,
+        p0: Readonly<BaseTrajData>,
+        p1: Readonly<BaseTrajData>,
+        p2: Readonly<BaseTrajData>,
+        out: BaseTrajData,
+        skip_key?: BaseTrajDataInterpKey
+    ): void {
+        out.set(
+            // Time: set directly if interpolating by time, otherwise interpolate
+            skip_key === "time" ? x : interpolate3pt(x, ox0, ox1, ox2, p0.time, p1.time, p2.time),
+
+            // Position components - always interpolate
+            interpolate3pt(x, ox0, ox1, ox2, p0.px, p1.px, p2.px),
+            interpolate3pt(x, ox0, ox1, ox2, p0.py, p1.py, p2.py),
+            interpolate3pt(x, ox0, ox1, ox2, p0.pz, p1.pz, p2.pz),
+
+            // Velocity components - always interpolate
+            interpolate3pt(x, ox0, ox1, ox2, p0.vx, p1.vx, p2.vx),
+            interpolate3pt(x, ox0, ox1, ox2, p0.vy, p1.vy, p2.vy),
+            interpolate3pt(x, ox0, ox1, ox2, p0.vz, p1.vz, p2.vz),
+
+            // Mach: set directly if interpolating by mach, otherwise interpolate
+            skip_key === "mach" ? x : interpolate3pt(x, ox0, ox1, ox2, p0.mach, p1.mach, p2.mach)
+        )
+    }
 }
 
-
+/**
+ * Interface for trajectory data handlers
+ * Optimized for zero-allocation hot path
+ */
 interface BaseTrajDataHandlerInterface {
-    handle: (data: Readonly<BaseTrajData>) => void;
+    /**
+     * Handle trajectory point from vectors (zero allocation)
+     * This is the primary method for hot loops like RK4 integration
+     */
+    handle(
+        time: number,
+        position: Readonly<Vector>,
+        velocity: Readonly<Vector>,
+        mach: number
+    ): void;
 }
 
-export { BaseTrajData, BaseTrajDataHandlerInterface };
+
+// ============================================================================
+// Handler Compositor
+// ============================================================================
+
+/**
+ * Compositor for multiple trajectory data handlers
+ * Broadcasts trajectory points to all registered handlers
+ * Supports zero-allocation hot path
+ * 
+ * const compositor = new BaseTrajDataHandlerCompositor()
+ * .add(new BaseTrajSeq())
+ *     .add(new TrajectoryAnalyzer())
+ *    .add(new TrajectoryLogger());
+ * integrate_rk4(engine, compositor);
+ */
+class BaseTrajDataHandlerCompositor implements BaseTrajDataHandlerInterface {
+    private handlers: BaseTrajDataHandlerInterface[] = [];
+
+    /**
+     * Create compositor with optional initial handlers
+     * @param handlers Variable number of handlers to register
+     */
+    constructor(...handlers: BaseTrajDataHandlerInterface[]) {
+        this.handlers = handlers;
+    }
+
+    /**
+     * Add a handler to the compositor
+     */
+    add(handler: BaseTrajDataHandlerInterface): this {
+        this.handlers.push(handler);
+        return this;
+    }
+
+    /**
+     * Remove a handler from the compositor
+     */
+    remove(handler: BaseTrajDataHandlerInterface): boolean {
+        const index = this.handlers.indexOf(handler);
+        if (index !== -1) {
+            this.handlers.splice(index, 1);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Clear all handlers
+     */
+    clear(): void {
+        this.handlers = [];
+    }
+
+    /**
+     * Get number of registered handlers
+     */
+    get count(): number {
+        return this.handlers.length;
+    }
+
+    /**
+     * Handle trajectory point - broadcasts to all handlers
+     */
+    handle(
+        time: number,
+        position: Readonly<Vector>,
+        velocity: Readonly<Vector>,
+        mach: number
+    ): void {
+        for (const handler of this.handlers) {
+            handler.handle(time, position, velocity, mach);
+        }
+    }
+}
+
+
+// ============================================================================
+// Trajectory Sequence
+// ============================================================================
+
+type BaseTrajSeqJSON = BaseTrajDataJSON[];
+
+
+/**
+ * Dynamic array of trajectory data points
+ */
+class BaseTrajSeq implements BaseTrajDataHandlerInterface {
+    private buffer: Float64Array;
+    private _length: number = 0;
+
+    constructor(initial_capacity: number = 64) {
+        this.buffer = new Float64Array(initial_capacity * 8);
+    }
+
+    get capacity(): number {
+        return this.buffer.length / 8;
+    }
+
+    get length(): number {
+        return this._length;
+    }
+
+    /**
+     * Handle trajectory point from vectors (interface method)
+     * Zero allocation hot path - optimized for RK4 integration
+     */
+    handle(
+        time: number,
+        position: Readonly<Vector>,
+        velocity: Readonly<Vector>,
+        mach: number
+    ): void {
+        if (this._length >= this.capacity) {
+            this.grow();
+        }
+
+        const offset = this._length * 8;
+        const buf = this.buffer;
+        const p = position.data;
+        const v = velocity.data;
+
+        buf[offset] = time;
+        buf[offset + 1] = p[0];
+        buf[offset + 2] = p[1];
+        buf[offset + 3] = p[2];
+        buf[offset + 4] = v[0];
+        buf[offset + 5] = v[1];
+        buf[offset + 6] = v[2];
+        buf[offset + 7] = mach;
+
+        this._length++;
+    }
+
+    /**
+     * Append trajectory point from BaseTrajData object
+     * Convenience method for when you already have a BaseTrajData
+     */
+    append(data: Readonly<BaseTrajData>): void {
+        if (this._length >= this.capacity) {
+            this.grow();
+        }
+
+        const offset = this._length * 8;
+        this.buffer.set(data.data, offset);
+        this._length++;
+    }
+
+    clear(): void {
+        this._length = 0;
+    }
+
+    getBuffer(): Float64Array {
+        return this.buffer.subarray(0, this._length * 8);
+    }
+
+    private grow(): void {
+        const new_capacity = Math.max(this.capacity << 1, 64);
+        const new_buffer = new Float64Array(new_capacity * 8);
+        new_buffer.set(this.buffer);
+        this.buffer = new_buffer;
+    }
+
+    *[Symbol.iterator](): Iterator<BaseTrajData> {
+        for (let i = 0; i < this._length; i++) {
+            yield this.get_item(i);
+        }
+    }
+
+
+    /**
+     * @brief Retrieves trajectory element at index (supports negative indexing).
+     *
+     * Python-style indexing: -1 returns last element, -2 returns second-to-last, etc.
+     *
+     * COMPLEXITY: O(1) - direct array access after index normalization.
+     *
+     * @param idx Index to retrieve (negative indices count from end).
+     * @return Const reference to trajectory data at index.
+     * @throws std::out_of_range if index is out of bounds after normalization.
+     */
+    get_item(idx: number): BaseTrajData {
+        const actualIndex = idx < 0 ? this._length + idx : idx;
+        if (actualIndex < 0 || actualIndex >= this._length) {
+            throw new RangeError(`Index ${idx} out of bounds [0, ${this._length})`);
+        }
+        return BaseTrajData.fromBuffer(this.buffer, actualIndex * 8);
+    }
+
+    /**
+     * @brief Retrieves trajectory data at specified key value with optional time filtering.
+     *
+     * ALGORITHM:
+     * 1. If start_from_time > 0 && key != TIME:
+     *    a. Binary search for time >= start_from_time
+     *    b. Check for exact match at start index
+     *    c. Binary search from start_idx to find target
+     * 2. Otherwise: Binary search entire sequence
+     * 3. Check for exact match at target (within epsilon=1e-9)
+     * 4. If no exact match: Interpolate using 3-point PCHIP
+     *
+     * OPTIMIZATION:
+     * - Binary search: O(log n) instead of linear scan
+     * - Exact match avoids expensive PCHIP computation
+     * - Time filtering reduces search space for time-series queries
+     *
+     * @param key Type of key to search by (TIME, MACH, POS_X, etc.).
+     * @param value Target key value to retrieve/interpolate.
+     * @param start_from_time Time threshold - only search data with time >= this value.
+     *                        Use 0.0 or negative to disable time filtering.
+     * @param out Output parameter - populated with exact or interpolated trajectory data.
+     *
+     * @throws std::domain_error if sequence has fewer than 3 points.
+     * @throws std::logic_error if binary search fails.
+     * @throws std::invalid_argument if interpolation encounters duplicate key values.
+     *
+     * @note For TIME key, start_from_time is ignored (would be circular).
+     * @note Uses try_get_exact internally which throws on no-match (control flow exception pattern).
+     */
+    get_at(
+        key: BaseTrajDataInterpKey,
+        value: number,
+        start_from_time: number = 0.0,
+        out: BaseTrajData
+    ): void {
+        ...
+    }
+
+    /**
+     * @brief Interpolates trajectory at specified slant height.
+     *
+     * Slant height formula: h_slant = py * cos(angle) - px * sin(angle)
+     * Represents perpendicular distance from line of sight.
+     *
+     * ALGORITHM:
+     * 1. Binary search to find 3-point bracket (uses slant values)
+     * 2. Validate center is in safe range [1, n-2]
+     * 3. Compute slant values for p0, p1, p2 using precomputed cos/sin
+     * 4. Validate non-degenerate (no duplicate slant values)
+     * 5. Perform vectorized 3-point PCHIP interpolation
+     *
+     * @param look_angle_rad Look angle in radians (angle of line of sight from horizontal).
+     * @param value Target slant height value.
+     * @param out Output parameter - populated with interpolated trajectory data.
+     *
+     * @throws std::domain_error if sequence has < 3 points or slant values are degenerate.
+     * @throws std::runtime_error if binary search fails to find valid bracket.
+     * @throws std::out_of_range if center index outside safe range [1, n-2].
+     *
+     * @note Slant height may be non-monotonic, binary search assumes local monotonicity.
+     * @note Uses POS_Y as dummy skip_key (not actually relevant for slant interpolation).
+     */
+    get_at_slant_height(
+        look_angle_rad: number,
+        value: number,
+        out: BaseTrajData
+    ): void {
+        const ca = Math.cos(look_angle_rad);
+        const sa = Math.sin(look_angle_rad);
+        ...
+    }
+
+    /**
+     * @brief Performs 3-point PCHIP interpolation at specified index.
+     *
+     * Uses trajectory points at [idx-1, idx, idx+1] as interpolation bracket.
+     * The "center" point is at idx, which should be close to the target value.
+     *
+     * VALID RANGE: idx must be in [1, n-2] to ensure all three points exist.
+     *
+     * @param idx Center index for interpolation (supports negative indexing).
+     * @param key Independent variable for interpolation (TIME, MACH, etc.).
+     * @param value Target value of the independent variable.
+     * @param out Output parameter - populated with interpolated trajectory data.
+     *
+     * @throws std::out_of_range if idx outside valid range [1, n-2] after normalization.
+     * @throws std::invalid_argument if key values at three points are not distinct.
+     *
+     * @note All fields interpolated except key_kind, which is set directly to key_value.
+     */
+    interpolate_at(
+        idx: number,
+        key: BaseTrajDataInterpKey,
+        value: number,
+        out: BaseTrajData
+    ): void {
+        ...
+    }
+
+    /**
+     * @brief Attempts to retrieve exact trajectory data at index if key matches.
+     *
+     * Checks if trajectory data at idx has key value matching key_value within
+     * tolerance (epsilon = 1e-9). If match found, copies data to out.
+     *
+     * OPTIMIZATION: Avoids expensive PCHIP interpolation when exact data exists.
+     * This is common when querying at measured data points.
+     *
+     * @param idx Index to check for exact match.
+     * @param key Type of key to compare.
+     * @param value Target key value to match.
+     * @param out Output parameter - populated only if exact match found.
+     *
+     * @throws std::out_of_range if idx is out of bounds.
+     * @throws std::runtime_error if key value does not match within tolerance.
+     *
+     * @note Uses exception for control flow (try_get pattern).
+     * @note Primarily used internally by get_at() to optimize exact lookups.
+     * @note Consider refactoring to return bool instead of throwing for cleaner API.
+     */
+    try_get_exact(
+        idx: number,
+        key: BaseTrajData_InterpKey,
+        value: number,
+        out: BaseTrajData,
+    ): void {
+        ...
+    }
+
+    /**
+     * @brief Binary search for 3-point interpolation bracket.
+     *
+     * Locates index 'center' such that:
+     * - Points at [center-1, center, center+1] bracket the key_value
+     * - center ∈ [1, n-2] (valid range for 3-point interpolation)
+     * - Handles both monotonically increasing and decreasing sequences
+     *
+     * ALGORITHM:
+     * 1. Determine sequence monotonicity (compare endpoints)
+     * 2. Standard binary search: O(log n)
+     * 3. Clamp result to [1, n-2]
+     *
+     * OPTIMIZATION: Uses bit shift (>> 1) for midpoint calculation.
+     *
+     * @param key Type of key to search by.
+     * @param value Target key value to bracket.
+     * @return Center index for 3-point interpolation [1, n-2], or -1 if n < 3.
+     *
+     * @note Returns -1 if sequence too short for interpolation.
+     * @note Assumes sequence is monotonic in key_kind (no validation).
+     * @note For non-monotonic sequences, result is undefined.
+     */
+    bisect_center_idx_buf(
+        key: BaseTrajDataInterpKey,
+        value: number
+    ): number {
+        ...
+    }
+
+    /**
+     * @brief Binary search for slant height interpolation bracket.
+     *
+     * Similar to bisect_center_idx_buf but searches by computed slant height values.
+     * Slant height = py * cos(angle) - px * sin(angle)
+     *
+     * OPTIMIZATION: Takes precomputed cos/sin to avoid repeated trig calculations
+     * during binary search (would be O(n log n) otherwise).
+     *
+     * @param ca Cosine of look angle (precomputed).
+     * @param sa Sine of look angle (precomputed).
+     * @param value Target slant height value to bracket.
+     * @return Center index in [1, n-2], or -1 if n < 3.
+     *
+     * @note Slant height computed on-the-fly during search.
+     * @note Assumes slant values are locally monotonic.
+     */
+    bisect_center_idx_slant_buf(ca: number, sa: number, value: number): number {
+        ...
+    }
+
+    /**
+     * @brief Finds first index where trajectory time >= start_time.
+     *
+     * OPTIMIZATION STRATEGY:
+     * - Large arrays (n > 10) with monotonic time: Binary search O(log n)
+     * - Small arrays or non-monotonic time: Linear search O(n)
+     *
+     * Rationale: Binary search overhead not worth it for small arrays.
+     * Monotonicity check: buffer[0].time <= buffer[n-1].time
+     *
+     * @param start_time Time threshold to search for.
+     * @return Index of first point with time >= start_time, or n-1 if none found.
+     *
+     * @note Returns n-1 (last index) if all points have time < start_time.
+     * @note Linear search used for small/non-monotonic sequences for simplicity.
+     */
+    find_start_index(start_time: number): number {
+        ...
+    }
+
+    /**
+     * @brief Finds target index for interpolation within bounded search range.
+     *
+     * Similar to bisect_center_idx_buf but with additional edge case handling:
+     * - If key_value outside sequence range, returns nearest valid interpolation index
+     * - Handles both increasing and decreasing monotonic sequences
+     *
+     * EDGE CASES:
+     * - key_value <= first value: returns 1 (minimum valid center)
+     * - key_value >= last value: returns n-2 (maximum valid center)
+     * - Otherwise: binary search for bracket
+     *
+     * @param key Type of key to search by.
+     * @param value Target key value.
+     * @param start_idx Starting search index (currently unused - searches full range).
+     * @return Target index in [1, n-2], or -1 if n < 3.
+     *
+     * @note start_idx parameter currently ignored (TODO: optimize to use it).
+     * @note Extrapolation is clamped to valid interpolation range.
+     */
+    find_target_index(
+        key: BaseTrajDataInterpKey,
+        value: number,
+        start_idx: number
+    ): number {
+        ...
+    }
+
+    /**
+     * @brief Checks if two doubles are approximately equal within tolerance.
+     *
+     * Uses absolute difference comparison: |a - b| < epsilon
+     *
+     * LIMITATION: Only checks absolute error, not relative error.
+     * This is appropriate for trajectory data where values have similar magnitudes.
+     *
+     * @param a First value.
+     * @param b Second value.
+     * @param epsilon Tolerance threshold (typically 1e-9).
+     * @return 1 if |a - b| < epsilon, 0 otherwise.
+     *
+     * @note Static method - no instance required.
+     * @note Does not handle special float values (NaN, infinity).
+     */
+    static isClose(a: number, b: number, epsilon: number): boolean {
+        return Math.abs(a - b) < epsilon;
+    }
+
+    toArray(): BaseTrajData[] {
+        const result: BaseTrajData[] = new Array(this._length) as BaseTrajData[];
+        for (let i = 0; i < this._length; i++) {
+            const point = new BaseTrajData();
+            point.assign(this.get_item(i));
+            result[i] = point;
+        }
+        return result;
+    }
+
+    toJSON(): BaseTrajSeqJSON {
+        const result: BaseTrajSeqJSON = new Array(this._length) as BaseTrajSeqJSON;
+        const buf = this.buffer;
+
+        for (let i = 0; i < this._length; i++) {
+            const offset = i * 8;
+            result[i] = {
+                time: buf[offset],
+                position: [buf[offset + 1], buf[offset + 2], buf[offset + 3]],
+                velocity: [buf[offset + 4], buf[offset + 5], buf[offset + 6]],
+                mach: buf[offset + 7]
+            };
+        }
+        return result;
+    }
+}
+
+
+// ============================================================================
+// TrajectoryData
+// ============================================================================
+
+type RawTrajectoryDataInterpKey = "time" | "distance" | "velocity" | "mach" | "height" | "slant_height" | "drop_angle" | "windage" | "windage_angle" | "slant_distance" | "angle" | "density_ratio" | "drag" | "energy" | "ogw"
+
+class RawTrajectoryData {
+    ...
+    constructor() { ... }
+
+    interpolate(
+        key: RawTrajectoryDataInterpKey,
+        value: number,
+        p0: Readonly<RawTrajectoryData>,
+        p1: Readonly<RawTrajectoryData>,
+        p2: Readonly<RawTrajectoryData>,
+        flag: TrajFlag,
+        method: InterpMethod
+    ): RawTrajectoryData {
+
+    }
+}
+
+export {
+    BaseTrajDataInterpKey,
+    BaseTrajData,
+    BaseTrajDataHandlerInterface,
+    BaseTrajSeq,
+    BaseTrajDataHandlerCompositor,
+    TrajectoryData,
+}

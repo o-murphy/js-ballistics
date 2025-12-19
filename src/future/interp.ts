@@ -1,12 +1,6 @@
-enum InterpStatus {
-    SUCCESS,
-    ZERODIVISION,
-};
+type InterpStatus = "success" | "zero_division"
 
-enum InterpMethod {
-    PCHIP,
-    LINEAR,
-};
+type InterpMethod = "pchip" | "linear"
 
 const hermite = (x: number, xk: number, xk1: number, yk: number, yk1: number, mk: number, mk1: number): number => { };
 

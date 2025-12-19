@@ -117,7 +117,7 @@ const integrate_rk4 = (
             eng.shot.alt0 + range_vector.y
         );
 
-        handler.handle({ time, range_vector, velocity_vector, mach });
+        handler.handle(time, range_vector, velocity_vector, mach);
 
         // Calculate relative velocity
         relative_velocity.assignSub(velocity_vector, wind_vector);
@@ -175,7 +175,7 @@ const integrate_rk4 = (
         time += delta_time;
     }
 
-    handler.handle({ time, range_vector, velocity_vector, mach });
+    handler.handle(time, range_vector, velocity_vector, mach);
 }
 
 export { integrate_rk4 };
