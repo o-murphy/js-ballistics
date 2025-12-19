@@ -925,7 +925,32 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      */
     findStartIndex(start_time: number): number {
         const n = this._length;
-        ...
+
+        // Binary search for large arrays with monotonic time
+        if (n > 10 && this.getItem(0).time <= this.getItem(n - 1).time) {
+            let lo = 0
+            let hi = n - 1;
+
+            while (lo < hi) {
+                const mid = lo + ((hi - lo) >> 1);
+
+                if (this.getItem(mid).time < start_time)
+                    lo = mid + 1;
+                else
+                    hi = mid;
+            }
+
+            return lo;
+        }
+
+        // Linear search for small arrays
+        for (let i = 0; i < n; i++) {
+            if (this.getItem(i).time >= start_time) {
+                return i;
+            }
+        }
+
+        return n - 1;
     }
 
     /**
@@ -957,7 +982,48 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         if (n < 3) {
             return -1;
         }
-        ...
+        // Determine monotonicity
+        const v0 = this.getItem(0)[key];
+        const vN = this.getItem(n - 1)[key];
+        const increasing = (vN >= v0);
+
+        // Handle extrapolation
+        if (increasing) {
+            if (value <= v0)
+                return 1;
+            if (value >= vN)
+                return n - 2;
+        }
+        else {
+            if (value >= v0)
+                return 1;
+            if (value <= vN)
+                return n - 2;
+        }
+
+        // Binary search
+        let lo = 0;
+        let hi = n - 1;
+
+        while (lo < hi) {
+            const mid = lo + ((hi - lo) >> 1);
+            const vm = this.getItem(mid)[key];
+
+            if ((increasing && vm < value) || (!increasing && vm > value)) {
+                lo = mid + 1;
+            }
+            else {
+                hi = mid;
+            }
+        }
+
+        // Clamp to [1, n-2]
+        if (lo < 1)
+            return 1;
+        if (lo > n - 2)
+            return n - 2;
+
+        return lo;
     }
 
     /**
