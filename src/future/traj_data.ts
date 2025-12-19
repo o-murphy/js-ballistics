@@ -1,6 +1,6 @@
 import { TrajFlag } from "../trajectory_data";
 import { ShotProps } from "./base_types";
-import { interpolate2pt, interpolate3pt } from "./interp";
+import { InterpMethod, interpolate2pt, interpolate3pt } from "./interp";
 import { Vector } from "./vector";
 
 type BaseTrajDataJSON = {
@@ -338,6 +338,11 @@ class BaseTrajData {
             skip_key === "mach" ? x : interpolate3pt(x, ox0, ox1, ox2, p0.mach, p1.mach, p2.mach)
         )
     }
+}
+
+type FlaggedData = {
+    data: BaseTrajData;
+    flag: TrajFlag;
 }
 
 /**
@@ -1311,6 +1316,7 @@ class RawTrajectoryData {
 export {
     BaseTrajDataInterpKey,
     BaseTrajData,
+    FlaggedData,
     BaseTrajDataHandlerInterface,
     BaseTrajSeq,
     BaseTrajDataHandlerCompositor,
