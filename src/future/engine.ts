@@ -1,7 +1,6 @@
 import { Vector } from "./vector";
 import { Config, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
-import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq } from "./traj_data";
-import { TrajectoryData } from "../trajectory_data";
+import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq, RawTrajectoryData } from "./traj_data";
 import { ValueError } from "../exceptions";
 
 enum ZeroInitialStatus {
@@ -96,9 +95,9 @@ class BaseEngine {
      * to use as the independent variable.
      * @param target_value The value the key attribute must reach for the
      * integration to terminate and interpolation to occur.
-     * @param raw_data Reference to a BCLIBC_BaseTrajData object that will store
+     * @returns raw_data Reference to a BCLIBC_BaseTrajData object that will store
      * the interpolated raw data point upon success.
-     * @param full_data Reference to a BCLIBC_TrajectoryData object that will store
+     * @returns full_data Reference to a BCLIBC_TrajectoryData object that will store
      * the full (processed) interpolated data point upon success.
      *
      * @note Access to the engine is protected by engine_mutex.
@@ -109,9 +108,7 @@ class BaseEngine {
      * integrated trajectory (e.g., "No apex flagged...").
      */
     integrateAt(key: keyof BaseTrajData,
-        target_value: number,
-        raw_data: BaseTrajData,
-        full_data: TrajectoryData): void {
+        target_value: number): [BaseTrajData, RawTrajectoryData] {
 
         const termination = new Termination();
         const handler = new SinglePointHandler(key, target_value, termination);
@@ -119,13 +116,15 @@ class BaseEngine {
         this.integrate(BaseEngine.MAX_INTEGRATION_RANGE, handler, termination);
 
         if (!handler.found) {
-            const raw_data = handler.last();
-            full_data.set(new RawTrajectoryData(this.shot, raw_data));
-            throw new InterceptionError("Intercept point not found for target key and value", raw_data, full_data);
+            const raw_data = handler.last;
+            Object.assign(raw_data, RawTrajectoryData.fromBasetrajData(this.shot, raw_data));
+            throw new InterceptionError(
+                "Intercept point not found for target key and value",
+                raw_data,
+                full_data);
         }
-
-        raw_data.set(handler.result);
-        full_data.set(new RawTrajectoryData(this.shot, raw_data))
+        const raw_data = handler.result;
+        return [raw_data, RawTrajectoryData.fromBasetrajData(this.shot, raw_data)]
     };
 
     /**
@@ -146,7 +145,7 @@ class BaseEngine {
         range_step_ft: number,
         time_step: number,
         filter_flags: TrajFlag,
-        records: TrajectoryData[],
+        records: RawTrajectoryData[],
         termination: Termination,
         dense_trajectory?: BaseTrajSeq): void {
 
