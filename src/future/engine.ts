@@ -2,6 +2,7 @@ import { Vector } from "./vector";
 import { Config, createConfig, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
 import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq, TrajectoryData } from "./traj_data";
 import { ValueError } from "../exceptions";
+import { InterceptionError, SolverRuntimeError } from "./exceptions";
 
 enum ZeroInitialStatus {
     CONTINUE,
@@ -114,11 +115,10 @@ class BaseEngine {
 
         if (!handler.found) {
             const raw_data = handler.last;
-            Object.assign(raw_data, TrajectoryData.fromBasetrajData(this.shot, raw_data));
             throw new InterceptionError(
                 "Intercept point not found for target key and value",
                 raw_data,
-                full_data);
+                TrajectoryData.fromBasetrajData(this.shot, raw_data));
         }
         const raw_data = handler.result;
         return [raw_data, TrajectoryData.fromBasetrajData(this.shot, raw_data)]
@@ -191,7 +191,7 @@ class BaseEngine {
         const termination = new Termination();
 
         // Backup and adjust constraints
-        ...c
+        ...
     };
 
     errorAtDistance(angle_rad: number,

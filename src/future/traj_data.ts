@@ -1228,7 +1228,7 @@ class TrajectoryData {
     }
 
     /**
-     * Assign from another RawTrajectoryData
+     * Assign from another TrajectoryData
      */
     assign(other: Readonly<TrajectoryData>): void {
         this.data.set(other.data);
