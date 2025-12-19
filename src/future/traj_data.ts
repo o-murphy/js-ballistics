@@ -792,7 +792,6 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         const epsilon = 1e-9;
 
         if (BaseTrajSeq.isClose(this.getItem(idx)[key], value, epsilon)) {
-            console.debug("Exact match found at index %zd", idx);
             out.assign(this.getItem(idx));
             return;
         }
@@ -1275,10 +1274,14 @@ class RawTrajectoryData {
 
         // Initialize output with p0 as base (fills derived fields)
         const interpolated_data = Object.create(RawTrajectoryData.prototype);
-        Object.assign(interpolated_data, p0);
+        // Hot path, copy only fields
+        for (const key of TRAJECTORY_DATA_INTERP_KEY_ACTIVE) {
+            interpolated_data[key] = p0[key];
+        }
+        interpolated_data.flag = p0.flag;
 
         // Interpolate all fields
-        for (let field_key of TRAJECTORY_DATA_INTERP_KEY_ACTIVE) {
+        for (const field_key of TRAJECTORY_DATA_INTERP_KEY_ACTIVE) {
 
             let interpolated_value: number;
 
