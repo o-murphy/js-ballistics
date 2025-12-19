@@ -77,24 +77,24 @@ const integrateRK4 = (
     gravity_vector.set(0, eng.config.cGravityConstant, 0);
 
     // Get initial wind
-    const initial_wind = eng.shot.wind_sock.currentVector();
+    const initial_wind = eng.shot.windSock.currentVector();
     wind_vector.assign(initial_wind);
 
     // Initialize projectile state
-    velocity = eng.shot.muzzle_velocity;
-    delta_time = eng.shot.calc_step;
+    velocity = eng.shot.muzzleVelocity;
+    delta_time = eng.shot.calcStep;
 
     range_vector.set(
         0,
-        -eng.shot.cant_cosine * eng.shot.sight_height,
-        -eng.shot.cant_sine * eng.shot.sight_height
+        -eng.shot.cantCosine * eng.shot.sightHeight,
+        -eng.shot.cantSine * eng.shot.sightHeight
     );
 
     // Calculate initial direction
-    const cos_elev = Math.cos(eng.shot.barrel_elevation);
-    const sin_elev = Math.sin(eng.shot.barrel_elevation);
-    const cos_az = Math.cos(eng.shot.barrel_azimuth);
-    const sin_az = Math.sin(eng.shot.barrel_azimuth);
+    const cos_elev = Math.cos(eng.shot.barrelElevation);
+    const sin_elev = Math.sin(eng.shot.barrelElevation);
+    const cos_az = Math.cos(eng.shot.barrelAzimuth);
+    const sin_az = Math.sin(eng.shot.barrelAzimuth);
 
     velocity_vector.set(
         cos_elev * cos_az * velocity,
@@ -112,8 +112,8 @@ const integrateRK4 = (
         eng.integration_step_count++;
 
         // Update wind if needed
-        if (range_vector.x >= eng.shot.wind_sock.next_range) {
-            const new_wind = eng.shot.wind_sock.vectorForRange(range_vector.x);
+        if (range_vector.x >= eng.shot.windSock.nextRange) {
+            const new_wind = eng.shot.windSock.vectorForRange(range_vector.x);
             wind_vector.assign(new_wind);
         }
 
@@ -134,7 +134,7 @@ const integrateRK4 = (
 
         // Gravity + Coriolis
         gravity_plus_coriolis.assign(gravity_vector);
-        if (!eng.shot.coriolis.flat_fire_only) {
+        if (!eng.shot.coriolis.flatFireOnly) {
             coriolis_acc.zero();
             eng.shot.coriolis.coriolisAccelerationLocal(velocity_vector, coriolis_acc);
             gravity_plus_coriolis.iadd(coriolis_acc);

@@ -1133,8 +1133,8 @@ class TrajectoryData {
 
         // Precompute trigonometric values
         const trajectory_angle = Math.atan2(velocity_vector.y, velocity_vector.x);
-        const look_angle_cos = Math.cos(props.look_angle);
-        const look_angle_sin = Math.sin(props.look_angle);
+        const look_angle_cos = Math.cos(props.lookAngle);
+        const look_angle_sin = Math.sin(props.lookAngle);
 
         const distance = adjusted_range.x;
         const height = adjusted_range.y;
@@ -1143,7 +1143,7 @@ class TrajectoryData {
 
         // Compute angles
         const drop_angle = getCorrection(distance, height) -
-            (distance ? props.look_angle : 0.0);
+            (distance ? props.lookAngle : 0.0);
         const windage_angle = getCorrection(distance, windage);
         const slant_distance = distance * look_angle_cos + height * look_angle_sin;
 
