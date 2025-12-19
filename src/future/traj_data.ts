@@ -1,4 +1,3 @@
-import { ValueError } from "../exceptions";
 import { TrajFlag } from "../trajectory_data";
 import { ShotProps } from "./base_types";
 import { interpolate2pt, interpolate3pt } from "./interp";
@@ -233,7 +232,7 @@ class BaseTrajData {
 
         // Validate non-degenerate segments
         if (x0 == x1 || x0 == x2 || x1 == x2) {
-            throw new ValueError("Degenerate interpolation segment: duplicate key values")
+            throw new Error("Degenerate interpolation segment: duplicate key values")
         }
 
         // Interpolate all fields directly without creating intermediate vectors
@@ -312,7 +311,7 @@ class BaseTrajData {
      * );
      * // result.px will be 1000.0, other fields interpolated
      */
-    interpolate3ptVectorized(
+    static interpolate3ptVectorized(
         x: number,
         ox0: number, ox1: number, ox2: number,
         p0: Readonly<BaseTrajData>,
@@ -441,6 +440,7 @@ class BaseTrajDataHandlerCompositor implements BaseTrajDataHandlerInterface {
 
 type BaseTrajSeqJSON = BaseTrajDataJSON[];
 
+const BASE_TRAJ_SEQ_MIN_CAPACITY = 64;
 
 /**
  * Dynamic array of trajectory data points
@@ -449,8 +449,8 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
     private buffer: Float64Array;
     private _length: number = 0;
 
-    constructor(initial_capacity: number = 64) {
-        this.buffer = new Float64Array(initial_capacity * 8);
+    constructor() {
+        this.buffer = new Float64Array(BASE_TRAJ_SEQ_MIN_CAPACITY * 8);
     }
 
     get capacity(): number {
@@ -515,7 +515,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
     }
 
     private grow(): void {
-        const new_capacity = Math.max(this.capacity << 1, 64);
+        const new_capacity = Math.max(this.capacity << 1, BASE_TRAJ_SEQ_MIN_CAPACITY);
         const new_buffer = new Float64Array(new_capacity * 8);
         new_buffer.set(this.buffer);
         this.buffer = new_buffer;
@@ -583,7 +583,50 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         start_from_time: number = 0.0,
         out: BaseTrajData
     ): void {
-        ...
+        const n = this._length;
+
+        if (n < 3) {
+            throw new Error("Insufficient data points for interpolation (need >= 3)");
+        }
+
+        let target_idx = -1;
+
+        // Apply time-based filtering if requested
+        if (start_from_time > 0.0 && key != "time") {
+            const start_idx = this.findStartIndex(start_from_time);
+
+            // Try exact match at start
+            try {
+                this.tryGetExact(start_idx, key, value, out);
+                return;
+            } catch (error: Error) {
+                // Not an exact match, continue to interpolation
+            }
+
+            // Find interpolation target
+            target_idx = this.findTargetIndex(key, value, start_idx);
+        }
+
+        // If no time filtering or target not found, search entire range
+        if (target_idx < 0) {
+            const center = this.bisectCenterIdxBuf(key, value);
+            if (center < 0) {
+                throw new Error("Binary search failed");
+            }
+            target_idx = (center < n - 1) ? center : n - 2;
+        }
+
+        // Try exact match at target
+        try {
+            this.tryGetExact(target_idx, key, value, out);
+            return;
+        } catch {
+            // Not exact, proceed to interpolation
+        }
+
+        // Interpolate at center point
+        const center_idx = (target_idx < n - 1) ? target_idx : n - 2;
+        this.interpolateAt(center_idx, key, value, out);
     }
 
     /**
@@ -617,7 +660,38 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
     ): void {
         const ca = Math.cos(look_angle_rad);
         const sa = Math.sin(look_angle_rad);
-        ...
+        const n = this._length;
+
+        if (n < 3) {
+            throw new Error("Insufficient data points for interpolation");
+        }
+
+        const center = this.bisectCenterIdxSlantBuf(ca, sa, value);
+        if (center < 0) {
+            throw new Error("Failed to locate interpolation center");
+        }
+
+        if (center < 1 || center >= n - 1) {
+            throw new Error("Center index outside safe interpolation range");
+        }
+
+        // Cache data access
+        const p0 = this.getItem(center - 1);
+        const p1 = this.getItem(center);
+        const p2 = this.getItem(center + 1);
+
+        // Compute slant key values
+        const ox0 = p0.slantValBuf(ca, sa);
+        const ox1 = p1.slantValBuf(ca, sa);
+        const ox2 = p2.slantValBuf(ca, sa);
+
+        if (ox0 == ox1 || ox1 == ox2) {
+            throw new Error("Degenerate slant values: cannot interpolate");
+        }
+
+        // Perform vectorized interpolation
+        BaseTrajData.interpolate3ptVectorized(
+            value, ox0, ox1, ox2, p0, p1, p2, out, "px"); // Dummy skip key
     }
 
     /**
@@ -644,7 +718,37 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         value: number,
         out: BaseTrajData
     ): void {
-        ...
+        const n = this._length;
+
+        // Handle negative indices
+        if (idx < 0) {
+            idx += length;
+        }
+
+        // Validate interpolation range
+        if (idx < 1 || idx >= length - 1) {
+            throw new Error("Index outside valid interpolation range [1, n-2]");
+        }
+
+        // Cache point references
+        const p0 = this.getItem(idx - 1);
+        const p1 = this.getItem(idx);
+        const p2 = this.getItem(idx + 1);
+
+        // Cache key values
+        const ox0 = p0[key];
+        const ox1 = p1[key];
+        const ox2 = p2[key];
+
+        // Validate non-degenerate
+        if (ox0 == ox1 || ox0 == ox2 || ox1 == ox2) {
+            throw new Error("Duplicate key values: cannot interpolate");
+        }
+
+        // Perform vectorized interpolation
+        BaseTrajData.interpolate3ptVectorized(
+            value, ox0, ox1, ox2, p0, p1, p2, out, key
+        );
     }
 
     /**
@@ -670,11 +774,24 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      */
     tryGetExact(
         idx: number,
-        key: BaseTrajData_InterpKey,
+        key: BaseTrajDataInterpKey,
         value: number,
         out: BaseTrajData,
     ): void {
-        ...
+
+        if (idx < 0 || idx >= this._length) {
+            throw new Error("Index out of bounds");
+        }
+
+        const epsilon = 1e-9;
+
+        if (BaseTrajSeq.isClose(this.getItem(idx)[key], value, epsilon)) {
+            console.debug("Exact match found at index %zd", idx);
+            out = this.getItem(idx);
+            return;
+        }
+
+        throw new Error("Not an exact match");
     }
 
     /**
@@ -704,7 +821,39 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         key: BaseTrajDataInterpKey,
         value: number
     ): number {
-        ...
+        const n = this._length;
+        if (n < 3) {
+            return -1;
+        }
+
+        // Determine monotonicity
+        const v0 = this.getItem(0)[key];
+        const vN = this.getItem(n - 1)[key];
+        const increasing = (vN >= v0);
+
+        let lo = 0;
+        let hi = n - 1;
+
+        // Binary search
+        while (lo < hi) {
+            const mid = lo + ((hi - lo) >> 1); // Bit shift optimization
+            const vm = this.getItem(mid)[key];
+
+            if ((increasing && vm < value) || (!increasing && vm > value)) {
+                lo = mid + 1;
+            }
+            else {
+                hi = mid;
+            }
+        }
+
+        // Clamp to valid interpolation range [1, n-2]
+        if (lo < 1)
+            lo = 1;
+        if (lo > n - 2)
+            lo = n - 2;
+
+        return lo;
     }
 
     /**
@@ -725,7 +874,37 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note Assumes slant values are locally monotonic.
      */
     bisectCenterIdxSlantBuf(ca: number, sa: number, value: number): number {
-        ...
+        const n = this._length;
+        if (n < 3) {
+            return -1;
+        }
+
+        // Determine monotonicity
+        const v0 = this.getItem(0).slantValBuf(ca, sa);
+        const vN = this.getItem(n - 1).slantValBuf(ca, sa);
+        const increasing = (vN >= v0);
+
+        let lo = 0;
+        let hi = n - 1;
+
+        // Binary search
+        while (lo < hi) {
+            const mid = lo + ((hi - lo) >> 1);
+            const vm = this.getItem(mid).slantValBuf(ca, sa);
+
+            if ((increasing && vm < value) || (!increasing && vm > value))
+                lo = mid + 1;
+            else
+                hi = mid;
+        }
+
+        // Clamp to [1, n-2]
+        if (lo < 1)
+            lo = 1;
+        if (lo > n - 2)
+            lo = n - 2;
+
+        return lo;
     }
 
     /**
@@ -745,6 +924,7 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
      * @note Linear search used for small/non-monotonic sequences for simplicity.
      */
     findStartIndex(start_time: number): number {
+        const n = this._length;
         ...
     }
 
@@ -773,6 +953,10 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
         value: number,
         start_idx: number
     ): number {
+        const n = this._length;
+        if (n < 3) {
+            return -1;
+        }
         ...
     }
 
@@ -1046,7 +1230,7 @@ class RawTrajectoryData {
                         interpolated_value = interpolate2pt(x_val, x1, y1, x2, y2)
                     }
                 } else {
-                    throw new ValueError("Invalid interpolation method");
+                    throw new Error("Invalid interpolation method");
                 }
             }
 
