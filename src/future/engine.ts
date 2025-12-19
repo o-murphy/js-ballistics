@@ -251,7 +251,24 @@ class BaseEngine {
         APEX_IS_MAX_RANGE_RADIANS: number,
         ALLOWED_ZERO_ERROR_FEET: number): number {... };
 
-    rangeForAngle(angle_rad: number): number {... };
+    rangeForAngle(angle_rad: number): number {
+
+        this.shot.barrelElevation = angle_rad;
+
+        const termination = new Termination();
+
+        // Use specialized zero-crossing handler
+        const handler = new ZeroCrossingHandler(this.shot.lookAngle, termination);
+
+        this.integrate(BaseEngine.MAX_INTEGRATION_RANGE, handler, termination);
+
+        if (handler.found) {
+            return handler.slant_distance;
+        }
+
+        // No crossing found - return 0.0
+        return 0.0;
+    };
 
     findZeroAngle(
         distance: number,
