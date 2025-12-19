@@ -1,5 +1,7 @@
 import { ValueError } from "../exceptions";
 import { TrajFlag } from "../trajectory_data";
+import { ShotProps } from "./base_types";
+import { interpolate2pt, interpolate3pt } from "./interp";
 import { Vector } from "./vector";
 
 type BaseTrajDataJSON = {
@@ -9,7 +11,12 @@ type BaseTrajDataJSON = {
     mach: number;
 }
 
-type BaseTrajDataInterpKey = 'time' | 'px' | 'py' | 'pz' | 'vx' | 'vy' | 'vz' | 'mach'
+
+const BASE_TRAJ_SEQ_INTERP_KEY_ACTIVE = [
+    "time", "px", "py", "pz", "vx", "vy", "vz", "mach"
+] as const;
+type BaseTrajDataInterpKey = (typeof BASE_TRAJ_SEQ_INTERP_KEY_ACTIVE[number])
+
 
 class BaseTrajData {
     readonly data: Float64Array;
@@ -821,12 +828,180 @@ class BaseTrajSeq implements BaseTrajDataHandlerInterface {
 // TrajectoryData
 // ============================================================================
 
-type RawTrajectoryDataInterpKey = "time" | "distance" | "velocity" | "mach" | "height" | "slant_height" | "drop_angle" | "windage" | "windage_angle" | "slant_distance" | "angle" | "density_ratio" | "drag" | "energy" | "ogw"
+const TRAJECTORY_DATA_INTERP_KEY_ACTIVE = [
+    "time", "distance", "velocity", "mach", "height",
+    "slant_height", "drop_angle", "windage", "windage_angle",
+    "slant_distance", "angle", "density_ratio", "drag", "energy", "ogw"
+] as const;
+type RawTrajectoryDataInterpKey = (typeof TRAJECTORY_DATA_INTERP_KEY_ACTIVE[number])
 
+/**
+ * @brief Complete trajectory data with all derived ballistic properties.
+ *
+ * Extends base trajectory data with:
+ * - Atmospheric corrections (density, drag)
+ * - Coriolis and spin drift effects
+ * - Angular measurements (drop, windage angles)
+ * - Energy and optimal game weight
+ *
+ * MEMORY: 16 doubles + 1 flag = ~136 bytes (with padding)
+ */
 class RawTrajectoryData {
-    ...
-    constructor() { ... }
 
+    // Core trajectory fields
+    time: number = 0.0;                            ///< Flight time in seconds
+    distance: number = 0.0;                     ///< Downrange distance (x-axis)
+    velocity: number = 0.0;                    ///< Total velocity magnitude
+    mach: number = 0.0;                            ///< Mach number
+    height: number = 0.0;                       ///< Height/altitude (y-axis)
+    slant_height: number = 0.0;                 ///< Distance perpendicular to sight line
+    drop_angle: number = 0.0;                  ///< Vertical angle correction
+    windage: number = 0.0;                      ///< Crossrange deflection (z-axis)
+    windage_angle: number = 0.0;               ///< Horizontal angle correction
+    slant_distance: number = 0.0;               ///< Distance along sight line
+    angle: number = 0.0;                       ///< Trajectory angle (velocity vector)
+    density_ratio: number = 0.0;                   ///< Air density / standard density
+    drag: number = 0.0;                            ///< Drag coefficient
+    energy: number = 0.0;                    ///< Kinetic energy
+    ogw: number = 0.0;                          ///< Optimal game weight
+    flag: TrajFlag = TrajFlag.NONE; ///< Point classification
+
+    /**
+     * @brief Constructs full trajectory data from ballistic state and shot properties.
+     *
+     * Computes all derived trajectory fields from basic state (position, velocity, time).
+     * This includes:
+     * - Atmospheric corrections (density, Mach, drag)
+     * - Coriolis effect (range adjustment)
+     * - Spin drift (windage correction)
+     * - Angular measurements (drop angle, windage angle)
+     * - Energy and optimal game weight
+     *
+     * ALGORITHM:
+     * 1. Apply Coriolis correction to range vector
+     * 2. Compute spin drift and add to windage
+     * 3. Get atmospheric density and speed of sound at current altitude
+     * 4. Compute slant range and angles relative to sight line
+     * 5. Calculate energy and derived ballistic properties
+     *
+     * @param props Shot properties (atmosphere, Coriolis, drag model, etc.).
+     * @param time Flight time in seconds.
+     * @param range_vector Position vector (x=downrange, y=height, z=windage).
+     * @param velocity_vector Velocity vector (x, y, z components).
+     * @param mach_arg Mach number (or 0.0 to compute from altitude).
+     * @param flag Trajectory point classification flag.
+     */
+    constructor(
+        props: Readonly<ShotProps>,
+        time: number,
+        range_vector: Vector,
+        velocity_vector: Vector,
+        mach_arg: number,
+        flag: TrajFlag,
+    ) {
+        this.time = time;
+        this.flag = flag;
+
+        // Compute adjusted range with Coriolis correction
+        const adjusted_range = props.coriolis.adjustRange(time, range_vector);
+        const spin_drift = props.spinDrift(time);
+        const velocity = velocity_vector.mag();
+
+        this.windage = adjusted_range.z + spin_drift;
+
+        // Get atmospheric conditions at current altitude
+        const [density_ratio, mach] = props.atmo.getDensityFactorAndMachForAltitude(range_vector.y);
+
+        // Precompute trigonometric values
+        const trajectory_angle = Math.atan2(velocity_vector.y, velocity_vector.x);
+        const look_angle_cos = Math.cos(props.look_angle);
+        const look_angle_sin = Math.sin(props.look_angle);
+
+        // Populate trajectory fields
+        this.distance = adjusted_range.x;
+        this.velocity = velocity;
+        this.mach = velocity / (mach_arg != 0.0 ? mach_arg : mach);
+        this.height = adjusted_range.y;
+        this.slant_height = adjusted_range.y * look_angle_cos - adjusted_range.x * look_angle_sin;
+
+        // Compute angles
+        this.drop_angle = getCorrection(adjusted_range.x, adjusted_range.y) -
+            (adjusted_range.x ? props.look_angle : 0.0);
+        this.windage_angle = getCorrection(adjusted_range.x, this.windage);
+        this.slant_distance = adjusted_range.x * look_angle_cos + adjusted_range.y * look_angle_sin;
+        this.angle = trajectory_angle;
+
+        // Physical properties
+        this.density_ratio = density_ratio;
+        this.drag = props.dragByMach(this.mach);
+        this.energy = calculateEnergy(props.weight, velocity);
+        this.ogw = calculateOgw(props.weight, velocity);
+    }
+
+    set(data: RawTrajectoryData): void {
+        ...
+    }
+
+    /**
+     * @brief Constructs trajectory data from base trajectory data and shot properties.
+     *
+     * Convenience constructor that delegates to main constructor.
+     *
+     * @param props Shot properties.
+     * @param data Base trajectory data (position, velocity, time, Mach).
+     * @param flag Trajectory point classification flag.
+     */
+    static fromBasetrajData(props: ShotProps, data: BaseTrajData, flag: TrajFlag): RawTrajectoryData {
+        return new RawTrajectoryData(props, data.time, data.position, data.velocity, data.mach, flag);
+    }
+
+    /**
+     * @brief Constructs trajectory data from flagged data structure.
+     *
+     * Convenience constructor that extracts flag from flagged data.
+     *
+     * @param props Shot properties.
+     * @param data Flagged trajectory data (includes flag field).
+     */
+    static fromFlaggedData(props: ShotProps, data: FlaggedData): RawTrajectoryData {
+        return RawTrajectoryData.fromBasetrajData(props, data.data, data.flag);
+    }
+
+    /**
+     * @brief Interpolates full trajectory data using 3-point method.
+     *
+     * ALGORITHM:
+     * 1. Validate key is in valid range
+     * 2. Cache independent variable values (x0, x1, x2)
+     * 3. Initialize output with p0 as template
+     * 4. For each field:
+     *    - If field == key: set directly to value
+     *    - Otherwise: interpolate using PCHIP or LINEAR method
+     * 5. Set output flag
+     *
+     * OPTIMIZATION: Uses switch statement for field access instead of reflection.
+     * Caches key values to avoid repeated get_key_val() calls.
+     *
+     * METHOD COMPARISON:
+     * - PCHIP: Monotone-preserving cubic, smooth, better for most trajectories
+     * - LINEAR: Piecewise linear, faster but less accurate, segments chosen by x1
+     *
+     * @param key Independent variable for interpolation (TIME, DISTANCE, MACH, etc.).
+     * @param value Target interpolation value.
+     * @param p0 First trajectory point.
+     * @param p1 Second trajectory point (center).
+     * @param p2 Third trajectory point.
+     * @param flag Output trajectory flag.
+     * @param method Interpolation method (PCHIP or LINEAR).
+     * @return Interpolated trajectory data with all fields populated.
+     *
+     * @throws std::logic_error if key is invalid/unsupported.
+     * @throws std::domain_error if linear interpolation encounters zero division.
+     * @throws std::invalid_argument if method is unknown.
+     *
+     * @note All 15 trajectory fields are interpolated independently.
+     * @note For LINEAR method: uses [p0,p1] if value <= x1, else [p1,p2].
+     */
     interpolate(
         key: RawTrajectoryDataInterpKey,
         value: number,
@@ -836,7 +1011,50 @@ class RawTrajectoryData {
         flag: TrajFlag,
         method: InterpMethod
     ): RawTrajectoryData {
+        // Cache independent variable values
+        const x_val = value;
+        const x0 = p0[key];
+        const x1 = p1[key];
+        const x2 = p2[key];
 
+        // Initialize output with p0 as base (fills derived fields)
+        const interpolated_data: RawTrajectoryData = new RawTrajectoryData();
+
+        // Interpolate all fields
+        for (let field_key of TRAJECTORY_DATA_INTERP_KEY_ACTIVE) {
+
+            let interpolated_value: number;
+
+
+            // If this is the independent variable, use target value directly
+            if (field_key === key) {
+                interpolated_value = x_val;
+            } else {
+                // Cache dependent variable values
+                const y0 = p0[field_key];
+                const y1 = p1[field_key];
+                const y2 = p2[field_key];
+
+                if (method === "pchip") {
+                    interpolated_value = interpolate3pt(x_val, x0, x1, x2, y0, y1, y2);
+                } else if (method === "linear") {
+
+                    // Choose segment based on which side of x1 the target falls
+                    if (x_val <= x1) {
+                        interpolated_value = interpolate2pt(x_val, x0, y0, x1, y1,);
+                    } else {
+                        interpolated_value = interpolate2pt(x_val, x1, y1, x2, y2)
+                    }
+                } else {
+                    throw new ValueError("Invalid interpolation method");
+                }
+            }
+
+            interpolated_data[key] = interpolated_value;
+        }
+
+        interpolated_data.flag = flag;
+        return interpolated_data;
     }
 }
 
@@ -846,5 +1064,5 @@ export {
     BaseTrajDataHandlerInterface,
     BaseTrajSeq,
     BaseTrajDataHandlerCompositor,
-    TrajectoryData,
+    RawTrajectoryData,
 }
