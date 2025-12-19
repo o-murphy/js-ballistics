@@ -1,6 +1,6 @@
 import { Vector } from "./vector";
 import { Config, ShotProps, Termination, TerminationReason, TrajFlag } from "./base_types";
-import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq, RawTrajectoryData } from "./traj_data";
+import { BaseTrajData, BaseTrajDataHandlerCompositor, BaseTrajDataHandlerInterface, BaseTrajSeq, TrajectoryData } from "./traj_data";
 import { ValueError } from "../exceptions";
 
 enum ZeroInitialStatus {
@@ -108,7 +108,7 @@ class BaseEngine {
      * integrated trajectory (e.g., "No apex flagged...").
      */
     integrateAt(key: keyof BaseTrajData,
-        target_value: number): [BaseTrajData, RawTrajectoryData] {
+        target_value: number): [BaseTrajData, TrajectoryData] {
 
         const termination = new Termination();
         const handler = new SinglePointHandler(key, target_value, termination);
@@ -117,14 +117,14 @@ class BaseEngine {
 
         if (!handler.found) {
             const raw_data = handler.last;
-            Object.assign(raw_data, RawTrajectoryData.fromBasetrajData(this.shot, raw_data));
+            Object.assign(raw_data, TrajectoryData.fromBasetrajData(this.shot, raw_data));
             throw new InterceptionError(
                 "Intercept point not found for target key and value",
                 raw_data,
                 full_data);
         }
         const raw_data = handler.result;
-        return [raw_data, RawTrajectoryData.fromBasetrajData(this.shot, raw_data)]
+        return [raw_data, TrajectoryData.fromBasetrajData(this.shot, raw_data)]
     };
 
     /**
@@ -145,7 +145,7 @@ class BaseEngine {
         range_step_ft: number,
         time_step: number,
         filter_flags: TrajFlag,
-        records: RawTrajectoryData[],
+        records: TrajectoryData[],
         termination: Termination,
         dense_trajectory?: BaseTrajSeq): void {
 

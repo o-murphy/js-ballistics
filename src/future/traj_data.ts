@@ -1088,7 +1088,7 @@ const TRAJECTORY_DATA_INTERP_KEY_ACTIVE = [
     "slant_height", "drop_angle", "windage", "windage_angle",
     "slant_distance", "angle", "density_ratio", "drag", "energy", "ogw"
 ] as const;
-type RawTrajectoryDataInterpKey = (typeof TRAJECTORY_DATA_INTERP_KEY_ACTIVE[number])
+type TrajectoryDataInterpKey = (typeof TRAJECTORY_DATA_INTERP_KEY_ACTIVE[number])
 
 /**
  * @brief Complete trajectory data with all derived ballistic properties.
@@ -1101,7 +1101,7 @@ type RawTrajectoryDataInterpKey = (typeof TRAJECTORY_DATA_INTERP_KEY_ACTIVE[numb
  *
  * MEMORY: 16 doubles + 1 flag = ~136 bytes (with padding)
  */
-class RawTrajectoryData {
+class TrajectoryData {
     readonly data: Float64Array;
     flag: TrajFlag;
 
@@ -1220,8 +1220,8 @@ class RawTrajectoryData {
     /**
      * Zero-copy view from buffer
      */
-    static fromBuffer(buffer: Float64Array, offset: number, flag: TrajFlag): RawTrajectoryData {
-        const v = Object.create(RawTrajectoryData.prototype);
+    static fromBuffer(buffer: Float64Array, offset: number, flag: TrajFlag): TrajectoryData {
+        const v = Object.create(TrajectoryData.prototype);
         v.data = buffer.subarray(offset, offset + 15);
         v.flag = flag;
         return v;
@@ -1230,7 +1230,7 @@ class RawTrajectoryData {
     /**
      * Assign from another RawTrajectoryData
      */
-    assign(other: Readonly<RawTrajectoryData>): void {
+    assign(other: Readonly<TrajectoryData>): void {
         this.data.set(other.data);
         this.flag = other.flag;
     }
@@ -1239,14 +1239,14 @@ class RawTrajectoryData {
      * OPTIMIZED: Interpolate using vectorized operations
      */
     static interpolate(
-        key: RawTrajectoryDataInterpKey,
+        key: TrajectoryDataInterpKey,
         value: number,
-        p0: Readonly<RawTrajectoryData>,
-        p1: Readonly<RawTrajectoryData>,
-        p2: Readonly<RawTrajectoryData>,
+        p0: Readonly<TrajectoryData>,
+        p1: Readonly<TrajectoryData>,
+        p2: Readonly<TrajectoryData>,
         flag: TrajFlag,
         method: InterpMethod,
-        out: RawTrajectoryData
+        out: TrajectoryData
     ): void {
         // Map key to index
         const keyIndex = TRAJECTORY_DATA_KEY_TO_INDEX[key];
@@ -1296,17 +1296,17 @@ class RawTrajectoryData {
         out.flag = flag;
     }
 
-    static fromBasetrajData(props: ShotProps, data: BaseTrajData, flag: TrajFlag = TrajFlag.NONE): RawTrajectoryData {
-        return new RawTrajectoryData(props, data.time, data.position, data.velocity, data.mach, flag);
+    static fromBasetrajData(props: ShotProps, data: BaseTrajData, flag: TrajFlag = TrajFlag.NONE): TrajectoryData {
+        return new TrajectoryData(props, data.time, data.position, data.velocity, data.mach, flag);
     }
 
-    static fromFlaggedData(props: ShotProps, data: FlaggedData): RawTrajectoryData {
-        return RawTrajectoryData.fromBasetrajData(props, data.data, data.flag);
+    static fromFlaggedData(props: ShotProps, data: FlaggedData): TrajectoryData {
+        return TrajectoryData.fromBasetrajData(props, data.data, data.flag);
     }
 }
 
 // Helper mapping for O(1) key lookup
-const TRAJECTORY_DATA_KEY_TO_INDEX: Record<RawTrajectoryDataInterpKey, number> = {
+const TRAJECTORY_DATA_KEY_TO_INDEX: Record<TrajectoryDataInterpKey, number> = {
     "time": 0,
     "distance": 1,
     "velocity": 2,
@@ -1324,12 +1324,201 @@ const TRAJECTORY_DATA_KEY_TO_INDEX: Record<RawTrajectoryDataInterpKey, number> =
     "ogw": 14
 };
 
+class TrajectorySeq {
+    private buffer: Float64Array;
+    private flags: Uint8Array;  // Окремо зберігаємо flags
+    private _length: number = 0;
+
+    constructor(initialCapacity = 64) {
+        this.buffer = new Float64Array(initialCapacity * 15);
+        this.flags = new Uint8Array(initialCapacity);
+    }
+
+    get capacity(): number {
+        return this.buffer.length / 15;
+    }
+
+    get length(): number {
+        return this._length;
+    }
+
+    /**
+     * Append trajectory data
+     */
+    append(traj: Readonly<TrajectoryData>): void {
+        if (this._length >= this.capacity) {
+            this.grow();
+        }
+
+        const offset = this._length * 15;
+        this.buffer.set(traj.data, offset);
+        this.flags[this._length] = traj.flag;
+        this._length++;
+    }
+
+    /**
+     * Get trajectory at index (zero-copy view)
+     */
+    getItem(idx: number): TrajectoryData {
+        const actualIndex = idx < 0 ? this._length + idx : idx;
+        if (actualIndex < 0 || actualIndex >= this._length) {
+            throw new RangeError(`Index ${idx} out of bounds`);
+        }
+        return TrajectoryData.fromBuffer(
+            this.buffer,
+            actualIndex * 15,
+            this.flags[actualIndex]
+        );
+    }
+
+    /**
+     * Direct data access for hot paths
+     */
+    getValueAt(idx: number, key: TrajectoryDataInterpKey): number {
+        const offset = idx * 15;
+        const fieldIdx = TRAJECTORY_DATA_KEY_TO_INDEX[key];
+        return this.buffer[offset + fieldIdx];
+    }
+
+    /**
+     * Set trajectory at index (copy data)
+     */
+    setItem(idx: number, traj: Readonly<TrajectoryData>): void {
+        if (idx < 0 || idx >= this._length) {
+            throw new RangeError(`Index ${idx} out of bounds`);
+        }
+        const offset = idx * 15;
+        this.buffer.set(traj.data, offset);
+        this.flags[idx] = traj.flag;
+    }
+
+    /**
+     * Clear all data
+     */
+    clear(): void {
+        this._length = 0;
+    }
+
+    /**
+     * Grow buffer capacity
+     */
+    private grow(): void {
+        const newCapacity = Math.max(this.capacity * 2, 64);
+
+        // Grow main buffer
+        const newBuffer = new Float64Array(newCapacity * 15);
+        newBuffer.set(this.buffer);
+        this.buffer = newBuffer;
+
+        // Grow flags buffer
+        const newFlags = new Uint8Array(newCapacity);
+        newFlags.set(this.flags);
+        this.flags = newFlags;
+    }
+
+    /**
+     * Iterator support
+     */
+    *[Symbol.iterator](): Iterator<TrajectoryData> {
+        for (let i = 0; i < this._length; i++) {
+            yield this.getItem(i);
+        }
+    }
+
+    /**
+     * Convert to array (allocates new objects)
+     */
+    toArray(): TrajectoryData[] {
+        const result: TrajectoryData[] = [];
+        for (let i = 0; i < this._length; i++) {
+            // Create new instance and copy data
+            const traj = new TrajectoryData(
+                // Need dummy props for constructor
+                {} as any, 0, new Vector(), new Vector(), 0, this.flags[i]
+            );
+            const offset = i * 15;
+            traj.data.set(this.buffer.subarray(offset, offset + 15));
+            result.push(traj);
+        }
+        return result;
+    }
+
+    /**
+     * Binary search by key value
+     */
+    bisectCenterIdx(key: TrajectoryDataInterpKey, value: number): number {
+        const n = this._length;
+        if (n < 3) return -1;
+
+        const fieldIdx = TRAJECTORY_DATA_KEY_TO_INDEX[key];
+
+        // Get values directly from buffer
+        const v0 = this.buffer[fieldIdx];
+        const vN = this.buffer[(n - 1) * 15 + fieldIdx];
+        const increasing = vN >= v0;
+
+        let lo = 0;
+        let hi = n - 1;
+
+        while (lo < hi) {
+            const mid = lo + ((hi - lo) >> 1);
+            const vm = this.buffer[mid * 15 + fieldIdx];
+
+            if ((increasing && vm < value) || (!increasing && vm > value)) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+
+        // Clamp to [1, n-2]
+        if (lo < 1) lo = 1;
+        if (lo > n - 2) lo = n - 2;
+
+        return lo;
+    }
+
+    /**
+     * Interpolate at key value
+     */
+    getAt(
+        key: TrajectoryDataInterpKey,
+        value: number,
+        method: InterpMethod,
+        out: TrajectoryData
+    ): void {
+        const n = this._length;
+        if (n < 3) {
+            throw new Error("Insufficient data for interpolation");
+        }
+
+        const center = this.bisectCenterIdx(key, value);
+        if (center < 0) {
+            throw new Error("Binary search failed");
+        }
+
+        const centerIdx = center < n - 1 ? center : n - 2;
+
+        // Get three points for interpolation
+        const p0 = this.getItem(centerIdx - 1);
+        const p1 = this.getItem(centerIdx);
+        const p2 = this.getItem(centerIdx + 1);
+
+        // Interpolate
+        TrajectoryData.interpolate(
+            key, value, p0, p1, p2,
+            p1.flag,  // Use center point flag
+            method, out
+        );
+    }
+}
+
 export {
     BaseTrajDataInterpKey,
-    BaseTrajData,
+    BaseTrajData, BaseTrajSeq,
     FlaggedData,
     BaseTrajDataHandlerInterface,
-    BaseTrajSeq,
     BaseTrajDataHandlerCompositor,
-    RawTrajectoryData,
+    TrajectoryDataInterpKey,
+    TrajectoryData, TrajectorySeq
 }
