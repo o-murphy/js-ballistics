@@ -84,7 +84,7 @@ class BaseEngine {
      * where a specific key attribute reaches a target value.
      *
      * This method runs a full trajectory integration internally, using
-     * BCLIBC_SinglePointHandler to find and interpolate the point where the
+     * SinglePointHandler to find and interpolate the point where the
      * specified key (e.g., 'time', 'mach', 'position.z') equals the target value.
      * The integration runs up to MAX_INTEGRATION_RANGE using a default timestep (0.0).
      *
@@ -92,16 +92,16 @@ class BaseEngine {
      * to use as the independent variable.
      * @param target_value The value the key attribute must reach for the
      * integration to terminate and interpolation to occur.
-     * @returns raw_data Reference to a BCLIBC_BaseTrajData object that will store
+     * @returns raw_data Reference to a BaseTrajData object that will store
      * the interpolated raw data point upon success.
-     * @returns full_data Reference to a BCLIBC_TrajectoryData object that will store
+     * @returns full_data Reference to a TrajectoryData object that will store
      * the full (processed) interpolated data point upon success.
      *
      * @note Access to the engine is protected by engine_mutex.
      * the actual step size is determined internally by the integrator.
      *
      * @throws std::logic_error if integrate_func is null.
-     * @throws BCLIBC_InterceptionError if the target point is not found within the
+     * @throws InterceptionError if the target point is not found within the
      * integrated trajectory (e.g., "No apex flagged...").
      */
     integrateAt(key: keyof BaseTrajData,
@@ -178,7 +178,7 @@ class BaseEngine {
      * @param apex_out Output variable to store apex trajectory data.
      *
      * @throws std::invalid_argument if barrel elevation is <= 0.
-     * @throws BCLIBC_ZeroFindingError if apex cannot be determined.
+     * @throws ZeroFindingError if apex cannot be determined.
      *
      * OPTIMIZATION: Uses ~192 bytes instead of ~N*64 bytes for full trajectory.
      */
@@ -191,12 +191,36 @@ class BaseEngine {
         const termination = new Termination();
 
         // Backup and adjust constraints
-        ...
+        ...c
     };
 
     errorAtDistance(angle_rad: number,
         target_x_ft: number,
-        target_y_ft: number): number {... };
+        target_y_ft: number): number {
+
+        this.shot.barrelElevation = angle_rad;
+
+        const termination = new Termination();
+
+        // Use specialized single-point handler
+        const handler = new SinglePointHandler("px", target_x_ft, termination);
+
+        this.integrate(BaseEngine.MAX_INTEGRATION_RANGE, handler, termination);
+
+        if (!handler.found) {
+            throw new SolverRuntimeError(
+                "Trajectory too short to determine error at distance.");
+        }
+
+        const hit: BaseTrajData = handler.result;
+
+        if (hit.time == 0.0) {
+            throw new Error("Trajectory sequence error");
+        }
+
+        return (hit.py - target_y_ft) - Math.abs(hit.px - target_x_ft);
+
+    };
 
     initZeroCalculation(
         distance: number,
