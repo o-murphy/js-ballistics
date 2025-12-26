@@ -12,7 +12,7 @@ import {
     HitResult,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
-    TrajectoryRangeError,
+    RangeError,
     TrajectoryData,
 } from "../src";
 
@@ -46,7 +46,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         trajectoryStep: step,
     }).trajectory;
 
-    beforeEach(() => {});
+    beforeEach(() => { });
 
     // region Cant_angle
 
@@ -69,13 +69,11 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         // console.log(baselineShot.weapon.sightHeight.rawValue);
         // console.log(baselineTrajectory[5].height.rawValue);
         expect(
-            cantedTrajectory[5].height.rawValue -
-                baselineShot.weapon.sightHeight.rawValue,
+            cantedTrajectory[5].height.rawValue - baselineShot.weapon.sightHeight.rawValue
         ).toBeCloseTo(baselineTrajectory[5].height.rawValue, 1e-2);
 
         expect(
-            cantedTrajectory[5].windage.rawValue +
-                baselineShot.weapon.sightHeight.rawValue,
+            cantedTrajectory[5].windage.rawValue + baselineShot.weapon.sightHeight.rawValue
         ).toBeCloseTo(baselineTrajectory[5].windage.rawValue, 1e-2);
     });
 
@@ -100,7 +98,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         // Assert height difference with baseline
         expect(t[5].height.rawValue - weapon.sightHeight.rawValue).toBeCloseTo(
             baselineTrajectory[5].height.rawValue,
-            2,
+            2
         );
 
         // Assert windage at muzzle
@@ -130,14 +128,15 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         }).trajectory;
 
         // Assert that height difference matches the baseline with adjusted sight height
-        expect(
-            cantedTrajectory[5].height.rawValue - weapon.sightHeight.rawValue,
-        ).toBeCloseTo(baselineTrajectory[5].height.rawValue, 2);
+        expect(cantedTrajectory[5].height.rawValue - weapon.sightHeight.rawValue).toBeCloseTo(
+            baselineTrajectory[5].height.rawValue,
+            2
+        );
 
         // Assert windage has no significant change
         expect(cantedTrajectory[5].windage.rawValue).toBeCloseTo(
             baselineTrajectory[5].windage.rawValue,
-            2,
+            2
         );
     });
 
@@ -167,7 +166,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the windage is greater due to wind from the left
         expect(trajectoryWithWind[5].windage.rawValue).toBeGreaterThan(
-            baselineTrajectory[5].windage.rawValue,
+            baselineTrajectory[5].windage.rawValue
         );
     });
 
@@ -194,7 +193,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the windage is less due to wind from the right
         expect(trajectoryWithWind[5].windage.rawValue).toBeLessThan(
-            baselineTrajectory[5].windage.rawValue,
+            baselineTrajectory[5].windage.rawValue
         );
     });
 
@@ -221,7 +220,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the trajectory height is greater with wind from behind
         expect(trajectoryWithWind[5].height.rawValue).toBeGreaterThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -248,7 +247,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the trajectory height is less with wind from the front
         expect(trajectoryWithWind[5].height.rawValue).toBeLessThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -279,9 +278,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
             trajectoryStep: step,
         }).trajectory;
 
-        expect(t[5].windage.rawValue).toBeLessThan(
-            baselineTrajectory[5].windage.rawValue,
-        );
+        expect(t[5].windage.rawValue).toBeLessThan(baselineTrajectory[5].windage.rawValue);
     });
 
     // Wind from in front should increase drop
@@ -383,7 +380,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that faster twist (right-hand twist) produces less drift compared to slower twist (left-hand twist)
         expect(-trajectoryLeftTwist[5].windage.rawValue).toBeGreaterThan(
-            trajectoryRightTwist[5].windage.rawValue,
+            trajectoryRightTwist[5].windage.rawValue
         );
     });
 
@@ -411,7 +408,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that height is greater with increased humidity
         expect(trajectoryWithHumidity[5].height.rawValue).toBeGreaterThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -435,7 +432,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the height is less in colder temperature, indicating increased drop
         expect(trajectoryInCold[5].height.rawValue).toBeLessThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -459,7 +456,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the height is greater at higher altitude, indicating decreased drop
         expect(trajectoryAtHighAltitude[5].height.rawValue).toBeGreaterThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -483,7 +480,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the height is greater in lower pressure, indicating decreased drop
         expect(trajectoryInLowPressure[5].height.rawValue).toBeGreaterThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -523,7 +520,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
 
         // Assert that the height is greater with the increased ballistic coefficient, indicating decreased drop
         expect(trajectoryWithSlickAmmo[5].height.rawValue).toBeGreaterThan(
-            baselineTrajectory[5].height.rawValue,
+            baselineTrajectory[5].height.rawValue
         );
     });
 
@@ -557,7 +554,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
         // Assert that the height is the same as with the baseline, indicating no change in drop
         expect(trajectoryWithReducedAmmo[5].height.rawValue).toBeCloseTo(
             baselineTrajectory[5].height.rawValue,
-            1e-2,
+            1e-2
         );
     });
 
@@ -573,9 +570,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
             trajectoryRange: range,
             trajectoryStep: step,
         }).trajectory;
-        expect(tNoSens[0].velocity.rawValue).toBeCloseTo(
-            baselineTrajectory[0].velocity.rawValue,
-        );
+        expect(tNoSens[0].velocity.rawValue).toBeCloseTo(baselineTrajectory[0].velocity.rawValue);
 
         // Test case 2: Powder temperature the same as atmosphere temperature
         ammo.usePowderSensitivity = true;
@@ -587,7 +582,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
             trajectoryStep: step,
         }).trajectory;
         expect(tSameTemp[0].velocity.rawValue).toBeLessThan(
-            baselineTrajectory[0].velocity.rawValue,
+            baselineTrajectory[0].velocity.rawValue
         );
 
         // Test case 3: Different powder temperature
@@ -599,7 +594,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
             trajectoryStep: step,
         }).trajectory;
         expect(tDiffTemp[0].velocity.rawValue).toBeLessThan(
-            baselineTrajectory[0].velocity.rawValue,
+            baselineTrajectory[0].velocity.rawValue
         );
 
         ammo.usePowderSensitivity = false;
@@ -624,7 +619,7 @@ describe.each(calculators)("TestComputer %s", ({ engine }) => {
                 trajectoryStep: step,
             });
         } catch (e: unknown) {
-            if (e instanceof TrajectoryRangeError) {
+            if (e instanceof RangeError) {
                 console.log("Passing");
             } else {
                 throw e;

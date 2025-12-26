@@ -54,9 +54,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         }).trajectory;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
-            expect(multiTrajectory[i].formatted()).toEqual(
-                baselineTrajectory[i].formatted(),
-            );
+            expect(multiTrajectory[i].formatted()).toEqual(baselineTrajectory[i].formatted());
         }
     });
 
@@ -79,9 +77,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         }).trajectory;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
-            expect(multiTrajectory[i].formatted()).toEqual(
-                baselineTrajectory[i].formatted(),
-            );
+            expect(multiTrajectory[i].formatted()).toEqual(baselineTrajectory[i].formatted());
         }
     });
 
@@ -105,10 +101,10 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
 
         expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(
             baselineTrajectory[1].velocity.rawValue,
-            1e-5,
+            1e-5
         );
         expect(multiTrajectory[4].velocity.rawValue).toBeGreaterThan(
-            baselineTrajectory[4].velocity.rawValue,
+            baselineTrajectory[4].velocity.rawValue
         );
     });
 
@@ -127,7 +123,7 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         expect(dmMulti.dragTable[0].CD).toBeCloseTo(0.1259323091692403, 1e-8);
         expect(dmMulti.dragTable[dmMulti.dragTable.length - 1].CD).toBeCloseTo(
             0.1577125859466895,
-            1e-8,
+            1e-8
         );
     });
 

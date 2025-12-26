@@ -8,7 +8,7 @@ interface GenericConfig {
 }
 
 interface EngineConstructor<C extends GenericConfig> {
-    new (config: Partial<C>): EngineInterface<C>;
+    new(config: Partial<C>): EngineInterface<C>;
 }
 
 interface EngineInterface<C extends GenericConfig> {
@@ -19,15 +19,15 @@ interface EngineInterface<C extends GenericConfig> {
         maxRange: Distance,
         distStep: Distance,
         extraData?: boolean,
-        timeStep?: number,
+        timeStep?: number
     ): TrajectoryData[];
 }
 
 function createEngine<C extends GenericConfig>(
     ctor: EngineConstructor<C>,
-    config: Partial<C>,
+    config: Partial<C>
 ): EngineInterface<C> {
     return new ctor(config);
 }
 
-export { GenericConfig, EngineConstructor, EngineInterface, createEngine };
+export { type GenericConfig, type EngineConstructor, type EngineInterface, createEngine };

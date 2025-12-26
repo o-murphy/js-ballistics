@@ -18,9 +18,9 @@ import RK4IntegrationEngine from "./rk4";
 
 export {
     createTrajectoryRow,
-    BaseEngineConfig,
-    BaseTrajectoryData,
-    BaseEngineTrajectoryProps,
+    type BaseEngineConfig,
+    type BaseTrajectoryData,
+    type BaseEngineTrajectoryProps,
     BaseIntegrationEngine,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
@@ -30,6 +30,6 @@ export {
     getCorrection,
     _WindSock,
     _TrajectoryDataFilter,
-    Curve,
-    CurvePoint,
+    type Curve,
+    type CurvePoint,
 };

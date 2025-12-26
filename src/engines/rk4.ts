@@ -1,7 +1,7 @@
 import { Shot } from "../conditions";
 import { TrajectoryData, TrajFlag } from "../trajectory_data";
 import Vector from "../vector";
-import { TrajectoryRangeError } from "../exceptions";
+import { RangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
 import {
     BaseEngineConfig,
@@ -14,8 +14,6 @@ import {
 class RK4IntegrationEngine
     extends BaseIntegrationEngine
     implements EngineInterface<BaseEngineConfig> {
-
-
     /**
      * Retrieves the calculation step size for trajectory calculations.
      * @param {number} [step=0] - The step size to retrieve.
@@ -30,10 +28,9 @@ class RK4IntegrationEngine
         maximumRange: number,
         recordStep: number,
         filterFlags: TrajFlag,
-        timeStep: number = 0.0,
+        timeStep: number = 0.0
     ): TrajectoryData[] {
-        const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } =
-            this._config;
+        const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } = this._config;
 
         const {
             muzzleVelocity,
@@ -61,13 +58,13 @@ class RK4IntegrationEngine
         let rangeVector: Vector = new Vector(
             0.0,
             -cantCosine * sightHeight,
-            -cantSine * sightHeight,
+            -cantSine * sightHeight
         );
         let velocityVector: Vector = new Vector(
             Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
             Math.sin(barrelElevation),
-            Math.cos(barrelElevation) * Math.sin(barrelAzimuth),
-        ).mulByConst(velocity);
+            Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
+        ).mul(velocity);
 
         const minStep = Math.min(calcStep, recordStep);
 
@@ -76,7 +73,7 @@ class RK4IntegrationEngine
             recordStep,
             rangeVector,
             velocityVector,
-            timeStep,
+            timeStep
         );
         dataFilter.setupSeenZero(rangeVector.y, barrelElevation, lookAngle);
 
@@ -89,78 +86,60 @@ class RK4IntegrationEngine
                 windVector = windSock.vectorForRange(rangeVector.x);
             }
 
-            [densityFactor, mach] =
-                shotInfo.atmo.getDensityFactorAndMachForAltitude(
-                    alt0 + rangeVector.y,
-                );
+            [densityFactor, mach] = shotInfo.atmo.getDensityFactorAndMachForAltitude(
+                alt0 + rangeVector.y
+            );
 
             if (filterFlags) {
-                const data = dataFilter.shouldRecord(
-                    rangeVector,
-                    velocityVector,
-                    mach,
-                    time,
-                );
+                const data = dataFilter.shouldRecord(rangeVector, velocityVector, mach, time);
                 if (data) {
                     ranges.push(
                         createTrajectoryRow(
                             data.time,
                             data.position,
                             data.velocity,
-                            data.velocity.magnitude(),
+                            data.velocity.mag(),
                             data.mach,
                             this.spinDrift(data.time),
                             lookAngle,
                             densityFactor,
                             drag,
                             weight,
-                            dataFilter.currentFlag,
-                        ),
+                            dataFilter.currentFlag
+                        )
                     );
                     lastRecordedRange = data.position.x;
                 }
             }
 
-            const relativeVelocity = velocityVector.subtract(windVector);
-            const relativeSpeed = relativeVelocity.magnitude();
+            const relativeVelocity = velocityVector.sub(windVector);
+            const relativeSpeed = relativeVelocity.mag();
             const deltaTime = calcStep / Math.max(1.0, relativeSpeed);
             const km = densityFactor * this.dragByMach(relativeSpeed / mach);
             drag = km * relativeSpeed;
 
             const f = (v: Vector): Vector => {
-                return this.gravityVector.subtract(
-                    v.mulByConst(km).mulByConst(v.magnitude()),
-                );
+                return this.gravityVector.sub(v.mul(km).mul(v.mag()));
             };
 
-            const v1: Vector = f(relativeVelocity).mulByConst(deltaTime);
-            const v2: Vector = f(relativeVelocity.add(v1.mulByConst(0.5))).mulByConst(deltaTime);
-            const v3: Vector = f(relativeVelocity.add(v2.mulByConst(0.5))).mulByConst(deltaTime);
-            const v4: Vector = f(relativeVelocity.add(v3)).mulByConst(deltaTime);
-            const p1: Vector = velocityVector.mulByConst(deltaTime);
-            const p2: Vector = velocityVector.add(p1.mulByConst(0.5)).mulByConst(deltaTime);
-            const p3: Vector = velocityVector.add(p2.mulByConst(0.5)).mulByConst(deltaTime);
-            const p4: Vector = velocityVector.add(p3).mulByConst(deltaTime);
+            const v1: Vector = f(relativeVelocity).mul(deltaTime);
+            const v2: Vector = f(relativeVelocity.add(v1.mul(0.5))).mul(deltaTime);
+            const v3: Vector = f(relativeVelocity.add(v2.mul(0.5))).mul(deltaTime);
+            const v4: Vector = f(relativeVelocity.add(v3)).mul(deltaTime);
+            const p1: Vector = velocityVector.mul(deltaTime);
+            const p2: Vector = velocityVector.add(p1.mul(0.5)).mul(deltaTime);
+            const p3: Vector = velocityVector.add(p2.mul(0.5)).mul(deltaTime);
+            const p4: Vector = velocityVector.add(p3).mul(deltaTime);
 
             velocityVector = velocityVector.add(
-                Vector.sum(
-                    v1,
-                    v2.mulByConst(2),
-                    v3.mulByConst(2),
-                    v4,
-                ).mulByConst(1 / 6.0),
+                Vector.sum(v1, v2.mul(2), v3.mul(2), v4).mul(1 / 6.0)
             );
 
             rangeVector = rangeVector.add(
-                Vector.sum(
-                    p1,
-                    p2.mulByConst(2),
-                    p3.mulByConst(2),
-                    p4,
-                ).mulByConst(1 / 6.0),
+                Vector.sum(p1, p2.mul(2), p3.mul(2), p4).mul(1 / 6.0)
             );
 
-            velocity = velocityVector.magnitude();
+            velocity = velocityVector.mag();
             time += deltaTime;
 
             if (
@@ -180,19 +159,19 @@ class RK4IntegrationEngine
                         densityFactor,
                         drag,
                         weight,
-                        dataFilter.currentFlag,
-                    ),
+                        dataFilter.currentFlag
+                    )
                 );
 
                 let reason = "";
                 if (velocity < cMinimumVelocity) {
-                    reason = TrajectoryRangeError.MinimumVelocityReached;
+                    reason = RangeError.MinimumVelocityReached;
                 } else if (rangeVector.y < cMaximumDrop) {
-                    reason = TrajectoryRangeError.MaximumDropReached;
+                    reason = RangeError.MaximumDropReached;
                 } else {
-                    reason = TrajectoryRangeError.MinimumAltitudeReached;
+                    reason = RangeError.MinimumAltitudeReached;
                 }
-                throw new TrajectoryRangeError(reason, ranges);
+                throw new RangeError(reason, ranges);
             }
         }
 
@@ -209,8 +188,8 @@ class RK4IntegrationEngine
                     densityFactor,
                     drag,
                     weight,
-                    TrajFlag.NONE,
-                ),
+                    TrajFlag.NONE
+                )
             );
         }
         return ranges;

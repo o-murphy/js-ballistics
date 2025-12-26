@@ -13,27 +13,44 @@ import {
     TrajFlag,
     EulerIntegrationEngine,
     RK4IntegrationEngine,
+    TrajectoryData,
 } from "../src";
 
-function customAssertEqual(a, b, accuracy, name) {
+type _TEST_ITEM = [
+    TrajectoryData,  // data
+    number,          // distance
+    number,          // velocity
+    number,          // mach
+    number,          // energy
+    number,          // path
+    number,          // hold
+    number,          // windage
+    number,          // wind_adjustment
+    number,          // time
+    number,          // ogw
+    number           // adjustment_unit
+]
+
+
+function customAssertEqual(a: number, b: number, accuracy: number, name: string) {
     // test(name, () => {
     expect(Math.abs(a - b)).toBeLessThan(accuracy);
     // });
 }
 
 function validateOne(
-    data,
-    distance,
-    velocity,
-    mach,
-    energy,
-    path,
-    hold,
-    windage,
-    wind_adjustment,
-    time,
-    ogw,
-    adjustment_unit,
+    data: TrajectoryData,
+    distance: number,
+    velocity: number,
+    mach: number,
+    energy: number,
+    path: number,
+    hold: number,
+    windage: number,
+    wind_adjustment: number,
+    time: number,
+    ogw: number,
+    adjustment_unit: number
 ) {
     customAssertEqual(distance, data.distance.In(Unit.Yard), 0.001, "Distance");
     customAssertEqual(velocity, data.velocity.In(Unit.FPS), 5, "Velocity");
@@ -51,12 +68,7 @@ function validateOne(
     }
 
     if (distance > 1) {
-        customAssertEqual(
-            hold,
-            data.dropAdjustment.In(adjustment_unit),
-            0.5,
-            "Hold",
-        );
+        customAssertEqual(hold, data.dropAdjustment.In(adjustment_unit), 0.5, "Hold");
     }
 
     if (distance >= 800) {
@@ -72,7 +84,7 @@ function validateOne(
             wind_adjustment,
             data.windageAdjustment.In(adjustment_unit),
             0.5,
-            "WindageAdjustment",
+            "WindageAdjustment"
         );
     }
 
@@ -100,7 +112,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
 
         const zero_angle = calc.barrelElevationForTarget(
             new Shot({ weapon, ammo, atmo }),
-            UNew.Yard(100),
+            UNew.Yard(100)
         );
 
         expect(zero_angle.In(Unit.Radian)).toBeCloseTo(0.001651, 1e-6);
@@ -122,7 +134,7 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
 
         const zero_angle = calc.barrelElevationForTarget(
             new Shot({ weapon, ammo, atmo }),
-            UNew.Yard(100),
+            UNew.Yard(100)
         );
 
         expect(zero_angle.In(Unit.Radian)).toBeCloseTo(0.0012286, 1e-6);
@@ -164,53 +176,14 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
 
         expect(tData.length).toEqual(11);
 
-        const data = [
+        const data: _TEST_ITEM[] = [
             [tData[0], 0, 2750, 2.463, 2820.6, -2, 0, 0, 0, 0, 880, Unit.MOA],
-            [
-                tData[1],
-                100,
-                2351.2,
-                2.106,
-                2061,
-                0,
-                0,
-                -0.6,
-                -0.6,
-                0.118,
-                550,
-                Unit.MOA,
-            ],
-            [
-                tData[5],
-                500,
-                1169.1,
-                1.047,
-                509.8,
-                -87.9,
-                -16.8,
-                -19.5,
-                -3.7,
-                0.857,
-                67,
-                Unit.MOA,
-            ],
-            [
-                tData[10],
-                1000,
-                776.4,
-                0.695,
-                224.9,
-                -823.9,
-                -78.7,
-                -87.5,
-                -8.4,
-                2.495,
-                20,
-                Unit.MOA,
-            ],
+            [tData[1], 100, 2351.2, 2.106, 2061, 0, 0, -0.6, -0.6, 0.118, 550, Unit.MOA],
+            [tData[5], 500, 1169.1, 1.047, 509.8, -87.9, -16.8, -19.5, -3.7, 0.857, 67, Unit.MOA],
+            [tData[10], 1000, 776.4, 0.695, 224.9, -823.9, -78.7, -87.5, -8.4, 2.495, 20, Unit.MOA],
         ];
 
-        data.forEach((item) => {
+        data.forEach((item: _TEST_ITEM) => {
             // describe(`validateOne ${data.indexOf(item)}`, () => {
             validateOne(...item);
             // });
@@ -254,66 +227,14 @@ describe.each(calculators)("trajectory %s", ({ engine }) => {
 
         expect(tData.length).toEqual(11);
 
-        const data = [
-            [
-                tData[0],
-                0,
-                2750,
-                2.46,
-                2821,
-                -2.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                880,
-                Unit.MIL,
-            ],
-            [
-                tData[1],
-                100,
-                2545,
-                2.28,
-                2416,
-                0.0,
-                0.0,
-                -0.2,
-                -0.06,
-                0.113,
-                698,
-                Unit.MIL,
-            ],
-            [
-                tData[5],
-                500,
-                1814,
-                1.62,
-                1227,
-                -56.2,
-                -3.2,
-                -6.3,
-                -0.36,
-                0.672,
-                252,
-                Unit.MIL,
-            ],
-            [
-                tData[10],
-                1000,
-                1086,
-                0.97,
-                440,
-                -399.9,
-                -11.3,
-                -31.6,
-                -0.9,
-                1.748,
-                54,
-                Unit.MIL,
-            ],
+        const data: _TEST_ITEM[] = [
+            [tData[0], 0, 2750, 2.46, 2821, -2.0, 0.0, 0.0, 0.0, 0.0, 880, Unit.MIL],
+            [tData[1], 100, 2545, 2.28, 2416, 0.0, 0.0, -0.2, -0.06, 0.113, 698, Unit.MIL],
+            [tData[5], 500, 1814, 1.62, 1227, -56.2, -3.2, -6.3, -0.36, 0.672, 252, Unit.MIL],
+            [tData[10], 1000, 1086, 0.97, 440, -399.9, -11.3, -31.6, -0.9, 1.748, 54, Unit.MIL],
         ];
 
-        data.forEach((item) => {
+        data.forEach((item: _TEST_ITEM) => {
             // describe(`validateOne ${data.indexOf(item)}`, () => {
             validateOne(...item);
             // });

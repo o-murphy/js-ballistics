@@ -33,17 +33,9 @@ class Weapon {
         twist?: number | Distance | null;
         zeroElevation?: number | Angular | null;
     } = {}) {
-        this.sightHeight = unitTypeCoerce(
-            sightHeight ?? 0,
-            Distance,
-            preferredUnits.sight_height,
-        );
+        this.sightHeight = unitTypeCoerce(sightHeight ?? 0, Distance, preferredUnits.sight_height);
         this.twist = unitTypeCoerce(twist ?? 0, Distance, preferredUnits.twist);
-        this.zeroElevation = unitTypeCoerce(
-            zeroElevation ?? 0,
-            Angular,
-            preferredUnits.angular,
-        );
+        this.zeroElevation = unitTypeCoerce(zeroElevation ?? 0, Angular, preferredUnits.angular);
     }
 }
 
@@ -83,7 +75,7 @@ class Ammo {
         this.powderTemp = unitTypeCoerce(
             powderTemp ?? UNew.Celsius(15),
             Temperature,
-            preferredUnits.temperature,
+            preferredUnits.temperature
         );
         this.tempModifier = tempModifier ?? 0;
         this.usePowderSensitivity = usePowderSensitivity;
@@ -97,20 +89,16 @@ class Ammo {
      */
     calcPowderSens(
         otherVelocity: number | Velocity,
-        otherTemperature: number | Temperature,
+        otherTemperature: number | Temperature
     ): number {
         const v0 = this.mv.In(Velocity.MPS);
         const t0 = this.powderTemp.In(Temperature.Celsius);
-        const v1 = unitTypeCoerce(
-            otherVelocity,
-            Velocity,
-            preferredUnits.velocity,
-        ).In(Velocity.MPS);
-        const t1 = unitTypeCoerce(
-            otherTemperature,
-            Temperature,
-            preferredUnits.temperature,
-        ).In(Temperature.Celsius);
+        const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).In(
+            Velocity.MPS
+        );
+        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature).In(
+            Temperature.Celsius
+        );
 
         const vDelta = Math.abs(v0 - v1);
         const tDelta = Math.abs(t0 - t1);
@@ -118,7 +106,7 @@ class Ammo {
 
         if (vDelta === 0 || tDelta === 0) {
             throw new Error(
-                "Temperature modifier error, other velocity and temperature can't be same as default",
+                "Temperature modifier error, other velocity and temperature can't be same as default"
             );
         }
         this.tempModifier = (vDelta / tDelta) * (15 / vLower); // * 100
@@ -139,11 +127,9 @@ class Ammo {
             return UNew.MPS(0);
         }
         const t0 = this.powderTemp.In(Temperature.Celsius);
-        const t1 = unitTypeCoerce(
-            currentTemp,
-            Temperature,
-            preferredUnits.temperature,
-        ).In(Temperature.Celsius);
+        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(
+            Temperature.Celsius
+        );
         const tDelta = t1 - t0;
         const muzzleVelocity = (this.tempModifier / (15 / v0)) * tDelta + v0;
         return UNew.MPS(muzzleVelocity);

@@ -24,14 +24,7 @@ describe("Unit back'n'forth", () => {
     }
 
     describe("Angular", () => {
-        backAndForthAll([
-            Unit.Degree,
-            Unit.MOA,
-            Unit.MRad,
-            Unit.MIL,
-            Unit.Radian,
-            Unit.Thousand,
-        ]);
+        backAndForthAll([Unit.Degree, Unit.MOA, Unit.MRad, Unit.MIL, Unit.Radian, Unit.Thousand]);
     });
 
     describe("Distance", () => {
@@ -58,12 +51,7 @@ describe("Unit back'n'forth", () => {
     });
 
     describe("Temperature", () => {
-        backAndForthAll([
-            Unit.Fahrenheit,
-            Unit.Kelvin,
-            Unit.Celsius,
-            Unit.Rankin,
-        ]);
+        backAndForthAll([Unit.Fahrenheit, Unit.Kelvin, Unit.Celsius, Unit.Rankin]);
     });
 
     describe("Velocity", () => {
@@ -95,19 +83,15 @@ describe("Unit coercion", () => {
 
     test("As invalid value", () => {
         // @ts-ignore
-        expect(() =>
-            unitTypeCoerce("invalid", Measure.Distance, Unit.Yard),
-        ).toThrowError(
-            `Instance must be a type of ${Measure.Distance.name} or 'number'`,
+        expect(() => unitTypeCoerce("invalid", Measure.Distance, Unit.Yard)).toThrow(
+            `Instance must be a type of ${Measure.Distance.name} or 'number'`
         );
     });
 
     test("As undefined", () => {
         //@ts-ignore
-        expect(() =>
-            unitTypeCoerce(undefined, Measure.Distance, Unit.Yard),
-        ).toThrowError(
-            `Instance must be a type of ${Measure.Distance.name} or 'number'`,
+        expect(() => unitTypeCoerce(undefined, Measure.Distance, Unit.Yard)).toThrow(
+            `Instance must be a type of ${Measure.Distance.name} or 'number'`
         );
     });
 });

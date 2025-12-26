@@ -28,13 +28,10 @@ const createShot = () => {
 
 const DISTANCES_FOR_CHECKING = [7126.05];
 
-const engines = [
-    { engine: EulerIntegrationEngine },
-    { engine: RK4IntegrationEngine },
-];
+const engines = [{ engine: EulerIntegrationEngine }, { engine: RK4IntegrationEngine }];
 
 const testCases = engines.flatMap((engineObj) =>
-    DISTANCES_FOR_CHECKING.map((distance) => ({ engineObj, distance })),
+    DISTANCES_FOR_CHECKING.map((distance) => ({ engineObj, distance }))
 );
 
 describe("Unit test for zero finding in ballistic calculator", () => {
@@ -53,7 +50,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
             const shot = createShot(); // Create a new shot for each test run
             zeroMinVelocityCalc.setWeaponZero(shot, UNew.Meter(distance));
             console.log(
-                `${engine} - barrelElevation for ${distance}m: ${shot.barrelElevation.In(Unit.Degree)} degrees`,
+                `${engine} - barrelElevation for ${distance}m: ${shot.barrelElevation.In(Unit.Degree)} degrees`
             );
             const t = zeroMinVelocityCalc.fire({
                 shot,
@@ -62,9 +59,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
             }).trajectory;
 
             const finalHitDistance = t[t.length - 1].distance.In(Unit.Meter);
-            expect(Math.abs(finalHitDistance - distance)).toBeLessThanOrEqual(
-                1.0,
-            );
-        },
+            expect(Math.abs(finalHitDistance - distance)).toBeLessThanOrEqual(1.0);
+        }
     );
 });

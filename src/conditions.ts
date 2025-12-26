@@ -1,5 +1,6 @@
 // Classes to define zeroing or current environment conditions
 
+import { _Atmosphere, Config, _IntegrationMethod, _ShotPropsInput, _Wind } from "./_wasm";
 import {
     cLapseRateImperial,
     cStandardTemperatureF,
@@ -28,8 +29,57 @@ import {
     Velocity,
     Angular,
     preferredUnits,
+    Unit,
 } from "./unit";
 import Vector from "./vector";
+import { IntegrationMethod, ShotPropsInput } from "./_wasm";
+
+export const cGravityImperial = 32.17405;
+
+export const cZeroFindingAccuracy = 0.000005  // Max allowed slant-error in feet to end zero search
+export const cMaxIterations = 40  // maximum number of iterations for zero search
+export const cMinimumAltitude = -1500  // feet, below sea level
+export const cMaximumDrop = -10000  // feet, maximum drop from the muzzle to continue trajectory
+export const cMinimumVelocity = 50.0  // fps, minimum velocity to continue trajectory
+export const cGravityConstant = -cGravityImperial  // feet per second squared
+export const cStepMultiplier = 1.0  // Multiplier for engine's default step, for changing integration speed & precision
+
+
+export const SHOT_DEFAULT_CONFIG: Pick<ShotPropsInput, 'config'> = {
+    config: {
+        zeroFindingAccuracy: cZeroFindingAccuracy,
+        maxIterations: cMaxIterations,
+        minimumAltitude: cMinimumAltitude,
+        maximumDrop: cMaximumDrop,
+        minimumVelocity: cMinimumVelocity,
+        gravityConstant: cGravityConstant,
+        stepMultiplier: cStepMultiplier
+    }
+}
+
+export const SHOT_INPUT_DEFAULT_OPTIONS: Pick<ShotPropsInput, 'method' | 'config'> = {
+    method: IntegrationMethod.RK4,
+    ...SHOT_DEFAULT_CONFIG
+}
+
+export const SHOT_INPUT_NO_WINDS: Pick<ShotPropsInput, 'winds'> = {
+    winds: []
+}
+
+export const SHOT_INPUT_NO_CORIOLIS: Pick<ShotPropsInput, 'coriolis'> = {
+    coriolis: {
+        sin_lat: 0.0,
+        cos_lat: 0.0,
+        sin_az: 0.0,
+        cos_az: 0.0,
+        range_east: 0.0,
+        range_north: 0.0,
+        cross_east: 0.0,
+        cross_north: 0.0,
+        flat_fire_only: false,
+        muzzle_velocity_fps: 0.0,
+    }
+}
 
 class Atmo {
     protected _altitude: Distance;
@@ -41,13 +91,11 @@ class Atmo {
     protected _densityRatio: number;
     // readonly mach: Velocity
 
-    protected _mach: number;
-    protected _a0: number;
-    protected _t0: number;
-    protected _p0: number;
-    public static cLowestTempC: number = UNew.Fahrenheit(cLowestTempF).In(
-        Temperature.Celsius,
-    );
+    public _mach: number;
+    public _a0: number;
+    public _t0: number;
+    public _p0: number;
+    public static cLowestTempC: number = UNew.Fahrenheit(cLowestTempF).In(Temperature.Celsius);
 
     protected _initializing: boolean;
 
@@ -75,27 +123,23 @@ class Atmo {
         powderT?: number | Temperature | null;
     } = {}) {
         this._initializing = true;
-        this._altitude = unitTypeCoerce(
-            altitude ?? 0,
-            Distance,
-            preferredUnits.distance,
-        );
+        this._altitude = unitTypeCoerce(altitude ?? 0, Distance, preferredUnits.distance);
         this._pressure = unitTypeCoerce(
             pressure ?? Atmo.standardPressure(this.altitude),
             Pressure,
-            preferredUnits.pressure,
+            preferredUnits.pressure
         );
         this._temperature = unitTypeCoerce(
             temperature ?? Atmo.standardTemperature(this.altitude),
             Temperature,
-            preferredUnits.temperature,
+            preferredUnits.temperature
         );
         // If powder_temperature not provided we use atmospheric temperature:
 
         this._powderTemp = unitTypeCoerce(
             powderT ?? this.temperature,
             Temperature,
-            preferredUnits.temperature,
+            preferredUnits.temperature
         );
         this._t0 = this.temperature.In(Temperature.Celsius);
         this._p0 = this.pressure.In(Pressure.hPa);
@@ -149,8 +193,7 @@ class Atmo {
 
     updateDensityRatio() {
         this._densityRatio =
-            Atmo.calculateAirDensity(this._t0, this._p0, this.humidity) /
-            cStandardDensityMetric;
+            Atmo.calculateAirDensity(this._t0, this._p0, this.humidity) / cStandardDensityMetric;
     }
 
     get densityMetric(): number {
@@ -175,10 +218,8 @@ class Atmo {
         return (
             this._p0 *
             Math.pow(
-                1 +
-                    (cLapseRateKperFoot * (altitude - this._a0)) /
-                        (this._t0 + cDegreesCtoK),
-                cPressureExponent,
+                1 + (cLapseRateKperFoot * (altitude - this._a0)) / (this._t0 + cDegreesCtoK),
+                cPressureExponent
             )
         );
     }
@@ -190,7 +231,7 @@ class Atmo {
         }
         if (altitude > 36089) {
             console.warn(
-                "Density request for altitude above troposphere. Atmospheric model not valid here.",
+                "Density request for altitude above troposphere. Atmospheric model not valid here."
             );
         }
         const t = this.temperatureAtAltitude(altitude) + cDegreesCtoK;
@@ -203,20 +244,19 @@ class Atmo {
 
     static standardTemperature(altitude: Distance): Temperature {
         return UNew.Fahrenheit(
-            cStandardTemperatureF +
-                altitude.In(Distance.Foot) * cLapseRateImperial,
+            cStandardTemperatureF + altitude.In(Distance.Foot) * cLapseRateImperial
         );
     }
 
     static standardPressure(altitude: Distance): Pressure {
         return UNew.hPa(
             cStandardPressureMetric *
-                Math.pow(
-                    1 +
-                        (cLapseRateMetric * altitude.In(Distance.Meter)) /
-                            (cStandardTemperatureC + cDegreesCtoK),
-                    cPressureExponent,
-                ),
+            Math.pow(
+                1 +
+                (cLapseRateMetric * altitude.In(Distance.Meter)) /
+                (cStandardTemperatureC + cDegreesCtoK),
+                cPressureExponent
+            )
         );
     }
 
@@ -231,11 +271,7 @@ class Atmo {
         temperature?: number | Temperature | null;
         humidity?: number;
     } = {}) {
-        const _altitude = unitTypeCoerce(
-            altitude,
-            Distance,
-            preferredUnits.distance,
-        );
+        const _altitude = unitTypeCoerce(altitude, Distance, preferredUnits.distance);
         if (temperature === null || temperature === undefined) {
             temperature = Atmo.standardTemperature(_altitude);
         }
@@ -247,9 +283,7 @@ class Atmo {
 
     static machF(fahrenheit: number): number {
         if (fahrenheit < -cDegreesFtoR) {
-            console.warn(
-                `Invalid temperature: ${fahrenheit}°F. Adjusted to (${cLowestTempF}°F).`,
-            );
+            console.warn(`Invalid temperature: ${fahrenheit}°F. Adjusted to (${cLowestTempF}°F).`);
         }
         return Math.sqrt(fahrenheit + cDegreesFtoR) * cSpeedOfSoundImperial;
     }
@@ -258,9 +292,7 @@ class Atmo {
         if (celsius < -cDegreesCtoK) {
             const badTemp = celsius;
             celsius = Atmo.cLowestTempC;
-            console.warn(
-                `Invalid temperature: ${badTemp}°C. Adjusted to (${celsius}°C).`,
-            );
+            console.warn(`Invalid temperature: ${badTemp}°C. Adjusted to (${celsius}°C).`);
         }
         return Atmo.machK(celsius + cDegreesCtoK);
     }
@@ -286,11 +318,7 @@ class Atmo {
             return alpha + beta * p + gamma * T ** 2;
         };
 
-        const compressibilityFactor = (
-            p: number,
-            T: number,
-            x_v: number,
-        ): number => {
+        const compressibilityFactor = (p: number, T: number, x_v: number): number => {
             const a0 = 1.58123e-6;
             const a1 = -2.9331e-8;
             const a2 = 1.1043e-10;
@@ -305,11 +333,7 @@ class Atmo {
             const Z =
                 1 -
                 (p / T) *
-                    (a0 +
-                        a1 * t +
-                        a2 * t ** 2 +
-                        (b0 + b1 * t) * x_v +
-                        (c0 + c1 * t) * x_v ** 2) +
+                (a0 + a1 * t + a2 * t ** 2 + (b0 + b1 * t) * x_v + (c0 + c1 * t) * x_v ** 2) +
                 (p / T) ** 2 * (d + e * x_v ** 2);
             return Z;
         };
@@ -328,9 +352,19 @@ class Atmo {
         // Calculation of compressibility factor
         const Z = compressibilityFactor(p, T_K, x_v);
 
-        const density =
-            ((p * M_a) / (Z * R * T_K)) * (1 - x_v * (1 - M_v / M_a));
+        const density = ((p * M_a) / (Z * R * T_K)) * (1 - x_v * (1 - M_v / M_a));
         return 100 * density;
+    }
+
+    toWasmAtmo(): _Atmosphere {
+        return {
+            _t0: this._t0,
+            _a0: this._a0,
+            _p0: this._p0,
+            _mach: this._mach,
+            density_ratio: this.densityRatio,
+            cLowestTempC: Atmo.cLowestTempC
+        }
     }
 }
 
@@ -358,7 +392,7 @@ class Vacuum extends Atmo {
         this._densityRatio = 0;
     }
 
-    updateDensityRatio() {}
+    updateDensityRatio() { }
 }
 
 class Wind {
@@ -389,20 +423,12 @@ class Wind {
     } = {}) {
         // Coerce input values to appropriate units
         Wind.MAX_DISTANCE_FEET = maxDistanceFeet ?? cMaxWindDistanceFeet;
-        this.velocity = unitTypeCoerce(
-            velocity ?? 0,
-            Velocity,
-            preferredUnits.velocity,
-        );
-        this.directionFrom = unitTypeCoerce(
-            directionFrom ?? 0,
-            Angular,
-            preferredUnits.angular,
-        );
+        this.velocity = unitTypeCoerce(velocity ?? 0, Velocity, preferredUnits.velocity);
+        this.directionFrom = unitTypeCoerce(directionFrom ?? 0, Angular, preferredUnits.angular);
         this.untilDistance = unitTypeCoerce(
             untilDistance ?? UNew.Foot(Wind.MAX_DISTANCE_FEET),
             Distance,
-            preferredUnits.distance,
+            preferredUnits.distance
         );
     }
 
@@ -412,6 +438,15 @@ class Wind {
         const rangeComponent = windVelocityFps * Math.cos(windDirectionRad);
         const crossComponent = windVelocityFps * Math.sin(windDirectionRad);
         return new Vector(rangeComponent, 0, crossComponent);
+    }
+
+    toWasmWind(): _Wind {
+        return {
+            velocity: this.velocity.In(Unit.FPS),
+            direction_from: this.directionFrom.In(Unit.Radian),
+            until_distance: this.untilDistance.In(Unit.Foot),
+            MAX_DISTANCE_FEET: Wind.MAX_DISTANCE_FEET,
+        }
     }
 }
 
@@ -457,21 +492,9 @@ class Shot {
         atmo?: Atmo | null;
         winds?: Wind[] | null;
     }) {
-        this.lookAngle = unitTypeCoerce(
-            lookAngle ?? 0,
-            Angular,
-            preferredUnits.angular,
-        );
-        this.relativeAngle = unitTypeCoerce(
-            relativeAngle ?? 0,
-            Angular,
-            preferredUnits.angular,
-        );
-        this.cantAngle = unitTypeCoerce(
-            cantAngle ?? 0,
-            Angular,
-            preferredUnits.angular,
-        );
+        this.lookAngle = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
+        this.relativeAngle = unitTypeCoerce(relativeAngle ?? 0, Angular, preferredUnits.angular);
+        this.cantAngle = unitTypeCoerce(cantAngle ?? 0, Angular, preferredUnits.angular);
         this.weapon = weapon;
         this.ammo = ammo;
         this.atmo = atmo ?? Atmo.icao({});
@@ -480,16 +503,13 @@ class Shot {
 
     set winds(winds: Wind[] | null) {
         // Changed type to allow null
-        this._winds =
-            winds === null || winds.length === 0 ? [new Wind({})] : winds;
+        this._winds = winds === null || winds.length === 0 ? [new Wind({})] : winds;
     }
 
     get winds(): Wind[] {
         return (this._winds ?? [new Wind({})])
             .slice() // Create a copy of the array
-            .sort(
-                (a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue,
-            );
+            .sort((a, b) => a.untilDistance.rawValue - b.untilDistance.rawValue);
     }
 
     /**
@@ -504,9 +524,9 @@ class Shot {
     get barrelElevation(): Angular {
         return UNew.Radian(
             this.lookAngle.In(Angular.Radian) +
-                Math.cos(this.cantAngle.In(Angular.Radian)) *
-                    (this.weapon.zeroElevation.In(Angular.Radian) +
-                        this.relativeAngle.In(Angular.Radian)),
+            Math.cos(this.cantAngle.In(Angular.Radian)) *
+            (this.weapon.zeroElevation.In(Angular.Radian) +
+                this.relativeAngle.In(Angular.Radian))
         );
     }
 
@@ -521,9 +541,36 @@ class Shot {
     get barrelAzimuth(): Angular {
         return UNew.Radian(
             Math.sin(this.cantAngle.In(Angular.Radian)) *
-                (this.weapon.zeroElevation.In(Angular.Radian) +
-                    this.relativeAngle.In(Angular.Radian)),
+            (this.weapon.zeroElevation.In(Angular.Radian) +
+                this.relativeAngle.In(Angular.Radian))
         );
+    }
+
+    toWasmShotPropsInput(method: IntegrationMethod, config: Partial<Config> = {}): _ShotPropsInput {
+        return {
+            bc: this.ammo.dm.bc,
+            look_angle: this.lookAngle.In(Unit.Radian),
+            twist: this.weapon.twist.In(Unit.Inch),
+            length: this.ammo.dm.length.In(Unit.Inch),
+            diameter: this.ammo.dm.diameter.In(Unit.Inch),
+            weight: this.ammo.dm.weight.In(Unit.Grain),
+            barrel_elevation: this.barrelElevation.In(Unit.Radian),
+            barrel_azimuth: this.barrelAzimuth.In(Unit.Radian),
+            sight_height: this.weapon.sightHeight.In(Unit.Foot),
+            cant_angle: this.cantAngle.In(Unit.Radian),
+            alt0: this.atmo.altitude.In(Unit.Foot),
+            muzzle_velocity: this.ammo.getVelocityForTemp(this.atmo.powderTemp).In(Unit.FPS),
+            drag_table: this.ammo.dm.dragTable,
+            atmo: this.atmo.toWasmAtmo(),
+            ...SHOT_INPUT_NO_CORIOLIS,
+            winds: this.winds.map(wind => wind.toWasmWind()),
+            // options
+            ...{
+                ...SHOT_INPUT_DEFAULT_OPTIONS,
+                method: method as unknown as _IntegrationMethod,
+                config: { ...SHOT_INPUT_DEFAULT_OPTIONS.config, ...config }
+            }
+        }
     }
 }
 

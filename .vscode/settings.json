@@ -21,5 +21,6 @@
     "[typescriptreact]": {
         "editor.tabSize": 4,
         "editor.insertSpaces": true
-    }
+    },
+    "jest.jestCommandLine": "node --experimental-vm-modules --no-warnings node_modules/.bin/jest"
 }

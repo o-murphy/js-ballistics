@@ -1,0 +1,82 @@
+// wasm/bclibc.d.ts - Shared type definitions for all module formats
+
+/**
+ * Re-export base types that are the same for all formats
+ */
+export type {
+    Config,
+    Atmosphere,
+    Wind,
+    Coriolis,
+    DragTablePoint,
+    MaxRangeResult,
+    TrajectoryData,
+    IntegrationMethod,
+    TrajFlag,
+    Vector,
+    ClassHandle
+} from './bclibc.cjs';
+
+/**
+ * Properly typed ShotPropsInput with arrays instead of 'any'
+ */
+export interface ShotPropsInput {
+    bc: number;
+    look_angle: number;
+    twist: number;
+    length: number;
+    diameter: number;
+    weight: number;
+    barrel_elevation: number;
+    barrel_azimuth: number;
+    sight_height: number;
+    cant_angle: number;
+    alt0: number;
+    muzzle_velocity: number;
+    drag_table: Array<{ Mach: number; CD: number }>;  // ✅ Plain JS array
+    atmo: import('./bclibc.cjs').Atmosphere;
+    coriolis: import('./bclibc.cjs').Coriolis;
+    winds: Array<{
+        velocity: number;
+        direction_from: number;
+        until_distance: number;
+        MAX_DISTANCE_FEET: number;
+    }>;  // ✅ Plain JS array
+    method: import('./bclibc.cjs').IntegrationMethod;
+    config: import('./bclibc.cjs').Config;
+}
+
+/**
+ * Integration request parameters
+ */
+export interface IntegrateRequest {
+    range_limit_ft: number;
+    range_step_ft: number;
+    time_step: number;
+    dense_data: boolean;
+    filter_flags: number;
+}
+
+/**
+ * Augment the auto-generated CJS module
+ */
+declare module './bclibc.cjs' {
+    interface EmbindModule {
+        findApex(shotProps: ShotPropsInput): TrajectoryData;
+        findMaxRange(shotProps: ShotPropsInput, lowAngleDeg: number, highAngleDeg: number): MaxRangeResult;
+        findZeroAngle(shotProps: ShotPropsInput, distance: number): number;
+        integrate(shotProps: ShotPropsInput, request: IntegrateRequest): any;
+    }
+}
+
+/**
+ * Augment the auto-generated ESM module
+ */
+declare module './bclibc.esm' {
+    interface EmbindModule {
+        findApex(shotProps: ShotPropsInput): TrajectoryData;
+        findMaxRange(shotProps: ShotPropsInput, lowAngleDeg: number, highAngleDeg: number): MaxRangeResult;
+        findZeroAngle(shotProps: ShotPropsInput, distance: number): number;
+        integrate(shotProps: ShotPropsInput, request: IntegrateRequest): any;
+    }
+}

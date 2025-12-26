@@ -3,27 +3,19 @@ import { Atmo, Shot, Wind } from "../conditions";
 // TrajectoryData module
 import { TrajectoryData, TrajFlag } from "../trajectory_data";
 // Unit module
-import {
-    Angular,
-    Distance,
-    UNew,
-    Weight,
-    Pressure,
-    Velocity,
-    Temperature,
-} from "../unit";
+import { Angular, Distance, UNew, Weight, Pressure, Velocity, Temperature } from "../unit";
 // Vector module
 import Vector from "../vector";
 import type { DragTable } from "../drag_model";
-import { TrajectoryRangeError, ZeroFindingError } from "../exceptions";
+import { RangeError, ZeroFindingError } from "../exceptions";
 import { EngineInterface, GenericConfig } from "../generics/engine";
 
 // Export the classes and constants
 export {
     createTrajectoryRow,
-    BaseEngineConfig,
-    BaseTrajectoryData,
-    BaseEngineTrajectoryProps,
+    type BaseEngineConfig,
+    type BaseTrajectoryData,
+    type BaseEngineTrajectoryProps,
     BaseIntegrationEngine,
     defaultEngineConfig,
     calculateEnergy,
@@ -31,8 +23,8 @@ export {
     getCorrection,
     _WindSock,
     _TrajectoryDataFilter,
-    Curve,
-    CurvePoint,
+    type Curve,
+    type CurvePoint,
 };
 
 // Constants
@@ -115,7 +107,7 @@ class _TrajectoryDataFilter {
         rangeStep: number,
         initialPosition: Vector,
         initialVelocity: Vector,
-        timeStep: number = 0,
+        timeStep: number = 0
     ) {
         this.filter = filterFlags;
         this.currentFlag = TrajFlag.NONE;
@@ -145,7 +137,7 @@ class _TrajectoryDataFilter {
         position: Vector,
         velocity: Vector,
         mach: number,
-        time: number,
+        time: number
     ): BaseTrajectoryData | null {
         let data: BaseTrajectoryData | null = null;
         this.currentFlag = TrajFlag.NONE;
@@ -158,20 +150,14 @@ class _TrajectoryDataFilter {
                     (this.nextRecordDistance - this.previousPosition.x) /
                     (position.x - this.previousPosition.x);
                 data = {
-                    time:
-                        this.previousTime + (time - this.previousTime) * ratio,
+                    time: this.previousTime + (time - this.previousTime) * ratio,
                     position: this.previousPosition.add(
-                        position
-                            .subtract(this.previousPosition)
-                            .mulByConst(ratio),
+                        position.sub(this.previousPosition).mul(ratio)
                     ),
                     velocity: this.previousVelocity.add(
-                        velocity
-                            .subtract(this.previousVelocity)
-                            .mulByConst(ratio),
+                        velocity.sub(this.previousVelocity).mul(ratio)
                     ),
-                    mach:
-                        this.previousMach + (mach - this.previousMach) * ratio,
+                    mach: this.previousMach + (mach - this.previousMach) * ratio,
                 };
             }
             this.currentFlag |= TrajFlag.RANGE;
@@ -181,7 +167,7 @@ class _TrajectoryDataFilter {
             this.checkNextTime(time);
         }
         this.checkZeroCrossing(position);
-        this.checkMachCrossing(velocity.magnitude(), mach);
+        this.checkMachCrossing(velocity.mag(), mach);
 
         if (Boolean(this.currentFlag & this.filter) && data === null) {
             data = {
@@ -305,11 +291,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
 
     constructor(config: Partial<BaseEngineConfig>) {
         this._config = { ...defaultEngineConfig, ...config };
-        this.gravityVector = new Vector(
-            0.0,
-            this._config.cGravityConstant,
-            0.0,
-        );
+        this.gravityVector = new Vector(0.0, this._config.cGravityConstant, 0.0);
     }
 
     /**
@@ -334,32 +316,21 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
         let zeroFindingError = cZeroFindingAccuracy * 2;
 
         let height: number;
-        while (
-            zeroFindingError > cZeroFindingAccuracy &&
-            iterationsCount < cMaxIterations
-        ) {
+        while (zeroFindingError > cZeroFindingAccuracy && iterationsCount < cMaxIterations) {
             try {
-                let t = this._integrate(
-                    shotInfo,
-                    zeroDistance,
-                    zeroDistance,
-                    TrajFlag.NONE,
-                )[0];
+                let t = this._integrate(shotInfo, zeroDistance, zeroDistance, TrajFlag.NONE)[0];
                 height = t.height.In(Distance.Foot);
             } catch (e: unknown) {
-                if (e instanceof TrajectoryRangeError) {
-                    if (
-                        e.lastDistance === null ||
-                        e.lastDistance == undefined
-                    ) {
+                if (e instanceof RangeError) {
+                    if (e.lastDistance === null || e.lastDistance == undefined) {
                         throw e;
                     }
                     let lastDistanceFoot = e.lastDistance.In(Distance.Foot);
                     let proportion = lastDistanceFoot / zeroDistance;
                     height =
-                        e.incompleteTrajectory[
-                            e.incompleteTrajectory.length - 1
-                        ].height.In(Distance.Foot) / proportion;
+                        e.incompleteTrajectory[e.incompleteTrajectory.length - 1].height.In(
+                            Distance.Foot
+                        ) / proportion;
                 } else {
                     throw e;
                 }
@@ -368,8 +339,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
             zeroFindingError = Math.abs(height - heightAtZero);
 
             if (zeroFindingError > cZeroFindingAccuracy) {
-                this._tProps.barrelElevation -=
-                    (height - heightAtZero) / zeroDistance;
+                this._tProps.barrelElevation -= (height - heightAtZero) / zeroDistance;
             } else {
                 break;
             }
@@ -380,7 +350,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
             throw new ZeroFindingError(
                 zeroFindingError,
                 iterationsCount,
-                UNew.Radian(this._tProps.barrelElevation),
+                UNew.Radian(this._tProps.barrelElevation)
             );
         }
         return UNew.Radian(this._tProps.barrelElevation);
@@ -391,7 +361,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
         maxRange: Distance,
         distStep: Distance,
         extraData: boolean = false,
-        timeStep: number = 0.0,
+        timeStep: number = 0.0
     ): TrajectoryData[] {
         let filterFlags = TrajFlag.RANGE;
         if (extraData) {
@@ -403,7 +373,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
             maxRange.In(Distance.Foot),
             distStep.In(Distance.Foot),
             filterFlags,
-            timeStep,
+            timeStep
         );
     }
 
@@ -413,8 +383,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
      * @private
      */
     protected _initTrajectory(shotInfo: Shot): void {
-        (this._bc = shotInfo.ammo.dm.bc),
-            (this._tableData = shotInfo.ammo.dm.dragTable);
+        ((this._bc = shotInfo.ammo.dm.bc), (this._tableData = shotInfo.ammo.dm.dragTable));
         this._curve = calculateCurve(this._tableData);
 
         this.__mach_list = getOnlyMachData(this._tableData);
@@ -437,9 +406,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
                 .In(Velocity.FPS),
             stabilityCoefficient: 0,
         };
-        this._tProps.stabilityCoefficient = this.calcStabilityCoefficient(
-            shotInfo.atmo,
-        );
+        this._tProps.stabilityCoefficient = this.calcStabilityCoefficient(shotInfo.atmo);
     }
 
     protected _integrate(
@@ -447,7 +414,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
         maximumRange: number,
         recordStep: number,
         filterFlags: TrajFlag,
-        timeStep: number = 0.0,
+        timeStep: number = 0.0
     ): TrajectoryData[] {
         throw new Error("Not implemented");
     }
@@ -472,11 +439,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
      * @returns {number} - The calculated drag coefficient for the provided Mach number.
      */
     dragByMach(mach: number): number {
-        const cd = calculateByCurveAndMachList(
-            this.__mach_list,
-            this._curve,
-            mach,
-        ); // Assuming `calculateByCurve` exists
+        const cd = calculateByCurveAndMachList(this.__mach_list, this._curve, mach); // Assuming `calculateByCurve` exists
         return (cd * 2.08551e-4) / this._bc;
     }
 
@@ -489,10 +452,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
         if (this._tProps.twist !== 0) {
             const sign = this._tProps.twist > 0 ? 1 : -1;
             return (
-                (sign *
-                    (1.25 *
-                        (this._tProps.stabilityCoefficient + 1.2) *
-                        Math.pow(time, 1.83))) /
+                (sign * (1.25 * (this._tProps.stabilityCoefficient + 1.2) * Math.pow(time, 1.83))) /
                 12
             );
         }
@@ -505,8 +465,7 @@ class BaseIntegrationEngine implements EngineInterface<BaseEngineConfig> {
      * @returns {number} - The calculated stability coefficient.
      */
     calcStabilityCoefficient(atmo: Atmo): number {
-        const { twist, length, weight, diameter, muzzleVelocity } =
-            this._tProps;
+        const { twist, length, weight, diameter, muzzleVelocity } = this._tProps;
         if (twist && length && diameter && atmo.pressure.rawValue) {
             const twistRate = Math.abs(twist) / diameter;
             const lengthRatio = length / diameter;
@@ -559,7 +518,7 @@ const createTrajectoryRow = (
     densityFactor: number,
     drag: number,
     weight: number,
-    flag: number,
+    flag: number
 ): TrajectoryData => {
     const windage = rangeVector.z + spinDrift;
     const dropAdjustment = getCorrection(rangeVector.x, rangeVector.y);
@@ -572,10 +531,7 @@ const createTrajectoryRow = (
         UNew.FPS(velocity),
         velocity / mach,
         UNew.Foot(rangeVector.y),
-        UNew.Foot(
-            (rangeVector.y - rangeVector.x * Math.tan(lookAngle)) *
-                Math.cos(lookAngle),
-        ),
+        UNew.Foot((rangeVector.y - rangeVector.x * Math.tan(lookAngle)) * Math.cos(lookAngle)),
         UNew.Radian(dropAdjustment - (rangeVector.x ? lookAngle : 0)),
         UNew.Foot(windage),
         UNew.Radian(windageAdjustment),
@@ -585,7 +541,7 @@ const createTrajectoryRow = (
         drag,
         UNew.FootPound(calculateEnergy(weight, velocity)),
         UNew.Pound(calculateOGW(weight, velocity)),
-        flag,
+        flag
     );
 };
 
@@ -632,8 +588,7 @@ const calculateOGW = (bulletWeight: number, velocity: number): number => {
  */
 const calculateCurve = (dataPoints: DragTable): Curve => {
     let rate: number =
-        (dataPoints[1].CD - dataPoints[0].CD) /
-        (dataPoints[1].Mach - dataPoints[0].Mach);
+        (dataPoints[1].CD - dataPoints[0].CD) / (dataPoints[1].Mach - dataPoints[0].Mach);
     let curve: Curve = [
         {
             a: 0,
@@ -678,11 +633,7 @@ const getOnlyMachData = (data: DragTable): number[] => {
     return data.map((item) => item.Mach);
 };
 
-const calculateByCurveAndMachList = (
-    machList: number[],
-    curve: Curve,
-    mach: number,
-) => {
+const calculateByCurveAndMachList = (machList: number[], curve: Curve, mach: number) => {
     let m: number = 0;
     let mid: number = 0;
     let mlo: number = 0;

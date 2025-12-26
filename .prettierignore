@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Git submodules (add your submodule paths here)
+**/submodules/
+vendor/
+third-party/
+# Add specific submodule paths if needed:
+# path/to/your/submodule/
+
+# Generated files
+*.wasm
+*.min.js
+*.bundle.js
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Emscripten generated
+wasm/bclibc.js
+wasm/*.wasm
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Git
+.git/
+.gitmodules
+
+# Submodules
+py-ballisticcalc/
+emsdk/

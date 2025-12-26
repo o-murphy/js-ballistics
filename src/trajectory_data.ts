@@ -16,13 +16,14 @@ import { Shot } from "./conditions";
 
 enum TrajFlag {
     NONE = 0,
-    ZERO_UP = 1 << 0,
-    ZERO_DOWN = 1 << 1,
-    MACH = 1 << 2,
-    RANGE = 1 << 3,
+    ZERO_UP = 1,
+    ZERO_DOWN = 2,
     ZERO = ZERO_UP | ZERO_DOWN,
-    APEX = 1 << 4, // Corrected APEX bit value
-    ALL = ZERO | MACH | RANGE | APEX, // Corrected ALL value
+    MACH = 4,
+    RANGE = 8,
+    APEX = 16,
+    ALL = RANGE | ZERO_UP | ZERO_DOWN | MACH | APEX,
+    MRT = 32
 }
 
 const trajFlagNames: Record<number, string> = {
@@ -60,9 +61,7 @@ const trajFlagName = (value: TrajFlag) => {
         (value & TrajFlag.ZERO_DOWN) === TrajFlag.ZERO_DOWN
     ) {
         // If ZERO_UP and ZERO_DOWN are both in parts, replace them with "ZERO"
-        parts = parts.filter(
-            (part) => part !== "ZERO_UP" && part !== "ZERO_DOWN",
-        );
+        parts = parts.filter((part) => part !== "ZERO_UP" && part !== "ZERO_DOWN");
         // Only add "ZERO" if it's not already implicitly handled by direct lookup
         // and if it makes sense as a combined flag.
         if (!parts.includes("ZERO")) {
@@ -115,7 +114,7 @@ class TrajectoryData {
         readonly drag: number,
         readonly energy: Energy,
         readonly ogw: Weight,
-        readonly flag: TrajFlag,
+        readonly flag: TrajFlag
     ) { } // Properties are automatically assigned due to 'readonly' and constructor parameters
 
     /**
@@ -197,7 +196,7 @@ class DangerSpace {
         readonly targetHeight: Distance,
         readonly begin: TrajectoryData,
         readonly end: TrajectoryData,
-        readonly lookAngle: Angular,
+        readonly lookAngle: Angular
     ) { }
 
     /**
@@ -205,14 +204,16 @@ class DangerSpace {
      * @returns {string} - A string summarizing the DangerSpace data.
      */
     toString(): string {
-        let str = `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
+        let str =
+            `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
             `for ${this.targetHeight.to(preferredUnits.drop)} tall target`;
 
         if (this.lookAngle.rawValue !== 0) {
             str += ` at ${this.lookAngle.to(Angular.Degree)} look-angle`;
         }
 
-        str += ` ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
+        str +=
+            ` ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
             `to ${this.end.distance.to(preferredUnits.distance)}`;
         return str;
     }
@@ -231,11 +232,7 @@ class HitResult {
     readonly trajectory: TrajectoryData[];
     readonly extra: boolean;
 
-    constructor(
-        shot: Shot,
-        trajectory: TrajectoryData[],
-        extra: boolean = false,
-    ) {
+    constructor(shot: Shot, trajectory: TrajectoryData[], extra: boolean = false) {
         this.shot = shot;
         this.trajectory = trajectory;
         this.extra = extra;
@@ -262,7 +259,7 @@ class HitResult {
         if (!this.extra) {
             // Using a custom message similar to Python's __repr__
             throw new Error(
-                `${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`,
+                `${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`
             );
         }
     }
@@ -291,7 +288,7 @@ class HitResult {
         // Adding epsilon to avoid floating-point issues, similar to Python
         const epsilon = 1e-8;
         return this.trajectory.findIndex(
-            (item) => item.distance.rawValue >= distance.rawValue - epsilon,
+            (item) => item.distance.rawValue >= distance.rawValue - epsilon
         );
     }
 
@@ -299,7 +296,7 @@ class HitResult {
         const index = this.indexAtDistance(d);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${d.rawValue}`, // Changed to d.rawValue for better output
+                `Calculated trajectory doesn't reach requested distance ${d.rawValue}` // Changed to d.rawValue for better output
             );
         }
         return this.trajectory[index];
@@ -315,20 +312,16 @@ class HitResult {
     public dangerSpace(
         atRange: number | Distance,
         targetHeight: number | Distance,
-        lookAngle: number | Angular | null = null,
+        lookAngle: number | Angular | null = null
     ): DangerSpace {
         this._checkExtra();
 
-        const _atRange: Distance = unitTypeCoerce(
-            atRange,
-            Distance,
-            preferredUnits.distance,
-        );
+        const _atRange: Distance = unitTypeCoerce(atRange, Distance, preferredUnits.distance);
 
         const _targetHeight: Distance = unitTypeCoerce(
             targetHeight,
             Distance,
-            preferredUnits.distance,
+            preferredUnits.distance
         );
         const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
 
@@ -341,7 +334,7 @@ class HitResult {
         const index = this.indexAtDistance(_atRange);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${_atRange.rawValue}`,
+                `Calculated trajectory doesn't reach requested distance ${_atRange.rawValue}`
             );
         }
 
@@ -358,7 +351,7 @@ class HitResult {
             for (let i = rowNum - 1; i >= 0; i--) {
                 const primeRow = this.trajectory[i];
                 if (
-                    (primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue) >=
+                    primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue >=
                     _targetHeightHalf
                 ) {
                     return primeRow;
@@ -380,7 +373,7 @@ class HitResult {
             for (let i = rowNum + 1; i < this.trajectory.length; i++) {
                 const primeRow = this.trajectory[i];
                 if (
-                    (centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue) >=
+                    centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue >=
                     _targetHeightHalf
                 ) {
                     return primeRow;
@@ -394,16 +387,9 @@ class HitResult {
             _targetHeight,
             findBeginDanger(index),
             findEndDanger(index),
-            _lookAngle,
+            _lookAngle
         );
     }
 }
 
-export {
-    TrajectoryData,
-    TrajFlag,
-    trajFlagName,
-    trajFlagNames,
-    DangerSpace,
-    HitResult,
-};
+export { TrajectoryData, TrajFlag, trajFlagName, trajFlagNames, DangerSpace, HitResult };

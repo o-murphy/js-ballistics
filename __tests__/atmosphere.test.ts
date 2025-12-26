@@ -32,20 +32,14 @@ describe("Atmo Class Tests", () => {
     });
 
     test("Standard atmosphere properties", () => {
-        expect(standard.temperature.In(Temperature.Fahrenheit)).toBeCloseTo(
-            59.0,
-            1,
-        );
+        expect(standard.temperature.In(Temperature.Fahrenheit)).toBeCloseTo(59.0, 1);
         expect(standard.pressure.In(Pressure.hPa)).toBeCloseTo(1013.25, 1);
         expect(standard.densityImperial).toBeCloseTo(0.076474, 4);
     });
 
     test("High altitude properties (ICAO and ISA)", () => {
         // Ref https://www.engineeringtoolbox.com/standard-atmosphere-d_604.html
-        expect(highICAO.temperature.In(Temperature.Fahrenheit)).toBeCloseTo(
-            23.36,
-            1,
-        );
+        expect(highICAO.temperature.In(Temperature.Fahrenheit)).toBeCloseTo(23.36, 1);
         expect(highICAO.densityRatio).toBeCloseTo(0.7387, 3);
         // Ref https://www.engineeringtoolbox.com/international-standard-atmosphere-d_985.html
         expect(highISA.pressure.In(Pressure.hPa)).toBeCloseTo(899, 0);
@@ -74,13 +68,10 @@ describe("Atmo Class Tests", () => {
 
     test("changes", () => {
         expect(standard.temperatureAtAltitude(5000)).toBeLessThan(
-            standard.temperature.In(Temperature.Celsius),
+            standard.temperature.In(Temperature.Celsius)
         );
-        expect(standard.pressureAtAltitude(5000)).toBeLessThan(
-            standard.pressure.In(Pressure.hPa),
-        );
-        const [density_ratio, mach] =
-            standard.getDensityFactorAndMachForAltitude(5000);
+        expect(standard.pressureAtAltitude(5000)).toBeLessThan(standard.pressure.In(Pressure.hPa));
+        const [density_ratio, mach] = standard.getDensityFactorAndMachForAltitude(5000);
         expect(density_ratio).toBeLessThan(standard.densityRatio);
         expect(mach).toBeLessThan(standard.mach.In(Velocity.FPS));
     });
@@ -115,9 +106,7 @@ describe("Atmo Class Tests", () => {
             trajectoryRange: check_distance,
             trajectoryStep: check_distance,
         });
-        expect(tNumid.getAtDistance(check_distance).time).toBeLessThan(
-            baseline.time,
-        );
+        expect(tNumid.getAtDistance(check_distance).time).toBeLessThan(baseline.time);
 
         // Increasing temperature reduces air density which decreases drag
         const warm = new Atmo({
@@ -129,9 +118,7 @@ describe("Atmo Class Tests", () => {
             trajectoryRange: check_distance,
             trajectoryStep: check_distance,
         });
-        expect(tWarm.getAtDistance(check_distance).time).toBeLessThan(
-            baseline.time,
-        );
+        expect(tWarm.getAtDistance(check_distance).time).toBeLessThan(baseline.time);
 
         // Increasing altitude reduces air density which decreases drag
         const high = new Atmo({ altitude: UNew.Foot(5000) }); // simulate increased altitude
@@ -140,8 +127,6 @@ describe("Atmo Class Tests", () => {
             trajectoryRange: check_distance,
             trajectoryStep: check_distance,
         });
-        expect(tHight.getAtDistance(check_distance).time).toBeLessThan(
-            baseline.time,
-        );
+        expect(tHight.getAtDistance(check_distance).time).toBeLessThan(baseline.time);
     });
 });

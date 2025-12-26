@@ -15,22 +15,20 @@ describe("VectorJs module", () => {
 
     test("Unary", () => {
         let v1 = new Vector(1, 2, 3);
-        expect(Math.abs(v1.magnitude() - 3.74165738677)).toBeLessThanOrEqual(
-            1e-7,
-        );
+        expect(Math.abs(v1.mag() - 3.74165738677)).toBeLessThanOrEqual(1e-7);
 
-        let v2 = v1.negate();
+        let v2 = v1.neg();
         expect(v2.x).toBe(-1);
         expect(v2.y).toBe(-2);
         expect(v2.z).toBe(-3);
 
-        v2 = v1.normalize();
+        v2 = v1.norm();
         expect(v2.x).toBeLessThanOrEqual(1);
         expect(v2.y).toBeLessThanOrEqual(1);
         expect(v2.z).toBeLessThanOrEqual(1);
 
         v1 = new Vector(0, 0, 0);
-        v2 = v1.normalize();
+        v2 = v1.norm();
         expect(v2.x).toBe(0);
         expect(v2.y).toBe(0);
         expect(v2.z).toBe(0);
@@ -43,15 +41,15 @@ describe("VectorJs module", () => {
         expect(v2.y).toBe(4);
         expect(v2.z).toBe(6);
 
-        v2 = v1.subtract(v2);
+        v2 = v1.sub(v2);
         expect(v2.x).toBe(-1);
         expect(v2.y).toBe(-2);
         expect(v2.z).toBe(-3);
 
-        let mul = v1.mulByVector(v1.copy());
+        let mul = v1.dot(v1.copy());
         expect(mul).toBe(1 + 4 + 9);
 
-        v2 = v1.mulByConst(3);
+        v2 = v1.mul(3);
         expect(v2.x).toBe(3);
         expect(v2.y).toBe(6);
         expect(v2.z).toBe(9);

@@ -1,7 +1,7 @@
 import { Shot } from "../conditions";
 import { TrajectoryData, TrajFlag } from "../trajectory_data";
 import Vector from "../vector";
-import { TrajectoryRangeError } from "../exceptions";
+import { RangeError } from "../exceptions";
 import { EngineInterface } from "../generics/engine";
 import {
     BaseEngineConfig,
@@ -13,17 +13,15 @@ import {
 
 class EulerIntegrationEngine
     extends BaseIntegrationEngine
-    implements EngineInterface<BaseEngineConfig>
-{
+    implements EngineInterface<BaseEngineConfig> {
     protected _integrate(
         shotInfo: Shot,
         maximumRange: number,
         recordStep: number,
         filterFlags: TrajFlag,
-        timeStep: number = 0.0,
+        timeStep: number = 0.0
     ): TrajectoryData[] {
-        const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } =
-            this._config;
+        const { cMinimumVelocity, cMaximumDrop, cMinimumAltitude } = this._config;
 
         const {
             muzzleVelocity,
@@ -51,13 +49,13 @@ class EulerIntegrationEngine
         let rangeVector: Vector = new Vector(
             0.0,
             -cantCosine * sightHeight,
-            -cantSine * sightHeight,
+            -cantSine * sightHeight
         );
         let velocityVector: Vector = new Vector(
             Math.cos(barrelElevation) * Math.cos(barrelAzimuth),
             Math.sin(barrelElevation),
-            Math.cos(barrelElevation) * Math.sin(barrelAzimuth),
-        ).mulByConst(velocity);
+            Math.cos(barrelElevation) * Math.sin(barrelAzimuth)
+        ).mul(velocity);
 
         const minStep = Math.min(calcStep, recordStep);
         const dataFilter = new _TrajectoryDataFilter(
@@ -65,7 +63,7 @@ class EulerIntegrationEngine
             recordStep,
             rangeVector,
             velocityVector,
-            timeStep,
+            timeStep
         );
         dataFilter.setupSeenZero(rangeVector.y, barrelElevation, lookAngle);
 
@@ -78,51 +76,42 @@ class EulerIntegrationEngine
                 windVector = windSock.vectorForRange(rangeVector.x);
             }
 
-            [densityFactor, mach] =
-                shotInfo.atmo.getDensityFactorAndMachForAltitude(
-                    alt0 + rangeVector.y,
-                );
+            [densityFactor, mach] = shotInfo.atmo.getDensityFactorAndMachForAltitude(
+                alt0 + rangeVector.y
+            );
 
             if (filterFlags) {
-                const data = dataFilter.shouldRecord(
-                    rangeVector,
-                    velocityVector,
-                    mach,
-                    time,
-                );
+                const data = dataFilter.shouldRecord(rangeVector, velocityVector, mach, time);
                 if (data) {
                     ranges.push(
                         createTrajectoryRow(
                             data.time,
                             data.position,
                             data.velocity,
-                            data.velocity.magnitude(),
+                            data.velocity.mag(),
                             data.mach,
                             this.spinDrift(data.time),
                             lookAngle,
                             densityFactor,
                             drag,
                             weight,
-                            dataFilter.currentFlag,
-                        ),
+                            dataFilter.currentFlag
+                        )
                     );
                     lastRecordedRange = data.position.x;
                 }
             }
 
-            const velocityAdjusted = velocityVector.subtract(windVector);
-            velocity = velocityAdjusted.magnitude();
+            const velocityAdjusted = velocityVector.sub(windVector);
+            velocity = velocityAdjusted.mag();
             const deltaTime = calcStep / Math.max(1.0, velocity);
             drag = densityFactor * velocity * this.dragByMach(velocity / mach);
-            velocityVector = velocityVector.subtract(
-                velocityAdjusted
-                    .mulByConst(drag)
-                    .subtract(this.gravityVector)
-                    .mulByConst(deltaTime),
+            velocityVector = velocityVector.sub(
+                velocityAdjusted.mul(drag).sub(this.gravityVector).mul(deltaTime)
             );
-            const deltaRangeVector = velocityVector.mulByConst(deltaTime);
+            const deltaRangeVector = velocityVector.mul(deltaTime);
             rangeVector = rangeVector.add(deltaRangeVector);
-            velocity = velocityVector.magnitude();
+            velocity = velocityVector.mag();
             time += deltaTime;
 
             if (
@@ -142,19 +131,19 @@ class EulerIntegrationEngine
                         densityFactor,
                         drag,
                         weight,
-                        dataFilter.currentFlag,
-                    ),
+                        dataFilter.currentFlag
+                    )
                 );
 
                 let reason = "";
                 if (velocity < cMinimumVelocity) {
-                    reason = TrajectoryRangeError.MinimumVelocityReached;
+                    reason = RangeError.MinimumVelocityReached;
                 } else if (rangeVector.y < cMaximumDrop) {
-                    reason = TrajectoryRangeError.MaximumDropReached;
+                    reason = RangeError.MaximumDropReached;
                 } else {
-                    reason = TrajectoryRangeError.MinimumAltitudeReached;
+                    reason = RangeError.MinimumAltitudeReached;
                 }
-                throw new TrajectoryRangeError(reason, ranges);
+                throw new RangeError(reason, ranges);
             }
         }
 
@@ -171,8 +160,8 @@ class EulerIntegrationEngine
                     densityFactor,
                     drag,
                     weight,
-                    TrajFlag.NONE,
-                ),
+                    TrajFlag.NONE
+                )
             );
         }
         return ranges;

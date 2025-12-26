@@ -97,9 +97,7 @@ class AbstractUnit {
         }
 
         if (!Object.values(this).includes(units)) {
-            throw new Error(
-                `${this.constructor.name}: unit ${units} is not supported`,
-            );
+            throw new Error(`${this.constructor.name}: unit ${units} is not supported`);
         }
 
         return 0;
@@ -675,16 +673,14 @@ const UNew = {
     [Unit.MIL]: (value: number) => new Angular(value, Unit.MIL),
     [Unit.MRad]: (value: number) => new Angular(value, Unit.MRad),
     [Unit.Thousand]: (value: number) => new Angular(value, Unit.Thousand),
-    [Unit.InchesPer100Yd]: (value: number) =>
-        new Angular(value, Unit.InchesPer100Yd),
+    [Unit.InchesPer100Yd]: (value: number) => new Angular(value, Unit.InchesPer100Yd),
     [Unit.CmPer100M]: (value: number) => new Angular(value, Unit.CmPer100M),
     [Unit.OClock]: (value: number) => new Angular(value, Unit.OClock),
     [Unit.Inch]: (value: number) => new Distance(value, Unit.Inch),
     [Unit.Foot]: (value: number) => new Distance(value, Unit.Foot),
     [Unit.Yard]: (value: number) => new Distance(value, Unit.Yard),
     [Unit.Mile]: (value: number) => new Distance(value, Unit.Mile),
-    [Unit.NauticalMile]: (value: number) =>
-        new Distance(value, Unit.NauticalMile),
+    [Unit.NauticalMile]: (value: number) => new Distance(value, Unit.NauticalMile),
     [Unit.Millimeter]: (value: number) => new Distance(value, Unit.Millimeter),
     [Unit.Centimeter]: (value: number) => new Distance(value, Unit.Centimeter),
     [Unit.Meter]: (value: number) => new Distance(value, Unit.Meter),
@@ -697,8 +693,7 @@ const UNew = {
     [Unit.Bar]: (value: number) => new Pressure(value, Unit.Bar),
     [Unit.hPa]: (value: number) => new Pressure(value, Unit.hPa),
     [Unit.PSI]: (value: number) => new Pressure(value, Unit.PSI),
-    [Unit.Fahrenheit]: (value: number) =>
-        new Temperature(value, Unit.Fahrenheit),
+    [Unit.Fahrenheit]: (value: number) => new Temperature(value, Unit.Fahrenheit),
     [Unit.Celsius]: (value: number) => new Temperature(value, Unit.Celsius),
     [Unit.Kelvin]: (value: number) => new Temperature(value, Unit.Kelvin),
     [Unit.Rankin]: (value: number) => new Temperature(value, Unit.Rankin),
@@ -734,7 +729,7 @@ const UNew = {
 function unitTypeCoerce<T extends AbstractUnit>(
     instance: number | T,
     expectedClass: new (value: number, unit: Unit) => T, // Better type for constructor
-    defaultUnit: Unit,
+    defaultUnit: Unit
 ): T {
     if (instance instanceof expectedClass) {
         // If the instance is already of the expected class type, return it.
@@ -744,9 +739,7 @@ function unitTypeCoerce<T extends AbstractUnit>(
         return new expectedClass(instance, defaultUnit);
     } else {
         // If the instance is not of the expected type, throw a TypeError.
-        throw new TypeError(
-            `Instance must be a type of ${expectedClass.name} or 'number'`,
-        );
+        throw new TypeError(`Instance must be a type of ${expectedClass.name} or 'number'`);
     }
 }
 

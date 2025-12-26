@@ -2,19 +2,8 @@ import EulerIntegrationEngine from "./engines/euler";
 import { Shot } from "./conditions";
 import { DragTable } from "./drag_model";
 import { HitResult } from "./trajectory_data";
-import {
-    UNew,
-    Angular,
-    Distance,
-    unitTypeCoerce,
-    preferredUnits,
-} from "./unit";
-import {
-    createEngine,
-    EngineConstructor,
-    EngineInterface,
-    GenericConfig,
-} from "./generics/engine";
+import { UNew, Angular, Distance, unitTypeCoerce, preferredUnits } from "./unit";
+import { createEngine, EngineConstructor, EngineInterface, GenericConfig } from "./generics/engine";
 import { BaseEngineConfig } from "./engines";
 
 /**
@@ -37,10 +26,7 @@ class Calculator<C extends GenericConfig> {
      * @param options.config The configuration for the engine.
      * @param options.engine The constructor of the engine class to use (defaults to EulerIntegrationEngine).
      */
-    constructor(options?: {
-        config?: Partial<C>;
-        engine?: EngineConstructor<C>;
-    }) {
+    constructor(options?: { config?: Partial<C>; engine?: EngineConstructor<C> }) {
         // Assign config directly. It's required, not optional, for type safety.
         options = options ?? {};
         this._config = options.config ?? {};
@@ -50,11 +36,8 @@ class Calculator<C extends GenericConfig> {
             this._engine = options.engine;
             this._calc = createEngine(this._engine, this._config);
         } else {
-            this._engine =
-                EulerIntegrationEngine as EngineConstructor<BaseEngineConfig>;
-            this._calc = new EulerIntegrationEngine(
-                this._config as Partial<BaseEngineConfig>,
-            );
+            this._engine = EulerIntegrationEngine as EngineConstructor<BaseEngineConfig>;
+            this._calc = new EulerIntegrationEngine(this._config as Partial<BaseEngineConfig>);
         }
     }
 
@@ -73,20 +56,10 @@ class Calculator<C extends GenericConfig> {
      * @param {number | Distance} options.targetDistance - The distance to the target, can be a number or Distance object.
      * @returns {Angular} - The required barrel elevation in radians.
      */
-    barrelElevationForTarget(
-        shot: Shot,
-        targetDistance: number | Distance,
-    ): Angular {
-        const _targetDistance = unitTypeCoerce(
-            targetDistance,
-            Distance,
-            preferredUnits.distance,
-        );
+    barrelElevationForTarget(shot: Shot, targetDistance: number | Distance): Angular {
+        const _targetDistance = unitTypeCoerce(targetDistance, Distance, preferredUnits.distance);
         const totalElevation = this._calc.zeroAngle(shot, _targetDistance);
-        return UNew.Radian(
-            totalElevation.In(Angular.Radian) -
-                shot.lookAngle.In(Angular.Radian),
-        );
+        return UNew.Radian(totalElevation.In(Angular.Radian) - shot.lookAngle.In(Angular.Radian));
     }
 
     /**
@@ -96,10 +69,7 @@ class Calculator<C extends GenericConfig> {
      * @returns {Angular} - The new zero elevation of the weapon in radians.
      */
     setWeaponZero(shot: Shot, zeroDistance: number | Distance): Angular {
-        shot.weapon.zeroElevation = this.barrelElevationForTarget(
-            shot,
-            zeroDistance,
-        );
+        shot.weapon.zeroElevation = this.barrelElevationForTarget(shot, zeroDistance);
         return shot.weapon.zeroElevation;
     }
 
@@ -128,28 +98,18 @@ class Calculator<C extends GenericConfig> {
         const _trajectoryRange: Distance = unitTypeCoerce(
             trajectoryRange,
             Distance,
-            preferredUnits.distance,
+            preferredUnits.distance
         );
         let step = undefined;
         if (!trajectoryStep) {
             step = UNew.Inch(_trajectoryRange.rawValue / 10.0);
         } else {
-            step = unitTypeCoerce(
-                trajectoryStep,
-                Distance,
-                preferredUnits.distance,
-            );
+            step = unitTypeCoerce(trajectoryStep, Distance, preferredUnits.distance);
         }
 
-        const data = this._calc.trajectory(
-            shot,
-            _trajectoryRange,
-            step,
-            extraData,
-            timeStep,
-        );
+        const data = this._calc.trajectory(shot, _trajectoryRange, step, extraData, timeStep);
         return new HitResult(shot, data, extraData);
     }
 }
 
-export default Calculator;
+export { Calculator };

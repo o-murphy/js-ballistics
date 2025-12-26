@@ -80,39 +80,31 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
     // Define the test case for danger space calculation.
     test("should calculate danger space correctly", () => {
         // First test case for danger space calculation (Target height: 1.5 meters)
-        let dangerSpace = shotResult.dangerSpace(
-            UNew.Yard(500),
-            UNew.Meter(1.5),
-            lookAngle,
-        );
+        let dangerSpace = shotResult.dangerSpace(UNew.Yard(500), UNew.Meter(1.5), lookAngle);
 
         // Assertions using Jest's toBeCloseTo, mirroring pytest.approx's behavior.
         // Precision `0` means checking to the nearest whole number (equivalent to abs=0.5).
         // Expected values are now reverted to the original Python test values.
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(
             388.0, // Reverted to original Python test value
-            0,
+            0
         );
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(
             581.0, // Reverted to original Python test value
-            0,
+            0
         );
 
         // Second test case for danger space calculation with different target height (10 inches)
-        dangerSpace = shotResult.dangerSpace(
-            UNew.Yard(500),
-            UNew.Inch(10),
-            lookAngle,
-        );
+        dangerSpace = shotResult.dangerSpace(UNew.Yard(500), UNew.Inch(10), lookAngle);
 
         // Expected values are now reverted to the original Python test values.
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(
             483.0, // Reverted to original Python test value
-            0,
+            0
         );
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(
             516.0, // Reverted to original Python test value
-            0,
+            0
         );
     });
 
