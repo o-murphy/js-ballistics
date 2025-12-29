@@ -302,6 +302,119 @@ BCLIBC_ShotProps shotPropsFromVal(const ShotPropsInput &props)
         BCLIBC_TRAJ_FLAG_NONE);
 }
 
+// ============================================================================
+// Exception Handling Utilities
+// ============================================================================
+
+/**
+ * @brief Creates a JavaScript Error constructor from the global scope
+ * @param className Name of the Error class (e.g., "SolverRuntimeError")
+ * @return JavaScript Error constructor function
+ */
+inline static val getErrorConstructor(const std::string& className)
+{
+    // Try to get custom error class, fall back to Error
+    val errorModule = val::global("Error");
+    try {
+        // Try to import from exceptions module
+        val exceptions = val::module_property("exceptions");
+        if (!exceptions.isUndefined() && exceptions[className].as<bool>()) {
+            return exceptions[className];
+        }
+    } catch (...) {
+        // Fall back to standard Error
+    }
+    return errorModule;
+}
+
+/**
+ * @brief Converts C++ exception to JavaScript Error with proper type
+ * @param e C++ exception
+ * @param errorType JavaScript error type name
+ */
+template<typename ExceptionType>
+inline static void throwAsJsError(const ExceptionType& e, const std::string& errorType)
+{
+    val ErrorClass = getErrorConstructor(errorType);
+    val error = ErrorClass.new_(std::string(e.what()));
+    error.set("name", val(errorType));
+    error.throw_();
+}
+
+/**
+ * @brief Converts BCLIBC_OutOfRangeError to JavaScript OutOfRangeError
+ */
+inline static void throwOutOfRangeError(const BCLIBC_OutOfRangeError& e)
+{
+    val ErrorClass = getErrorConstructor("OutOfRangeError");
+    val error = ErrorClass.new_(std::string(e.what()));
+    error.set("name", val("OutOfRangeError"));
+    error.set("requestedDistanceFt", e.requested_distance_ft);
+    error.set("maxRangeFt", e.max_range_ft);
+    error.set("lookAngleRad", e.look_angle_rad);
+    error.throw_();
+}
+
+/**
+ * @brief Converts BCLIBC_ZeroFindingError to JavaScript ZeroFindingError
+ */
+inline static void throwZeroFindingError(const BCLIBC_ZeroFindingError& e)
+{
+    val ErrorClass = getErrorConstructor("ZeroFindingError");
+    val error = ErrorClass.new_(std::string(e.what()));
+    error.set("name", val("ZeroFindingError"));
+    error.set("zeroFindingError", e.zero_finding_error);
+    error.set("iterationsCount", e.iterations_count);
+    error.set("lastBarrelElevationRad", e.last_barrel_elevation_rad);
+    error.throw_();
+}
+
+/**
+ * @brief Converts BCLIBC_InterceptionError to JavaScript InterceptionError
+ */
+inline static void throwInterceptionError(const BCLIBC_InterceptionError& e)
+{
+    val ErrorClass = getErrorConstructor("InterceptionError");
+    val error = ErrorClass.new_(std::string(e.what()));
+    error.set("name", val("InterceptionError"));
+    // TODO: Convert rawData and fullData to JS objects if needed
+    error.throw_();
+}
+
+/**
+ * @brief Universal exception handler wrapper template
+ * Wraps any callable and converts C++ exceptions to JavaScript errors
+ */
+template<typename Func>
+inline static auto wrapExceptions(Func&& func) -> decltype(func())
+{
+    try {
+        return func();
+    }
+    catch (const BCLIBC_OutOfRangeError& e) {
+        throwOutOfRangeError(e);
+        throw; // unreachable, but needed for compiler
+    }
+    catch (const BCLIBC_ZeroFindingError& e) {
+        throwZeroFindingError(e);
+        throw; // unreachable, but needed for compiler
+    }
+    catch (const BCLIBC_InterceptionError& e) {
+        throwInterceptionError(e);
+        throw; // unreachable, but needed for compiler
+    }
+    catch (const BCLIBC_SolverRuntimeError& e) {
+        throwAsJsError(e, "SolverRuntimeError");
+        throw; // unreachable, but needed for compiler
+    }
+    catch (const std::exception& e) {
+        // Generic fallback for any other std::exception
+        val error = val::global("Error").new_(std::string(e.what()));
+        error.throw_();
+        throw; // unreachable, but needed for compiler
+    }
+}
+
 inline static void initEngine(BCLIBC_BaseEngine &engine, const ShotPropsInput &shotProps)
 {
     engine.integrate_func = selectIntegrationMethod(shotProps.method);
@@ -312,81 +425,91 @@ inline static void initEngine(BCLIBC_BaseEngine &engine, const ShotPropsInput &s
 
 inline static BCLIBC_TrajectoryData findApex(const ShotPropsInput &shotProps)
 {
-    BCLIBC_BaseEngine engine;
-    initEngine(engine, shotProps);
+    return wrapExceptions([&]() {
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
 
-    BCLIBC_BaseTrajData apex;
-    engine.find_apex(apex);
+        BCLIBC_BaseTrajData apex;
+        engine.find_apex(apex);
 
-    return BCLIBC_TrajectoryData(engine.shot, apex, BCLIBC_TRAJ_FLAG_APEX);
+        return BCLIBC_TrajectoryData(engine.shot, apex, BCLIBC_TRAJ_FLAG_APEX);
+    });
 }
 
 inline static BCLIBC_MaxRangeResult findMaxRange(const ShotPropsInput &shotProps, double low_angle_deg, double high_angle_deg)
 {
-    BCLIBC_BaseEngine engine;
-    initEngine(engine, shotProps);
+    return wrapExceptions([&]() {
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
 
-    return engine.find_max_range(
-        low_angle_deg,
-        high_angle_deg,
-        APEX_IS_MAX_RANGE_RADIANS);
+        return engine.find_max_range(
+            low_angle_deg,
+            high_angle_deg,
+            APEX_IS_MAX_RANGE_RADIANS);
+    });
 }
 
 inline static double findZeroAngle(const ShotPropsInput &shotProps, double distance)
 {
-    BCLIBC_BaseEngine engine;
-    initEngine(engine, shotProps);
-    return engine.zero_angle_with_fallback(
-        distance,
-        APEX_IS_MAX_RANGE_RADIANS,
-        ALLOWED_ZERO_ERROR_FEET);
+    return wrapExceptions([&]() {
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
+        return engine.zero_angle_with_fallback(
+            distance,
+            APEX_IS_MAX_RANGE_RADIANS,
+            ALLOWED_ZERO_ERROR_FEET);
+    });
 }
 
 inline static HitOutput integrate(const ShotPropsInput &shotProps, const TrajectoryRequest &request)
 {
-    HitOutput obj = HitOutput();
+    return wrapExceptions([&]() {
+        HitOutput obj = HitOutput();
 
-    std::vector<BCLIBC_TrajectoryData> filtered_records;
-    BCLIBC_BaseTrajSeq dense_trajectory;
+        std::vector<BCLIBC_TrajectoryData> filtered_records;
+        BCLIBC_BaseTrajSeq dense_trajectory;
 
-    BCLIBC_BaseEngine engine;
-    initEngine(engine, shotProps);
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
 
-    engine.integrate_filtered(
-        request.range_limit_ft,
-        request.range_step_ft,
-        request.time_step,
-        request.filter_flags,
-        filtered_records,
-        obj.reason,
-        request.dense_output ? &dense_trajectory : nullptr);
+        engine.integrate_filtered(
+            request.range_limit_ft,
+            request.range_step_ft,
+            request.time_step,
+            request.filter_flags,
+            filtered_records,
+            obj.reason,
+            request.dense_output ? &dense_trajectory : nullptr);
 
-    for (const auto &row : filtered_records)
-    {
-        obj.trajectory.call<void>("push", row);
-    }
-
-    if (request.dense_output)
-    {
-        for (ssize_t i = 0; i < dense_trajectory.get_length(); ++i)
+        for (const auto &row : filtered_records)
         {
-            obj.dense_trajectory.call<void>("push", dense_trajectory[i]);
+            obj.trajectory.call<void>("push", row);
         }
-    }
-    return obj;
+
+        if (request.dense_output)
+        {
+            for (ssize_t i = 0; i < dense_trajectory.get_length(); ++i)
+            {
+                obj.dense_trajectory.call<void>("push", dense_trajectory[i]);
+            }
+        }
+        return obj;
+    });
 }
 
 inline static Interception integrateRawAt(const ShotPropsInput &shotProps, const BCLIBC_BaseTrajData_InterpKey &key, const double &target_value)
 {
-    BCLIBC_TerminationReason reason;
-    BCLIBC_BaseTrajSeq dense_trajectory;
+    return wrapExceptions([&]() {
+        BCLIBC_TerminationReason reason;
+        BCLIBC_BaseTrajSeq dense_trajectory;
 
-    BCLIBC_BaseEngine engine;
-    initEngine(engine, shotProps);
-    Interception result = {};
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
+        Interception result = {};
 
-    engine.integrate_at(key, target_value, result.raw_data, result.full_data);
-    return result;
+        engine.integrate_at(key, target_value, result.raw_data, result.full_data);
+        return result;
+    });
 }
 
 inline static bool get_flat_fire_only(const BCLIBC_Coriolis &obj)
