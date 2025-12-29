@@ -313,18 +313,20 @@ BCLIBC_ShotProps shotPropsFromVal(const ShotPropsInput &props)
  */
 inline static val getErrorConstructor(const std::string& className)
 {
-    // Try to get custom error class, fall back to Error
-    val errorModule = val::global("Error");
+    // Try to get custom error class from globalThis, fall back to Error
     try {
-        // Try to import from exceptions module
-        val exceptions = val::module_property("exceptions");
-        if (!exceptions.isUndefined() && exceptions[className].as<bool>()) {
-            return exceptions[className];
+        val globalThis = val::global("globalThis");
+        if (!globalThis.isUndefined()) {
+            val errorClass = globalThis[className];
+            // Check if it's a function by trying to use it as a constructor
+            if (!errorClass.isUndefined()) {
+                return errorClass;
+            }
         }
     } catch (...) {
         // Fall back to standard Error
     }
-    return errorModule;
+    return val::global("Error");
 }
 
 /**
@@ -336,7 +338,10 @@ template<typename ExceptionType>
 inline static void throwAsJsError(const ExceptionType& e, const std::string& errorType)
 {
     val ErrorClass = getErrorConstructor(errorType);
+    // Call the constructor with 'new' keyword
     val error = ErrorClass.new_(std::string(e.what()));
+    // Set prototype to ensure instanceof works
+    error.set("__proto__", ErrorClass["prototype"]);
     error.set("name", val(errorType));
     error.throw_();
 }
@@ -348,6 +353,7 @@ inline static void throwOutOfRangeError(const BCLIBC_OutOfRangeError& e)
 {
     val ErrorClass = getErrorConstructor("OutOfRangeError");
     val error = ErrorClass.new_(std::string(e.what()));
+    error.set("__proto__", ErrorClass["prototype"]);
     error.set("name", val("OutOfRangeError"));
     error.set("requestedDistanceFt", e.requested_distance_ft);
     error.set("maxRangeFt", e.max_range_ft);
@@ -362,6 +368,7 @@ inline static void throwZeroFindingError(const BCLIBC_ZeroFindingError& e)
 {
     val ErrorClass = getErrorConstructor("ZeroFindingError");
     val error = ErrorClass.new_(std::string(e.what()));
+    error.set("__proto__", ErrorClass["prototype"]);
     error.set("name", val("ZeroFindingError"));
     error.set("zeroFindingError", e.zero_finding_error);
     error.set("iterationsCount", e.iterations_count);
@@ -376,6 +383,7 @@ inline static void throwInterceptionError(const BCLIBC_InterceptionError& e)
 {
     val ErrorClass = getErrorConstructor("InterceptionError");
     val error = ErrorClass.new_(std::string(e.what()));
+    error.set("__proto__", ErrorClass["prototype"]);
     error.set("name", val("InterceptionError"));
     // TODO: Convert rawData and fullData to JS objects if needed
     error.throw_();
@@ -593,6 +601,18 @@ inline static void testThrowRuntimeError(const std::string& message)
     // Create and throw JavaScript Error object directly
     val error = val::global("Error").new_(message);
     error.throw_();
+}
+
+/**
+ * @brief Test function that throws BCLIBC_SolverRuntimeError for testing
+ * This will be caught by wrapExceptions and converted to JS SolverRuntimeError
+ */
+inline static void testThrowSolverError(const std::string& message)
+{
+    wrapExceptions([&]() {
+        throw BCLIBC_SolverRuntimeError(message);
+        return; // needed for template deduction
+    });
 }
 
 /**
@@ -821,6 +841,7 @@ EMSCRIPTEN_BINDINGS(bclibc)
 
     function("testThrowRuntimeError", &testThrowRuntimeError);
     function("testThrowCustomException", &testThrowCustomException);
+    function("testThrowSolverError", &testThrowSolverError);
 
     // ========================================================================
     // Interpolation Functions

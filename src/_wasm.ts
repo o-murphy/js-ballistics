@@ -19,11 +19,25 @@ import MainModuleFactory, * as bclibc from '@wasm/bclibc'
 import {
     type MainModule as BCLIBC,
 } from '@wasm/bclibc';
+import {
+    SolverRuntimeError,
+    ZeroFindingError,
+    OutOfRangeError,
+    InterceptionError,
+} from './exceptions';
 
 export type * from '@wasm/bclibc';
 export * from '@wasm/bclibc';
 
 export { type BCLIBC };
+
+// Register exception classes in globalThis for WASM access
+if (typeof globalThis !== 'undefined') {
+    (globalThis as any).SolverRuntimeError = SolverRuntimeError;
+    (globalThis as any).ZeroFindingError = ZeroFindingError;
+    (globalThis as any).OutOfRangeError = OutOfRangeError;
+    (globalThis as any).InterceptionError = InterceptionError;
+}
 
 const BclibcFactory = MainModuleFactory
 
