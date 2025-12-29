@@ -10,20 +10,11 @@ import {
     Velocity,
     Energy,
     Weight,
-    AbstractUnit,
+    Dimension,
+    UNew,
 } from "./unit";
-import { Shot } from "./conditions";
-
-enum TrajFlag {
-    NONE = 0,
-    ZERO_UP = 1 << 0,
-    ZERO_DOWN = 1 << 1,
-    MACH = 1 << 2,
-    RANGE = 1 << 3,
-    ZERO = ZERO_UP | ZERO_DOWN,
-    APEX = 1 << 4, // Corrected APEX bit value
-    ALL = ZERO | MACH | RANGE | APEX, // Corrected ALL value
-}
+import { Shot } from "./shot";
+import { _TrajectoryData, HitOutput, TrajFlag } from "./_wasm";
 
 const trajFlagNames: Record<number, string> = {
     [TrajFlag.NONE]: "NONE",
@@ -34,6 +25,7 @@ const trajFlagNames: Record<number, string> = {
     [TrajFlag.RANGE]: "RANGE",
     [TrajFlag.APEX]: "APEX",
     [TrajFlag.ALL]: "ALL",
+    [TrajFlag.MRT]: "MRT",
 };
 
 const trajFlagName = (value: TrajFlag) => {
@@ -60,9 +52,7 @@ const trajFlagName = (value: TrajFlag) => {
         (value & TrajFlag.ZERO_DOWN) === TrajFlag.ZERO_DOWN
     ) {
         // If ZERO_UP and ZERO_DOWN are both in parts, replace them with "ZERO"
-        parts = parts.filter(
-            (part) => part !== "ZERO_UP" && part !== "ZERO_DOWN",
-        );
+        parts = parts.filter((part) => part !== "ZERO_UP" && part !== "ZERO_DOWN");
         // Only add "ZERO" if it's not already implicitly handled by direct lookup
         // and if it makes sense as a combined flag.
         if (!parts.includes("ZERO")) {
@@ -115,7 +105,7 @@ class TrajectoryData {
         readonly drag: number,
         readonly energy: Energy,
         readonly ogw: Weight,
-        readonly flag: TrajFlag,
+        readonly flag: TrajFlag
     ) { } // Properties are automatically assigned due to 'readonly' and constructor parameters
 
     /**
@@ -152,11 +142,11 @@ class TrajectoryData {
      */
     formatted(): string[] {
         /** simple formatter
-         * @param {AbstractUnit} value
+         * @param {Dimension} value
          * @param {Unit} unit
          * @return {string} time
          */
-        function _fmt(value: AbstractUnit, unit: Unit): string {
+        function _fmt<AllowedUnitT extends Unit>(value: Dimension<AllowedUnitT>, unit: AllowedUnitT): string {
             return `${value.In(unit).toFixed(UnitProps[unit].accuracy)} ${UnitProps[unit].symbol}`;
         }
 
@@ -179,6 +169,27 @@ class TrajectoryData {
             `${trajFlagName(this.flag)}`,
         ];
     }
+
+    static fromWasmTrajectoryData(data: _TrajectoryData) {
+        return new TrajectoryData(
+            data.time,
+            UNew.Foot(data.distance_ft),
+            UNew.FPS(data.velocity_fps),
+            data.mach,
+            UNew.Foot(data.height_ft),
+            UNew.Foot(data.slant_height_ft),
+            UNew.Radian(data.drop_angle_rad),
+            UNew.Foot(data.windage_ft),
+            UNew.Radian(data.windage_angle_rad),
+            UNew.Foot(data.slant_distance_ft),
+            UNew.Radian(data.angle_rad),
+            data.density_ratio,
+            data.drag,
+            UNew.FootPound(data.energy_ft_lb),
+            UNew.Pound(data.ogw_lb),
+            data.flag.value as TrajFlag
+        )
+    }
 }
 
 class DangerSpace {
@@ -187,17 +198,17 @@ class DangerSpace {
      * ! DATACLASS, USES AS RETURNED VALUE ONLY
      *
      * @param {TrajectoryData} atRange - The trajectory data at the specified range.
-     * @param {Distance} targetHeight - The height of the target, or null if not applicable.
+     * @param {Distance} targetHeight - The height of the target, or undefined if not applicable.
      * @param {TrajectoryData} begin - The starting trajectory data for the danger space.
      * @param {TrajectoryData} end - The ending trajectory data for the danger space.
-     * @param {Angular} lookAngle - The look angle for the danger space, or null if not applicable.
+     * @param {Angular} lookAngle - The look angle for the danger space, or undefined if not applicable.
      */
     constructor(
         readonly atRange: TrajectoryData,
         readonly targetHeight: Distance,
         readonly begin: TrajectoryData,
         readonly end: TrajectoryData,
-        readonly lookAngle: Angular,
+        readonly lookAngle: Angular
     ) { }
 
     /**
@@ -205,14 +216,16 @@ class DangerSpace {
      * @returns {string} - A string summarizing the DangerSpace data.
      */
     toString(): string {
-        let str = `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
+        let str =
+            `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
             `for ${this.targetHeight.to(preferredUnits.drop)} tall target`;
 
         if (this.lookAngle.rawValue !== 0) {
             str += ` at ${this.lookAngle.to(Angular.Degree)} look-angle`;
         }
 
-        str += ` ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
+        str +=
+            ` ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
             `to ${this.end.distance.to(preferredUnits.distance)}`;
         return str;
     }
@@ -229,13 +242,9 @@ class HitResult {
 
     readonly shot: Shot;
     readonly trajectory: TrajectoryData[];
-    readonly extra: boolean;
+    extra: boolean;
 
-    constructor(
-        shot: Shot,
-        trajectory: TrajectoryData[],
-        extra: boolean = false,
-    ) {
+    constructor(shot: Shot, trajectory: TrajectoryData[], extra: boolean = false) {
         this.shot = shot;
         this.trajectory = trajectory;
         this.extra = extra;
@@ -262,7 +271,7 @@ class HitResult {
         if (!this.extra) {
             // Using a custom message similar to Python's __repr__
             throw new Error(
-                `${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`,
+                `${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`
             );
         }
     }
@@ -291,7 +300,7 @@ class HitResult {
         // Adding epsilon to avoid floating-point issues, similar to Python
         const epsilon = 1e-8;
         return this.trajectory.findIndex(
-            (item) => item.distance.rawValue >= distance.rawValue - epsilon,
+            (item) => item.distance.rawValue >= distance.rawValue - epsilon
         );
     }
 
@@ -299,7 +308,7 @@ class HitResult {
         const index = this.indexAtDistance(d);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${d.rawValue}`, // Changed to d.rawValue for better output
+                `Calculated trajectory doesn't reach requested distance ${d.rawValue}` // Changed to d.rawValue for better output
             );
         }
         return this.trajectory[index];
@@ -309,31 +318,27 @@ class HitResult {
      * Calculates the danger space for the specified range and target height.
      * @param {number | Distance} atRange - The distance at which to calculate the danger space.
      * @param {number | Distance} targetHeight - The height of the target.
-     * @param {number | Angular | null} lookAngle - The look angle for the calculation.
+     * @param {number | Angular} lookAngle - The look angle for the calculation.
      * @returns {DangerSpace} - The computed DangerSpace object.
      */
     public dangerSpace(
         atRange: number | Distance,
         targetHeight: number | Distance,
-        lookAngle: number | Angular | null = null,
+        lookAngle?: number | Angular
     ): DangerSpace {
         this._checkExtra();
 
-        const _atRange: Distance = unitTypeCoerce(
-            atRange,
-            Distance,
-            preferredUnits.distance,
-        );
+        const _atRange: Distance = unitTypeCoerce(atRange, Distance, preferredUnits.distance);
 
         const _targetHeight: Distance = unitTypeCoerce(
             targetHeight,
             Distance,
-            preferredUnits.distance,
+            preferredUnits.distance
         );
         const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
 
         const _lookAngle: Angular =
-            lookAngle === null || lookAngle === undefined
+            lookAngle === undefined
                 ? this.shot.lookAngle
                 : unitTypeCoerce(lookAngle, Angular, preferredUnits.angular);
 
@@ -341,7 +346,7 @@ class HitResult {
         const index = this.indexAtDistance(_atRange);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${_atRange.rawValue}`,
+                `Calculated trajectory doesn't reach requested distance ${_atRange.rawValue}`
             );
         }
 
@@ -358,7 +363,7 @@ class HitResult {
             for (let i = rowNum - 1; i >= 0; i--) {
                 const primeRow = this.trajectory[i];
                 if (
-                    (primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue) >=
+                    primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue >=
                     _targetHeightHalf
                 ) {
                     return primeRow;
@@ -380,7 +385,7 @@ class HitResult {
             for (let i = rowNum + 1; i < this.trajectory.length; i++) {
                 const primeRow = this.trajectory[i];
                 if (
-                    (centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue) >=
+                    centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue >=
                     _targetHeightHalf
                 ) {
                     return primeRow;
@@ -394,16 +399,17 @@ class HitResult {
             _targetHeight,
             findBeginDanger(index),
             findEndDanger(index),
-            _lookAngle,
+            _lookAngle
+        );
+    }
+
+    static fromWasmHitOutput(shot: Shot, hit: HitOutput, extra_data: boolean) {
+        return new HitResult(
+            shot,
+            (hit.trajectory as _TrajectoryData[]).map(item => TrajectoryData.fromWasmTrajectoryData(item)),
+            extra_data  // FIXME
         );
     }
 }
 
-export {
-    TrajectoryData,
-    TrajFlag,
-    trajFlagName,
-    trajFlagNames,
-    DangerSpace,
-    HitResult,
-};
+export { TrajectoryData, trajFlagName, trajFlagNames, DangerSpace, HitResult };

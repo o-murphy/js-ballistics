@@ -1,8 +1,28 @@
 import { describe, expect, test } from "@jest/globals";
-import { Measure, UNew, Unit, UnitProps, unitTypeCoerce } from "../src";
+import {
+    Dimension,
+    Angular,
+    Distance,
+    Energy,
+    Pressure,
+    Temperature,
+    Velocity,
+    Weight,
+    UNew,
+    Unit,
+    type AngularUnit,
+    type DistanceUnit,
+    type VelocityUnit,
+    type WeightUnit,
+    type TemperatureUnit,
+    type PressureUnit,
+    type EnergyUnit,
+    UnitProps,
+    unitTypeCoerce
+} from "../src";
 
 describe("Unit back'n'forth", () => {
-    function backAndForth(value: number, units: Unit): void {
+    function backAndForth<AllowedUnitT extends Unit>(value: number, units: AllowedUnitT): void {
         const u = UNew[units](value);
         const v = u.In(units);
 
@@ -24,14 +44,7 @@ describe("Unit back'n'forth", () => {
     }
 
     describe("Angular", () => {
-        backAndForthAll([
-            Unit.Degree,
-            Unit.MOA,
-            Unit.MRad,
-            Unit.MIL,
-            Unit.Radian,
-            Unit.Thousand,
-        ]);
+        backAndForthAll([Unit.Degree, Unit.MOA, Unit.MRad, Unit.MIL, Unit.Radian, Unit.Thousand]);
     });
 
     describe("Distance", () => {
@@ -58,12 +71,7 @@ describe("Unit back'n'forth", () => {
     });
 
     describe("Temperature", () => {
-        backAndForthAll([
-            Unit.Fahrenheit,
-            Unit.Kelvin,
-            Unit.Celsius,
-            Unit.Rankin,
-        ]);
+        backAndForthAll([Unit.Fahrenheit, Unit.Kelvin, Unit.Celsius, Unit.Rankin]);
     });
 
     describe("Velocity", () => {
@@ -83,31 +91,69 @@ describe("Unit back'n'forth", () => {
 });
 
 describe("Unit coercion", () => {
-    test("As number", () => {
-        const unit = unitTypeCoerce(10, Measure.Distance, Unit.Yard);
+    test("Distance as number", () => {
+        const unit = unitTypeCoerce<DistanceUnit, Distance>(10, Distance, Unit.Yard);
         expect(unit.In(Unit.Yard)).toBeCloseTo(10, 7);
     });
 
-    test("As AbstractUnit", () => {
-        const unit = unitTypeCoerce(UNew.Yard(10), Measure.Distance, Unit.Yard);
+    test("Distance as instance", () => {
+        const unit = unitTypeCoerce<DistanceUnit, Distance>(UNew.Yard(10), Distance, Unit.Yard);
         expect(unit.In(Unit.Yard)).toBeCloseTo(10, 7);
     });
 
-    test("As invalid value", () => {
-        // @ts-ignore
-        expect(() =>
-            unitTypeCoerce("invalid", Measure.Distance, Unit.Yard),
-        ).toThrowError(
-            `Instance must be a type of ${Measure.Distance.name} or 'number'`,
+    test("Angular as number", () => {
+        const unit = unitTypeCoerce<AngularUnit, Angular>(45, Angular, Unit.Degree);
+        expect(unit.In(Unit.Degree)).toBeCloseTo(45, 7);
+    });
+
+    test("Angular as instance", () => {
+        const unit = unitTypeCoerce<AngularUnit, Angular>(UNew.Degree(45), Angular, Unit.Degree);
+        expect(unit.In(Unit.Degree)).toBeCloseTo(45, 7);
+    });
+
+    test("Velocity as number", () => {
+        const unit = unitTypeCoerce<VelocityUnit, Velocity>(2800, Velocity, Unit.FPS);
+        expect(unit.In(Unit.FPS)).toBeCloseTo(2800, 7);
+    });
+
+    test("Weight as instance", () => {
+        const unit = unitTypeCoerce<WeightUnit, Weight>(UNew.Grain(150), Weight, Unit.Grain);
+        expect(unit.In(Unit.Grain)).toBeCloseTo(150, 7);
+    });
+
+    test("Temperature as number", () => {
+        const unit = unitTypeCoerce<TemperatureUnit, Temperature>(59, Temperature, Unit.Fahrenheit);
+        expect(unit.In(Unit.Fahrenheit)).toBeCloseTo(59, 7);
+    });
+
+    test("Pressure as instance", () => {
+        const unit = unitTypeCoerce<PressureUnit, Pressure>(UNew.InHg(29.92), Pressure, Unit.InHg);
+        expect(unit.In(Unit.InHg)).toBeCloseTo(29.92, 7);
+    });
+
+    test("Energy as number", () => {
+        const unit = unitTypeCoerce<EnergyUnit, Energy>(2500, Energy, Unit.FootPound);
+        expect(unit.In(Unit.FootPound)).toBeCloseTo(2500, 7);
+    });
+
+    test("Invalid value (string)", () => {
+        // @ts-expect-error - Testing invalid input
+        expect(() => unitTypeCoerce<DistanceUnit, Distance>("invalid", Distance, Unit.Yard)).toThrow(
+            `Instance must be a type of Distance or 'number'`
         );
     });
 
-    test("As undefined", () => {
-        //@ts-ignore
-        expect(() =>
-            unitTypeCoerce(undefined, Measure.Distance, Unit.Yard),
-        ).toThrowError(
-            `Instance must be a type of ${Measure.Distance.name} or 'number'`,
+    test("Undefined value", () => {
+        // @ts-expect-error - Testing invalid input
+        expect(() => unitTypeCoerce<DistanceUnit, Distance>(undefined, Distance, Unit.Yard)).toThrow(
+            `Instance must be a type of Distance or 'number'`
+        );
+    });
+
+    test("Null value", () => {
+        // @ts-expect-error - Testing invalid input
+        expect(() => unitTypeCoerce<DistanceUnit, Distance>(null, Distance, Unit.Yard)).toThrow(
+            `Instance must be a type of Distance or 'number'`
         );
     });
 });

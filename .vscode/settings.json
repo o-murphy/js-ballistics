@@ -1,25 +1,67 @@
 {
-    "cSpell.words": [
-        "atmo"
-    ],
+  "cSpell.words": [
+    "atmo"
+  ],
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": true,
+  // Typescript/JavaScript specific
+  "[javascript]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  },
+  "[typescript]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false,
-    "editor.formatOnSave": true,
-    "[javascript]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
-    },
-    "[typescript]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
-    },
-    "[javascriptreact]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
-    },
-    "[typescriptreact]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
-    }
+  },
+  "[javascriptreact]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  },
+  "[typescriptreact]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  },
+  // JSON formatting
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  // TypeScript settings (актуальні опції)
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  // JavaScript settings
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  // Jest settings
+  "jest.jestCommandLine": "node --experimental-vm-modules --no-warnings node_modules/.bin/jest",
+  "jest.autoRun": "off",
+  // Trailing whitespace
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  // Editor suggestions
+  "editor.suggest.showWords": true,
+  "editor.suggest.showKeywords": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.parameterHints.enabled": true,
+  "editor.suggest.snippetsPreventQuickSuggestions": false
 }

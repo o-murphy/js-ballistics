@@ -1,4 +1,22 @@
-const Table = {
+/**
+ * Represents a data point for drag calculation.
+ */
+export interface DragDataPoint {
+    /**
+     * @param {number} Mach - Mach number at the data point.
+     * @param {number} CD - Drag coefficient at the data point.
+     */
+    Mach: number;
+    CD: number;
+}
+
+/**
+ * Type alias for an array of DragDataPoint instances.
+ */
+export type DragTable = DragDataPoint[];
+
+
+export const DragTables: Record<string, DragTable> = {
     G1: [
         {
             Mach: 0.0,
@@ -2589,4 +2607,48 @@ const Table = {
     ],
 };
 
-export default Table;
+/**
+ * Input type that accepts drag data point objects or a table name string.
+ */
+export type DragTableDataType = DragTable | keyof typeof DragTables;
+
+/**
+ * Converts a drag table into an array of `DragDataPoint` objects.
+ *
+ * @param dragTable - The input drag table data: either an array with `Mach` and `CD` properties, or a string name of a standard table (e.g., "G1", "G7")
+ * @returns Array of `DragDataPoint` objects
+ * @throws {TypeError} If any item in the drag table doesn't have `Mach` and `CD` properties
+ * @throws {Error} If the table name string is not found in `Table`
+ *
+ * @example
+ * ```typescript
+ * // Using standard table name
+ * const g1Table = makeDataPoints("G1");
+ *
+ * // Using custom data points
+ * const customTable = makeDataPoints([
+ *     { Mach: 0.0, CD: 0.2629 },
+ *     { Mach: 0.5, CD: 0.2630 }
+ * ]);
+ * ```
+ */
+export const makeDataPoints = (dragTable: DragTableDataType): DragDataPoint[] => {
+    // If string provided, get table from Table object
+    if (typeof dragTable === 'string') {
+        const tableName = dragTable.toUpperCase();
+        if (!(tableName in DragTables)) {
+            throw new Error(`Drag table "${dragTable}" not found. Available tables: ${Object.keys(DragTables).join(', ')}`);
+        }
+        return DragTables[tableName];
+    }
+
+    // If array provided, validate and return
+    return dragTable.map((point) => {
+        if (typeof point === 'object' && point !== null && 'Mach' in point && 'CD' in point) {
+            return { Mach: point.Mach, CD: point.CD };
+        }
+        throw new TypeError(
+            "All items in dragTable must be objects with 'Mach' and 'CD' keys."
+        );
+    });
+};

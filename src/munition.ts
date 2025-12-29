@@ -20,30 +20,22 @@ class Weapon {
     /**
      * Initializes a new instance of the Weapon class.
      * @param {Object} options - Parameters for initializing the weapon.
-     * @param {number | Distance | null} [options.sightHeight=null] - Height of the sight above the bore axis.
-     * @param {number | Distance | null} [options.twist=null] - The twist rate of the barrel.
-     * @param {number | Angular | null} [options.zeroElevation=null] - The look angle for the zero distance.
+     * @param {number | Distance} [options.sightHeight=undefined] - Height of the sight above the bore axis.
+     * @param {number | Distance} [options.twist=undefined] - The twist rate of the barrel.
+     * @param {number | Angular} [options.zeroElevation=undefined] - The look angle for the zero distance.
      */
     constructor({
-        sightHeight = null,
-        twist = null,
-        zeroElevation = null,
+        sightHeight = undefined,
+        twist = undefined,
+        zeroElevation = undefined,
     }: {
-        sightHeight?: number | Distance | null;
-        twist?: number | Distance | null;
-        zeroElevation?: number | Angular | null;
+        sightHeight?: number | Distance;
+        twist?: number | Distance;
+        zeroElevation?: number | Angular;
     } = {}) {
-        this.sightHeight = unitTypeCoerce(
-            sightHeight ?? 0,
-            Distance,
-            preferredUnits.sight_height,
-        );
+        this.sightHeight = unitTypeCoerce(sightHeight ?? 0, Distance, preferredUnits.sight_height);
         this.twist = unitTypeCoerce(twist ?? 0, Distance, preferredUnits.twist);
-        this.zeroElevation = unitTypeCoerce(
-            zeroElevation ?? 0,
-            Angular,
-            preferredUnits.angular,
-        );
+        this.zeroElevation = unitTypeCoerce(zeroElevation ?? 0, Angular, preferredUnits.angular);
     }
 }
 
@@ -59,31 +51,28 @@ class Ammo {
      * @param {DragModel} options.dm - Drag model instance.
      * @param {number | Velocity} options.mv - Velocity value.
      * @param {number} [options.tempModifier=0] - Temperature modifier value. Defaults to 0.
-     * @param {number | Temperature | null} [options.powderTemp=null] - Powder temperature value. Defaults to null.
+     * @param {number | Temperature} [options.powderTemp=undefined] - Powder temperature value. Defaults to undefined.
      * @param {boolean} [options.usePowderSensitivity=false] - Use powder sensitivity value. Defaults to false.
      */
     constructor({
         dm,
         mv,
-        powderTemp = null,
+        powderTemp = undefined,
         tempModifier = 0,
         usePowderSensitivity = false,
     }: {
         dm: DragModel;
         mv: number | Velocity;
-        powderTemp?: number | Temperature | null;
+        powderTemp?: number | Temperature;
         tempModifier?: number;
         usePowderSensitivity?: boolean;
     }) {
-        if (!dm) {
-            throw new Error("'dm' have to be an instance of 'DragModel'");
-        }
         this.dm = dm;
         this.mv = unitTypeCoerce(mv ?? 0, Velocity, preferredUnits.velocity);
         this.powderTemp = unitTypeCoerce(
             powderTemp ?? UNew.Celsius(15),
             Temperature,
-            preferredUnits.temperature,
+            preferredUnits.temperature
         );
         this.tempModifier = tempModifier ?? 0;
         this.usePowderSensitivity = usePowderSensitivity;
@@ -97,20 +86,20 @@ class Ammo {
      */
     calcPowderSens(
         otherVelocity: number | Velocity,
-        otherTemperature: number | Temperature,
+        otherTemperature: number | Temperature
     ): number {
         const v0 = this.mv.In(Velocity.MPS);
         const t0 = this.powderTemp.In(Temperature.Celsius);
-        const v1 = unitTypeCoerce(
-            otherVelocity,
-            Velocity,
-            preferredUnits.velocity,
-        ).In(Velocity.MPS);
-        const t1 = unitTypeCoerce(
-            otherTemperature,
-            Temperature,
-            preferredUnits.temperature,
-        ).In(Temperature.Celsius);
+        const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).In(
+            Velocity.MPS
+        );
+        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature).In(
+            Temperature.Celsius
+        );
+
+        if (v0 <= 0 || v1 <= 0) {
+            throw new Error("calcPowderSens requires positive muzzle velocities")
+        }
 
         const vDelta = Math.abs(v0 - v1);
         const tDelta = Math.abs(t0 - t1);
@@ -118,7 +107,7 @@ class Ammo {
 
         if (vDelta === 0 || tDelta === 0) {
             throw new Error(
-                "Temperature modifier error, other velocity and temperature can't be same as default",
+                "Temperature modifier error, other velocity and temperature can't be same as default"
             );
         }
         this.tempModifier = (vDelta / tDelta) * (15 / vLower); // * 100
@@ -139,11 +128,9 @@ class Ammo {
             return UNew.MPS(0);
         }
         const t0 = this.powderTemp.In(Temperature.Celsius);
-        const t1 = unitTypeCoerce(
-            currentTemp,
-            Temperature,
-            preferredUnits.temperature,
-        ).In(Temperature.Celsius);
+        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(
+            Temperature.Celsius
+        );
         const tDelta = t1 - t0;
         const muzzleVelocity = (this.tempModifier / (15 / v0)) * tDelta + v0;
         return UNew.MPS(muzzleVelocity);

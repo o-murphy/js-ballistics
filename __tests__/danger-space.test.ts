@@ -1,30 +1,29 @@
 import {
-    Calculator,
     HitResult,
     Ammo,
     UNew,
     DragModel,
-    Shot,
-    Table,
+    DragTables,
     Distance,
     Weapon,
     Wind,
-    EulerIntegrationEngine,
-    RK4IntegrationEngine,
     Angular, // Ensure Angular is imported for UNew.Degree
-    TrajFlag, // Import TrajFlag for the extra data test
+    TrajFlag,
+    IntegrationMethod,
 } from "../src";
 import { expect, describe, test, beforeEach } from "@jest/globals"; // Import beforeEach
+import { Shot } from "../src/shot";
+import { Calculator } from "../src/interface";
 
 // Define the engine types to test with, similar to pytest's parameterized fixtures
-const calculatorsToTest = [
-    // Provide a name for better test output
-    { engine: EulerIntegrationEngine },
-    { engine: RK4IntegrationEngine },
+const methods = [
+    { name: "RK4", method: IntegrationMethod.RK4 },
+    { name: "EULER", method: IntegrationMethod.EULER },
 ];
 
 // Use describe.each to iterate over different engine implementations
-describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
+describe.each(methods)("TestDangerSpace with $name", (obj) => {
+    const { method } = obj;
     // Declare variables that will hold the setup state,
     // making them accessible across test cases within this describe block.
     let lookAngle: Angular;
@@ -32,14 +31,14 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
 
     // The beforeEach hook runs before each 'test' function in this describe block.
     // This effectively mimics pytest's `setup_method` fixture with `autouse=True` in Python.
-    beforeEach(() => {
+    beforeEach(async () => {
         // Initialize the look angle
         lookAngle = UNew.Degree(0);
 
         // Create the DragModel
         const dm = new DragModel({
             bc: 0.223,
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 168,
             diameter: 0.308,
             length: UNew.Inch(1.282),
@@ -65,54 +64,46 @@ describe.each(calculatorsToTest)("TestDangerSpace with %s", ({ engine }) => {
         });
 
         // Instantiate the Calculator with the current engine class
-        const calc = new Calculator({ engine });
-        calc.setWeaponZero(shot, UNew.Foot(300));
+        const calc = new Calculator({ method });
+        await calc.setWeaponZero(shot, UNew.Foot(300));
 
         // Fire the shot and store the result in the shared 'shotResult' variable
-        shotResult = calc.fire({
+        shotResult = await calc.fire({
             shot: shot,
             trajectoryRange: UNew.Yard(1000),
             trajectoryStep: UNew.Yard(1),
-            extraData: true,
+            filterFlags: TrajFlag.ALL,
         });
     });
 
     // Define the test case for danger space calculation.
     test("should calculate danger space correctly", () => {
         // First test case for danger space calculation (Target height: 1.5 meters)
-        let dangerSpace = shotResult.dangerSpace(
-            UNew.Yard(500),
-            UNew.Meter(1.5),
-            lookAngle,
-        );
+        let dangerSpace = shotResult.dangerSpace(UNew.Yard(500), UNew.Meter(1.5), lookAngle);
 
         // Assertions using Jest's toBeCloseTo, mirroring pytest.approx's behavior.
         // Precision `0` means checking to the nearest whole number (equivalent to abs=0.5).
         // Expected values are now reverted to the original Python test values.
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(
             388.0, // Reverted to original Python test value
-            0,
+            0
         );
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(
             581.0, // Reverted to original Python test value
-            0,
+            0
         );
 
         // Second test case for danger space calculation with different target height (10 inches)
-        dangerSpace = shotResult.dangerSpace(
-            UNew.Yard(500),
-            UNew.Inch(10),
-            lookAngle,
-        );
+        dangerSpace = shotResult.dangerSpace(UNew.Yard(500), UNew.Inch(10), lookAngle);
 
         // Expected values are now reverted to the original Python test values.
         expect(dangerSpace.begin.distance.In(Distance.Yard)).toBeCloseTo(
             483.0, // Reverted to original Python test value
-            0,
+            0
         );
         expect(dangerSpace.end.distance.In(Distance.Yard)).toBeCloseTo(
             516.0, // Reverted to original Python test value
-            0,
+            0
         );
     });
 

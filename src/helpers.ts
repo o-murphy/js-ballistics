@@ -1,5 +1,6 @@
-import { HitResult, TrajectoryData, TrajFlag } from "./trajectory_data";
-import { Angular, Distance, UNew, Unit, Velocity } from "./unit";
+import { TrajFlag } from "./_wasm";
+import { HitResult, TrajectoryData } from "./trajectory_data";
+import { UNew, Unit, VelocityUnit } from "./unit";
 
 export const EARTH_GRAVITY_CONSTANT_IN_SI: number = 9.81; // Acceleration due to gravity (m/s^2)
 
@@ -9,16 +10,16 @@ export const EARTH_GRAVITY_CONSTANT_IN_SI: number = 9.81; // Acceleration due to
 export const calculateDragFreeRange = (
     velocityMPS: number,
     angleDegree: number,
-    gravity: number = EARTH_GRAVITY_CONSTANT_IN_SI,
+    gravity: number = EARTH_GRAVITY_CONSTANT_IN_SI
 ): number => {
-    const angleRad = UNew.Degree(angleDegree).In(Angular.Radian);
-    return (Math.pow(velocityMPS, 2) * Math.sin(2 * angleDegree)) / gravity;
+    const angleRad = UNew.Degree(angleDegree).rad;
+    return (Math.pow(velocityMPS, 2) * Math.sin(2 * angleRad)) / gravity;
 };
 
 // Search sequentially for the index of first point in the trajectory, which matches condition.
 export const findFirstIndexMatchingCondition = (
     hit: HitResult,
-    condition: (point: TrajectoryData) => number,
+    condition: (point: TrajectoryData) => number
 ): number => {
     hit.trajectory.forEach((point, i) => {
         if (condition(point)) {
@@ -31,12 +32,9 @@ export const findFirstIndexMatchingCondition = (
 // Find index of first point, for which `flag` is set.
 export const findIndexOfPointWithFlag = (
     hit: HitResult,
-    flag: TrajFlag = TrajFlag.ZERO_DOWN,
+    flag: TrajFlag = TrajFlag.ZERO_DOWN
 ): number => {
-    return findFirstIndexMatchingCondition(
-        hit,
-        (p: TrajectoryData) => p.flag & flag,
-    );
+    return findFirstIndexMatchingCondition(hit, (p: TrajectoryData) => p.flag & flag);
 };
 
 // Find index of point for which TrjFlag.MACH was set.
@@ -50,9 +48,9 @@ export const findMachPointIndex = (hit: HitResult): number => {
 export const findTouchPointIndex = (
     hit: HitResult,
     velocityInUnits: number,
-    velocityUnit: Unit = Unit.MPS,
+    velocityUnit: VelocityUnit = Unit.MPS
 ): number => {
     return findFirstIndexMatchingCondition(hit, (p: TrajectoryData): number =>
-        Number(p.velocity.In(velocityUnit) < velocityInUnits),
+        Number(p.velocity.In(velocityUnit) < velocityInUnits)
     );
 };
