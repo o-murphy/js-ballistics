@@ -3,14 +3,14 @@
 - [x] constants
 - [x] vector
 - [x] munition
-  - [x] weapon
-  - [x] ammo
-  - [ ] sight ?
+    - [x] weapon
+    - [x] ammo
+    - [ ] sight ?
 - [x] conditions
-  - [x] atmo
-  - [x] vacuum
-  - [x] wind
-  - [x] shot
+    - [x] atmo
+    - [x] vacuum
+    - [x] wind
+    - [x] shot
 - [x] drag model
 - [x] exceptions
 - [ ] helpers (partially)
@@ -22,17 +22,16 @@
 - [x] trajectory data
 - [x] unit
 
-
 - [tests]
-  - [x] atmosphere
-  - [x] computer
-  - [ч] danger space
-  - [ ] helpers
-  - [ ] incomplete shots
-  - [ ] issues
-  - [x] mbc
-  - [ ] sight ?
-  - [x] trajectory
-  - [x] units
-  - [x] vector
-  - [x] zero finding
+    - [x] atmosphere
+    - [x] computer
+    - [ч] danger space
+    - [ ] helpers
+    - [ ] incomplete shots
+    - [ ] issues
+    - [x] mbc
+    - [ ] sight ?
+    - [x] trajectory
+    - [x] units
+    - [x] vector
+    - [x] zero finding

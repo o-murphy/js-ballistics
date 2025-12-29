@@ -1,18 +1,31 @@
 {
-    "type": "module",
     "name": "js-ballistics",
+    "type": "module",
     "version": "2.2.0-beta.2",
     "description": "ISC library for small arms ballistic calculations (JavaScript ES6+)",
-    "main": "dist/index.js",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
     "scripts": {
-        "test": "jest",
-        "prettier": "prettier ./src ./__tests__ --write",
-        "build": "tsc",
-        "prepublishOnly": "npm run build"
+        "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+        "test:rebuild": "yarn build && NODE_OPTIONS='--experimental-vm-modules' jest",
+        "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+        "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+        "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+        "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+        "build": "make build",
+        "prepublishOnly": "npm run build",
+        "deploy": "touch dist/.nojekyll && gh-pages -d dist"
     },
     "files": [
-        "dist/**/*.js",
-        "dist/**/*.d.ts"
+        "dist"
     ],
     "repository": {
         "type": "git",
@@ -35,11 +48,18 @@
         "@babel/preset-env": "^7.28.6",
         "@babel/preset-typescript": "^7.28.5",
         "@jest/globals": "^30.2.0",
+        "@types/emscripten": "^1.41.5",
         "@types/jest": "^30.0.0",
+        "@types/node": "^25.0.3",
         "babel-jest": "^30.2.0",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-jest": "^29.5.0",
+        "gh-pages": "^6.3.0",
         "jest": "^30.2.0",
         "prettier": "^3.7.4",
         "ts-jest": "^29.4.6",
+        "tsup": "^8.5.1",
         "typescript": "^5.9.3"
     }
 }

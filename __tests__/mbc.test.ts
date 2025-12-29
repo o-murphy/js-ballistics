@@ -1,125 +1,128 @@
-import { expect, describe, test, beforeEach } from "@jest/globals";
+import { expect, describe, test } from "@jest/globals";
 import {
-    Calculator,
     UNew,
     DragModel,
-    Table,
+    DragTables,
     Ammo,
     Weapon,
-    Shot,
     DragModelMultiBC,
     BCPoint,
-    RK4IntegrationEngine,
-    EulerIntegrationEngine,
+    IntegrationMethod,
+    TrajectoryData,
 } from "../src";
+import { Calculator } from "../src/interface";
+import { Shot } from "../src/shot";
 
-const calculators = [
-    { engine: EulerIntegrationEngine }, // Assuming these are string identifiers or actual classes
-    { engine: RK4IntegrationEngine },
+const methods = [
+    { name: "RK4", method: IntegrationMethod.RK4 },
+    { name: "EULER", method: IntegrationMethod.EULER },
 ];
 
-describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
+describe.each(methods)("TestMultiBC $name", (obj) => {
+    const { method } = obj;
     let range = 1000;
     let step = 100;
-    let dm = new DragModel({ bc: 0.22, dragTable: Table.G7 });
+    let dm = new DragModel({ bc: 0.22, dragTable: DragTables.G7 });
     let ammo = new Ammo({ dm: dm, mv: UNew.FPS(2600) });
     let weapon = new Weapon({ sightHeight: 4, twist: 12 });
-    let calc = new Calculator({ engine });
+    let calc = new Calculator({ method });
     let baseLineShot = new Shot({ weapon: weapon, ammo: ammo });
-    let baselineTrajectory = calc.fire({
-        shot: baseLineShot,
-        trajectoryRange: range,
-        trajectoryStep: step,
-    }).trajectory;
+    let baselineTrajectory: TrajectoryData[];
 
-    beforeEach(() => {});
+    beforeAll(async () => {
+        const hit = await calc.fire({
+            shot: baseLineShot,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        })
+        baselineTrajectory = hit.trajectory;
+    });
 
-    test("mbc1", () => {
-        let dmMulti = DragModelMultiBC({
+    test("mbc1", async () => {
+        const dmMulti = DragModelMultiBC({
             bcPoints: [
                 new BCPoint({ BC: 0.22, V: UNew.FPS(2500) }),
                 new BCPoint({ BC: 0.22, V: UNew.FPS(1500) }),
                 new BCPoint({ BC: 0.22, Mach: 3 }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
         });
-        let multiShot = new Shot({
+        const multiShot = new Shot({
             weapon: weapon,
             ammo: new Ammo({ dm: dmMulti, mv: ammo.mv }),
         });
-        let multiTrajectory = calc.fire({
+        const hit = await calc.fire({
             shot: multiShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        }).trajectory;
+        })
+        const multiTrajectory = hit.trajectory;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
-            expect(multiTrajectory[i].formatted()).toEqual(
-                baselineTrajectory[i].formatted(),
-            );
+            expect(multiTrajectory[i].formatted()).toEqual(baselineTrajectory[i].formatted());
         }
     });
 
-    test("mbc2", () => {
-        let dmMulti = DragModelMultiBC({
+    test("mbc2", async () => {
+        const dmMulti = DragModelMultiBC({
             bcPoints: [
                 new BCPoint({ BC: 0.22, V: UNew.FPS(2700) }),
                 new BCPoint({ BC: 0.5, V: UNew.FPS(3500) }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
         });
-        let multiShot = new Shot({
+        const multiShot = new Shot({
             weapon: weapon,
             ammo: new Ammo({ dm: dmMulti, mv: ammo.mv }),
         });
-        let multiTrajectory = calc.fire({
+        const hit = await calc.fire({
             shot: multiShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        }).trajectory;
+        })
+        const multiTrajectory = hit.trajectory;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
-            expect(multiTrajectory[i].formatted()).toEqual(
-                baselineTrajectory[i].formatted(),
-            );
+            expect(multiTrajectory[i].formatted()).toEqual(baselineTrajectory[i].formatted());
         }
     });
 
-    test("mbc3", () => {
-        let dmMulti = DragModelMultiBC({
+    test("mbc3", async () => {
+        const dmMulti = DragModelMultiBC({
             bcPoints: [
                 new BCPoint({ BC: 0.5, V: baselineTrajectory[3].velocity }),
                 new BCPoint({ BC: 0.22, V: baselineTrajectory[2].velocity }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
         });
-        let multiShot = new Shot({
+        const multiShot = new Shot({
             weapon: weapon,
             ammo: new Ammo({ dm: dmMulti, mv: ammo.mv }),
         });
-        let multiTrajectory = calc.fire({
+        const hit = await calc.fire({
             shot: multiShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        }).trajectory;
+        })
+        const multiTrajectory = hit.trajectory;
 
         expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(
             baselineTrajectory[1].velocity.rawValue,
-            1e-5,
+            1e-5
         );
         expect(multiTrajectory[4].velocity.rawValue).toBeGreaterThan(
-            baselineTrajectory[4].velocity.rawValue,
+            baselineTrajectory[4].velocity.rawValue
         );
     });
 
     test("mbc", () => {
-        let dmMulti = DragModelMultiBC({
+        const dmMulti = DragModelMultiBC({
             bcPoints: [
                 new BCPoint({ BC: 0.275, V: UNew.MPS(800) }),
                 new BCPoint({ BC: 0.255, V: UNew.MPS(500) }),
                 new BCPoint({ BC: 0.26, V: UNew.MPS(700) }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 178,
             diameter: 0.308,
         });
@@ -127,26 +130,26 @@ describe.each(calculators)("TestMultiBC %s", ({ engine }) => {
         expect(dmMulti.dragTable[0].CD).toBeCloseTo(0.1259323091692403, 1e-8);
         expect(dmMulti.dragTable[dmMulti.dragTable.length - 1].CD).toBeCloseTo(
             0.1577125859466895,
-            1e-8,
+            1e-8
         );
     });
 
     test("valid", () => {
-        let dmMulti = DragModelMultiBC({
+        const dmMulti = DragModelMultiBC({
             bcPoints: [
                 new BCPoint({ BC: 0.417, V: UNew.MPS(745) }),
                 new BCPoint({ BC: 0.409, V: UNew.MPS(662) }),
                 new BCPoint({ BC: 0.4, V: UNew.MPS(580) }),
             ],
-            dragTable: Table.G7,
+            dragTable: DragTables.G7,
             weight: 285,
             diameter: 0.338,
         });
 
-        let cds = dmMulti.dragTable.map((p) => p.CD);
-        let machs = dmMulti.dragTable.map((p) => p.Mach);
+        const cds = dmMulti.dragTable.map((p) => p.CD);
+        const machs = dmMulti.dragTable.map((p) => p.Mach);
 
-        let reference = [
+        const reference = [
             [1, 0.3384895315],
             [2, 0.2585639866],
             [3, 0.2069547831],

@@ -1,45 +1,107 @@
-// Global Constants
+/**
+ * Global physical and atmospheric constants for ballistic calculations.
+ *
+ * This module defines scientific constants used throughout the ballistic calculations,
+ * including atmospheric model constants, physical constants, and runtime limits.
+ * All constants follow international standards (ISA, ICAO) where applicable.
+ *
+ * Constant Categories:
+ *   - Global atmosphere constants: Standard conditions and coefficients
+ *   - ISA metric constants: International Standard Atmosphere in metric units
+ *   - ICAO constants: International Civil Aviation Organization standards
+ *   - Conversion factors: Unit conversion constants
+ *   - Runtime limits: Computational bounds and validation limits
+ *
+ * References:
+ *   - ISA: https://www.engineeringtoolbox.com/international-standard-atmosphere-d_985.html
+ *   - ICAO: International Civil Aviation Organization standards
+ *   - Physical constants: NIST and other authoritative sources
+ */
 
-export const cStandardHumidity: number = 0.0; // Relative Humidity
-export const cPressureExponent: number = 5.255876; // =g*M/R*L
+/** Standard gravity (g) in ft/s² */
+export const cGravityImperial = 32.17405 as const;
 
-// ISA, metric preferred units: (https://www.engineeringtoolbox.com/international-standard-atmosphere-d_985.html)
-export const cDegreesCtoK: number = 273.15; // °K = °C + 273.15
-export const cStandardTemperatureC: number = 15.0; // °C
-export const cLapseRateKperFoot: number = -0.0019812; // Lapse Rate, °K/ft
-export const cLapseRateMetric: number = -6.5e-3; // Lapse Rate, °C/m
-export const cStandardPressureMetric: number = 1013.25; // hPa
-export const cSpeedOfSoundMetric: number = 20.0467; // Mach1 in m/s = cSpeedOfSound * sqrt(°K)
-export const cStandardDensityMetric: number = 1.225; // kg/m^3
-export const cDensityImperialToMetric: number = 16.0185; // lb/ft^3 to kg/m^3
+/** Earth's rotational speed (Ω) in radians per second (rad/s) */
+export const cEarthAngularVelocityRadS = 7.2921159e-5 as const;
 
-// ICAO standard atmosphere:
-export const cDegreesFtoR: number = 459.67; // °R = °F + 459.67
-export const cStandardTemperatureF: number = 59.0; // °F
-export const cLapseRateImperial: number = -3.56616e-3; // Lapse rate, °F/ft
-export const cStandardPressure: number = 29.92; // InHg
-export const cSpeedOfSoundImperial: number = 49.0223; // Mach1 in fps = cSpeedOfSound * sqrt(°R)
-export const cStandardDensity: number = 0.076474; // lb/ft^3
+// =============================================================================
+// Global Atmosphere Constants
+// =============================================================================
 
-// Runtime constants
-export const cLowestTempF: number = -130; // °F
-export const cMaxWindDistanceFeet: number = 1e8; // From python
+/** Standard relative humidity used in atmospheric calculations (%) */
+export const cStandardHumidity = 0.0 as const;
 
-// CIPM 2007 Air Density Constants (from calculate_air_density in conditions.py)
-// These constants are internal to the calculate_air_density function in Python,
-// but for TypeScript, we'll export them as global constants to maintain consistency
-// and enable easier refactoring if needed.
-export const CIPM_A0: number = 1.2378847e-5;
-export const CIPM_A1: number = -1.9121316e-2;
-export const CIPM_A2: number = 33.93711047;
-export const CIPM_A3: number = -6.3431645e3;
+/** Pressure exponent constant for barometric formula (dimensionless) */
+export const cPressureExponent = 5.255876 as const; // =g*M/R*L
 
-export const CIPM_a0: number = 1.58123e-6;
-export const CIPM_a1: number = -2.9331e-8;
-export const CIPM_a2: number = 1.1043e-10;
-export const CIPM_b0: number = 5.707e-6;
-export const CIPM_b1: number = -2.051e-8;
-export const CIPM_c0: number = 1.9898e-4;
-export const CIPM_c1: number = -2.376e-6;
-export const CIPM_d: number = 1.83e-11;
-export const CIPM_e: number = -0.765e-8;
+// Atmospheric model coefficients (used in air density calculations)
+export const cA0 = 1.24871 as const;
+export const cA1 = 0.0988438 as const;
+export const cA2 = 0.00152907 as const;
+export const cA3 = -3.07031e-06 as const;
+export const cA4 = 4.21329e-07 as const;
+export const cA5 = 3.342e-04 as const;
+
+// =============================================================================
+// ISA Metric Constants (International Standard Atmosphere)
+// =============================================================================
+
+/** Standard temperature at sea level in Celsius (°C) */
+export const cStandardTemperatureC = 15.0 as const;
+
+/** Temperature lapse rate in Kelvin per foot (K/ft) */
+export const cLapseRateKperFoot = -0.0019812 as const;
+
+/** Temperature lapse rate in metric units (°C/m) */
+export const cLapseRateMetric = -6.5e-03 as const;
+
+/** Standard atmospheric pressure at sea level (hPa) */
+export const cStandardPressureMetric = 1013.25 as const;
+
+/** Speed of sound coefficient in metric units (m/s per √K) */
+export const cSpeedOfSoundMetric = 20.0467 as const; // Mach1 in m/s = cSpeedOfSound * sqrt(K)
+
+/** Standard air density at sea level in metric units (kg/m³) */
+export const cStandardDensityMetric = 1.2250 as const;
+
+// =============================================================================
+// ICAO Standard Atmosphere Constants
+// =============================================================================
+
+/** Standard temperature at sea level in Fahrenheit (°F) */
+export const cStandardTemperatureF = 59.0 as const;
+
+/** Temperature lapse rate in imperial units (°F/ft) */
+export const cLapseRateImperial = -3.56616e-03 as const;
+
+/** Standard atmospheric pressure at sea level (InHg) */
+export const cStandardPressure = 29.92 as const;
+
+/** Speed of sound coefficient in imperial units (fps per √°R) */
+export const cSpeedOfSoundImperial = 49.0223 as const; // Mach1 in fps = cSpeedOfSound * sqrt(°R)
+
+/** Standard air density at sea level in imperial units (lb/ft³) */
+export const cStandardDensity = 0.076474 as const;
+
+// =============================================================================
+// Conversion Factors
+// =============================================================================
+
+/** Celsius to Kelvin conversion constant (K) */
+export const cDegreesCtoK = 273.15 as const; // K = °C + 273.15
+
+/** Fahrenheit to Rankine conversion constant (°R) */
+export const cDegreesFtoR = 459.67 as const; // °R = °F + 459.67
+
+/** Density conversion factor from imperial to metric units (kg/m³ per lb/ft³) */
+export const cDensityImperialToMetric = 16.0185 as const;
+
+// =============================================================================
+// Runtime Limits and Validation Constants
+// =============================================================================
+
+/** Minimum allowed temperature for atmospheric calculations (°F) */
+export const cLowestTempF = -130 as const;
+
+/** Maximum wind effect distance for computational limits (ft) */
+export const cMaxWindDistanceFeet = 1e8 as const;

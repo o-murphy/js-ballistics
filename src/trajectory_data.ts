@@ -4,26 +4,25 @@ import {
     UnitProps,
     Unit,
     preferredUnits,
-    unitTypeCoerce,
     Angular,
     Distance,
     Velocity,
     Energy,
     Weight,
-    AbstractUnit,
+    Dimension,
+    UNew,
 } from "./unit";
-import { Shot } from "./conditions";
-
-enum TrajFlag {
-    NONE = 0,
-    ZERO_UP = 1 << 0,
-    ZERO_DOWN = 1 << 1,
-    MACH = 1 << 2,
-    RANGE = 1 << 3,
-    ZERO = ZERO_UP | ZERO_DOWN,
-    APEX = 1 << 4, // Corrected APEX bit value
-    ALL = ZERO | MACH | RANGE | APEX, // Corrected ALL value
-}
+import { Shot } from "./shot";
+import {
+    _TrajectoryData,
+    _TrajectoryDataInterpKey,
+    _InterpMethod,
+    HitOutput,
+    TrajFlag,
+    loadBclibc,
+    TerminationReason
+} from "./_wasm";
+import { RangeError } from "./exceptions";
 
 const trajFlagNames: Record<number, string> = {
     [TrajFlag.NONE]: "NONE",
@@ -34,6 +33,7 @@ const trajFlagNames: Record<number, string> = {
     [TrajFlag.RANGE]: "RANGE",
     [TrajFlag.APEX]: "APEX",
     [TrajFlag.ALL]: "ALL",
+    [TrajFlag.MRT]: "MRT",
 };
 
 const trajFlagName = (value: TrajFlag) => {
@@ -60,9 +60,7 @@ const trajFlagName = (value: TrajFlag) => {
         (value & TrajFlag.ZERO_DOWN) === TrajFlag.ZERO_DOWN
     ) {
         // If ZERO_UP and ZERO_DOWN are both in parts, replace them with "ZERO"
-        parts = parts.filter(
-            (part) => part !== "ZERO_UP" && part !== "ZERO_DOWN",
-        );
+        parts = parts.filter((part) => part !== "ZERO_UP" && part !== "ZERO_DOWN");
         // Only add "ZERO" if it's not already implicitly handled by direct lookup
         // and if it makes sense as a combined flag.
         if (!parts.includes("ZERO")) {
@@ -82,22 +80,22 @@ class TrajectoryData {
      * This class is used solely as a return value from trajectory calculations.
      *
      * @class
-     * @param {number} time - The time elapsed in the trajectory calculation.
-     * @param {Distance} distance - The distance traveled.
+     * @param {number} time - Flight time in seconds
+     * @param {Distance} distance - Down-range (x-axis) coordinate of this point
      * @param {Velocity} velocity - The velocity at the given point.
-     * @param {number} mach - The Mach number at the given point.
-     * @param {Distance} height - The height above the reference point.
-     * @param {Distance} targetDrop - The drop from the target elevation.
-     * @param {Angular} dropAdjustment - Adjustment in angle due to drop.
-     * @param {Distance} windage - The amount of windage correction.
-     * @param {Angular} windageAdjustment - Adjustment in angle due to windage.
-     * @param {Distance} lookDistance - The distance to the target.
-     * @param {Angular} angle - The angle of the trajectory.
-     * @param {number} densityFactor - Factor representing air density effects.
-     * @param {number} drag - The drag experienced by the projectile.
-     * @param {Energy} energy - The energy of the projectile.
-     * @param {Weight} ogw - The optimal gun weight.
-     * @param {TrajFlag} flag - Flags representing various trajectory characteristics.
+     * @param {number} mach - Velocity in Mach terms
+     * @param {Distance} height - Vertical (y-axis) coordinate of this point
+     * @param {Distance} slantHeight - Distance orthogonal to sight-line
+     * @param {Angular} dropAngle - Slant_height in angular terms
+     * @param {Distance} windage - Windage (z-axis) coordinate of this point
+     * @param {Angular} windageAngle - Windage in angular terms
+     * @param {Distance} slantDistance - Distance along sight line that is closest to this point
+     * @param {Angular} angle - Angle of velocity vector relative to x-axis
+     * @param {number} densityRatio - Ratio of air density here to standard density
+     * @param {number} drag - Standard Drag Factor at this point
+     * @param {Energy} energy - Energy of bullet at this point
+     * @param {Weight} ogw - Optimal game weight, given .energy
+     * @param {TrajFlag} flag - Row type
      */
     constructor(
         readonly time: number,
@@ -105,17 +103,17 @@ class TrajectoryData {
         readonly velocity: Velocity,
         readonly mach: number,
         readonly height: Distance,
-        readonly targetDrop: Distance,
-        readonly dropAdjustment: Angular,
+        readonly slantHeight: Distance,
+        readonly dropAngle: Angular,
         readonly windage: Distance,
-        readonly windageAdjustment: Angular,
-        readonly lookDistance: Distance,
+        readonly windageAngle: Angular,
+        readonly slantDistance: Distance,
         readonly angle: Angular,
-        readonly densityFactor: number,
+        readonly densityRatio: number,
         readonly drag: number,
         readonly energy: Energy,
         readonly ogw: Weight,
-        readonly flag: TrajFlag,
+        readonly flag: TrajFlag
     ) { } // Properties are automatically assigned due to 'readonly' and constructor parameters
 
     /**
@@ -131,13 +129,13 @@ class TrajectoryData {
             this.velocity.In(preferredUnits.velocity),
             this.mach,
             this.height.In(preferredUnits.drop), // Changed to preferredUnits.drop as per python
-            this.targetDrop.In(preferredUnits.drop),
-            this.dropAdjustment.In(preferredUnits.adjustment),
+            this.slantHeight.In(preferredUnits.drop),
+            this.dropAngle.In(preferredUnits.adjustment),
             this.windage.In(preferredUnits.drop),
-            this.windageAdjustment.In(preferredUnits.adjustment),
-            this.lookDistance.In(preferredUnits.distance),
+            this.windageAngle.In(preferredUnits.adjustment),
+            this.slantDistance.In(preferredUnits.distance),
             this.angle.In(preferredUnits.angular),
-            this.densityFactor,
+            this.densityRatio,
             this.drag,
             this.energy.In(preferredUnits.energy),
             this.ogw.In(preferredUnits.ogw),
@@ -152,11 +150,11 @@ class TrajectoryData {
      */
     formatted(): string[] {
         /** simple formatter
-         * @param {AbstractUnit} value
+         * @param {Dimension} value
          * @param {Unit} unit
          * @return {string} time
          */
-        function _fmt(value: AbstractUnit, unit: Unit): string {
+        function _fmt<AllowedUnitT extends Unit>(value: Dimension<AllowedUnitT>, unit: AllowedUnitT): string {
             return `${value.In(unit).toFixed(UnitProps[unit].accuracy)} ${UnitProps[unit].symbol}`;
         }
 
@@ -166,79 +164,103 @@ class TrajectoryData {
             _fmt(this.velocity, preferredUnits.velocity),
             `${this.mach.toFixed(2)} mach`,
             _fmt(this.height, preferredUnits.drop), // Changed to preferredUnits.drop as per python
-            _fmt(this.targetDrop, preferredUnits.drop),
-            _fmt(this.dropAdjustment, preferredUnits.adjustment),
+            _fmt(this.slantHeight, preferredUnits.drop),
+            _fmt(this.dropAngle, preferredUnits.adjustment),
             _fmt(this.windage, preferredUnits.drop),
-            _fmt(this.windageAdjustment, preferredUnits.adjustment),
-            _fmt(this.lookDistance, preferredUnits.distance),
+            _fmt(this.windageAngle, preferredUnits.adjustment),
+            _fmt(this.slantDistance, preferredUnits.distance),
             _fmt(this.angle, preferredUnits.angular),
-            `${this.densityFactor.toFixed(3)}`,
+            `${this.densityRatio.toFixed(3)}`,
             `${this.drag.toFixed(3)}`,
             _fmt(this.energy, preferredUnits.energy),
             _fmt(this.ogw, preferredUnits.ogw),
             `${trajFlagName(this.flag)}`,
         ];
     }
-}
 
-class DangerSpace {
     /**
-     * Stores the danger space data for a specified distance.
-     * ! DATACLASS, USES AS RETURNED VALUE ONLY
+     * Converts TrajectoryData instance to WASM-compatible format.
      *
-     * @param {TrajectoryData} atRange - The trajectory data at the specified range.
-     * @param {Distance} targetHeight - The height of the target, or null if not applicable.
-     * @param {TrajectoryData} begin - The starting trajectory data for the danger space.
-     * @param {TrajectoryData} end - The ending trajectory data for the danger space.
-     * @param {Angular} lookAngle - The look angle for the danger space, or null if not applicable.
+     * This method serializes all trajectory data fields into the raw format
+     * expected by WASM functions like interpolateTrajectoryData.
+     *
+     * @returns WASM-compatible trajectory data object
      */
-    constructor(
-        readonly atRange: TrajectoryData,
-        readonly targetHeight: Distance,
-        readonly begin: TrajectoryData,
-        readonly end: TrajectoryData,
-        readonly lookAngle: Angular,
-    ) { }
+    toWasmTrajectoryData(): _TrajectoryData {
+        return {
+            time: this.time,
+            distance_ft: this.distance.foot,
+            velocity_fps: this.velocity.fps,
+            mach: this.mach,
+            height_ft: this.height.foot,
+            slant_height_ft: this.slantHeight.foot,
+            drop_angle_rad: this.dropAngle.rad,
+            windage_ft: this.windage.foot,
+            windage_angle_rad: this.windageAngle.rad,
+            slant_distance_ft: this.slantDistance.foot,
+            angle_rad: this.angle.rad,
+            density_ratio: this.densityRatio,
+            drag: this.drag,
+            energy_ft_lb: this.energy.footPound,
+            ogw_lb: this.ogw.pound,
+            flag: { value: this.flag }
+        };
+    }
 
-    /**
-     * Returns a string representation of the DangerSpace object.
-     * @returns {string} - A string summarizing the DangerSpace data.
-     */
-    toString(): string {
-        let str = `Danger space at ${this.atRange.distance.to(preferredUnits.distance)} ` +
-            `for ${this.targetHeight.to(preferredUnits.drop)} tall target`;
-
-        if (this.lookAngle.rawValue !== 0) {
-            str += ` at ${this.lookAngle.to(Angular.Degree)} look-angle`;
-        }
-
-        str += ` ranges from ${this.begin.distance.to(preferredUnits.distance)} ` +
-            `to ${this.end.distance.to(preferredUnits.distance)}`;
-        return str;
+    static fromWasmTrajectoryData(data: _TrajectoryData) {
+        return new TrajectoryData(
+            data.time,
+            UNew.Foot(data.distance_ft),
+            UNew.FPS(data.velocity_fps),
+            data.mach,
+            UNew.Foot(data.height_ft),
+            UNew.Foot(data.slant_height_ft),
+            UNew.Radian(data.drop_angle_rad),
+            UNew.Foot(data.windage_ft),
+            UNew.Radian(data.windage_angle_rad),
+            UNew.Foot(data.slant_distance_ft),
+            UNew.Radian(data.angle_rad),
+            data.density_ratio,
+            data.drag,
+            UNew.FootPound(data.energy_ft_lb),
+            UNew.Pound(data.ogw_lb),
+            data.flag.value as TrajFlag
+        )
     }
 }
 
 class HitResult {
     /**
-     * Results of the shot
-     * ! DATACLASS, USES AS RETURNED VALUE ONLY
-     * @param {Shot} shot
-     * @param {TrajectoryData[]} _trajectory
-     * @param {boolean} _extra
+     * Computed trajectory data of the shot.
+     *
+     * @param shot - The parameters of the shot calculation
+     * @param trajectory - Computed TrajectoryData points
+     * @param error - RangeError if any (optional)
+     * @param filterFlags - Flags that were requested in the trajectory calculation
      */
 
     readonly shot: Shot;
     readonly trajectory: TrajectoryData[];
-    readonly extra: boolean;
+    error?: Error;
+    readonly filterFlags: TrajFlag;
 
     constructor(
         shot: Shot,
         trajectory: TrajectoryData[],
-        extra: boolean = false,
+        filterFlags: TrajFlag = TrajFlag.NONE,
+        error?: Error,
     ) {
         this.shot = shot;
         this.trajectory = trajectory;
-        this.extra = extra;
+        this.filterFlags = filterFlags;
+        this.error = error;
+    }
+
+    /**
+     * Get Shot properties (alias for shot for Python compatibility)
+     */
+    get props(): Shot {
+        return this.shot;
     }
 
     /**
@@ -258,25 +280,48 @@ class HitResult {
         return this.trajectory[index];
     }
 
-    protected _checkExtra(): void {
-        if (!this.extra) {
-            // Using a custom message similar to Python's __repr__
-            throw new Error(
-                `${Object.getPrototypeOf(this).constructor.name} has no extra data. Use Calculator.fire(..., extra_data=true)`,
-            );
-        }
-    }
-
     get length(): number {
         return this.trajectory.length;
     }
 
+    /**
+     * Check if the specified flag was requested in the trajectory calculation.
+     * @param flag - The flag to check
+     * @throws Error if the flag was not requested
+     */
+    protected _checkFlag(flag: TrajFlag): void {
+        // Check if the flag was requested in filter_flags
+        const wasRequested = (this.filterFlags & flag) !== 0;
+        if (!wasRequested) {
+            const flagName = trajFlagName(flag);
+            throw new Error(
+                `${flagName} was not requested in trajectory. Use Calculator.fire(..., flags=TrajFlag.${flagName}) to include it.`
+            );
+        }
+    }
+
+    /**
+     * Get first TrajectoryData row with the specified flag.
+     * @param flag - The flag to search for
+     * @returns First TrajectoryData row with the specified flag, or undefined if not found
+     * @throws Error if the flag was not requested
+     */
+    flag(flag: TrajFlag): TrajectoryData | undefined {
+        this._checkFlag(flag);
+        return this.trajectory.find(row => row.flag & flag);
+    }
+
+    /**
+     * Get all zero crossing points.
+     * @returns Array of TrajectoryData at zero crossings
+     * @throws Error if zero crossing points are not found
+     */
     zeros(): TrajectoryData[] {
-        this._checkExtra();
+        this._checkFlag(TrajFlag.ZERO);
 
         const data = this.trajectory.filter((row) => row.flag & TrajFlag.ZERO);
         if (data.length < 1) {
-            throw new Error("Can't find zero crossing points"); // Equivalent to Python's ArithmeticError, here using generic Error
+            throw new Error("Can't find zero crossing points");
         }
 
         return data;
@@ -291,7 +336,7 @@ class HitResult {
         // Adding epsilon to avoid floating-point issues, similar to Python
         const epsilon = 1e-8;
         return this.trajectory.findIndex(
-            (item) => item.distance.rawValue >= distance.rawValue - epsilon,
+            (item) => item.distance.rawValue >= distance.rawValue - epsilon
         );
     }
 
@@ -299,111 +344,183 @@ class HitResult {
         const index = this.indexAtDistance(d);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${d.rawValue}`, // Changed to d.rawValue for better output
+                `Calculated trajectory doesn't reach requested distance ${d.rawValue}` // Changed to d.rawValue for better output
             );
         }
         return this.trajectory[index];
     }
 
     /**
-     * Calculates the danger space for the specified range and target height.
-     * @param {number | Distance} atRange - The distance at which to calculate the danger space.
-     * @param {number | Distance} targetHeight - The height of the target.
-     * @param {number | Angular | null} lookAngle - The look angle for the calculation.
-     * @returns {DangerSpace} - The computed DangerSpace object.
+     * Get TrajectoryData where the specified attribute equals the target value.
+     * Interpolates to create a new TrajectoryData point if necessary.
+     *
+     * @param keyAttribute - The TrajectoryDataInterpKey to interpolate on
+     * @param value - The target value for the key attribute
+     * @param epsilon - Allowed difference to match existing TrajectoryData without interpolating (default: 1e-9)
+     * @param startFromTime - Time to center the search from (default: 0.0)
+     * @returns TrajectoryData where keyAttribute equals value
+     * @throws Error if trajectory doesn't reach the requested value
+     * @throws Error if interpolation requires at least 3 points
      */
-    public dangerSpace(
-        atRange: number | Distance,
-        targetHeight: number | Distance,
-        lookAngle: number | Angular | null = null,
-    ): DangerSpace {
-        this._checkExtra();
+    async getAt(
+        keyAttribute: _TrajectoryDataInterpKey,
+        value: number,
+        epsilon: number = 1e-9,
+        startFromTime: number = 0.0
+    ): Promise<TrajectoryData> {
+        const traj = this.trajectory;
+        const n = traj.length;
 
-        const _atRange: Distance = unitTypeCoerce(
-            atRange,
-            Distance,
-            preferredUnits.distance,
-        );
+        // Helper to get raw value of the key attribute from TrajectoryData
+        const getKeyVal = (td: TrajectoryData): number => {
+            // Map _TrajectoryDataInterpKey to TrajectoryData property
+            const keyIndex = typeof keyAttribute === 'object' && 'value' in keyAttribute
+                ? keyAttribute.value
+                : keyAttribute;
+            switch (keyIndex) {
+                case 0: return td.time;
+                case 1: return td.distance.rawValue;
+                case 2: return td.velocity.rawValue;
+                case 3: return td.mach;
+                case 4: return td.height.rawValue;
+                case 5: return td.slantHeight.rawValue;
+                case 6: return td.dropAngle.rawValue;
+                case 7: return td.windage.rawValue;
+                case 8: return td.windageAngle.rawValue;
+                case 9: return td.slantDistance.rawValue;
+                case 10: return td.angle.rawValue;
+                case 11: return td.densityRatio;
+                case 12: return td.drag;
+                case 13: return td.energy.rawValue;
+                case 14: return td.ogw.rawValue;
+                default: throw new Error(`Invalid interpolation key: ${keyIndex}`);
+            }
+        };
 
-        const _targetHeight: Distance = unitTypeCoerce(
-            targetHeight,
-            Distance,
-            preferredUnits.distance,
-        );
-        const _targetHeightHalf: number = _targetHeight.rawValue / 2.0;
-
-        const _lookAngle: Angular =
-            lookAngle === null || lookAngle === undefined
-                ? this.shot.lookAngle
-                : unitTypeCoerce(lookAngle, Angular, preferredUnits.angular);
-
-        // Get index of first trajectory point with distance >= at_range
-        const index = this.indexAtDistance(_atRange);
-        if (index < 0) {
-            throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${_atRange.rawValue}`,
-            );
+        // Check if we have enough points for interpolation
+        if (n < 3) {
+            if (Math.abs(getKeyVal(traj[0]) - value) < epsilon) {
+                return traj[0];
+            }
+            if (n > 1 && Math.abs(getKeyVal(traj[1]) - value) < epsilon) {
+                return traj[1];
+            }
+            throw new Error("Interpolation requires at least 3 TrajectoryData points.");
         }
 
-        const findBeginDanger = (rowNum: number): TrajectoryData => {
-            /**
-             * Beginning of danger space is last .distance' < .distance where
-             * (.drop' - target_center) >= target_height/2
-             * @param {number} rowNum - Index of the trajectory point for which we are calculating danger space
-             * @return {TrajectoryData} - Distance marking the beginning of danger space
-             */
-            const centerRow = this.trajectory[rowNum];
+        // Find starting index based on startFromTime
+        let startIdx = 0;
+        if (startFromTime > 0) {
+            startIdx = traj.findIndex(td => td.time >= startFromTime);
+            if (startIdx < 0) startIdx = 0;
+        }
 
-            // Iterate in reverse from rowNum - 1 down to 0, similar to Python's reversed(self.trajectory[:row_num])
-            for (let i = rowNum - 1; i >= 0; i--) {
-                const primeRow = this.trajectory[i];
-                if (
-                    (primeRow.targetDrop.rawValue - centerRow.targetDrop.rawValue) >=
-                    _targetHeightHalf
-                ) {
-                    return primeRow;
+        const currVal = getKeyVal(traj[startIdx]);
+        if (Math.abs(currVal - value) < epsilon) {
+            return traj[startIdx];
+        }
+
+        // Determine search direction
+        let searchForward = true;
+        if (startIdx === n - 1) {
+            searchForward = false;
+        } else if (startIdx > 0 && startIdx < n - 1) {
+            const nextVal = getKeyVal(traj[startIdx + 1]);
+            if ((nextVal > currVal && value > currVal) || (nextVal < currVal && value < currVal)) {
+                searchForward = true;
+            } else {
+                searchForward = false;
+            }
+        }
+
+        // Search for target value
+        let targetIdx = -1;
+        if (searchForward) {
+            for (let i = startIdx; i < n - 1; i++) {
+                const curr = getKeyVal(traj[i]);
+                const next = getKeyVal(traj[i + 1]);
+                if ((curr < value && value <= next) || (next <= value && value < curr)) {
+                    targetIdx = i + 1;
+                    break;
                 }
             }
-            return this.trajectory[0];
-        };
-
-        const findEndDanger = (rowNum: number): TrajectoryData => {
-            /**
-             * End of danger space is first .distance' > .distance where
-             * (target_center - .drop') >= target_height/2
-             * @param {number} rowNum - Index of the trajectory point for which we are calculating danger space
-             * @return {TrajectoryData} - Distance marking the end of danger space
-             */
-            const centerRow = this.trajectory[rowNum];
-
-            // Iterate forwards from rowNum + 1 up to the end, similar to Python's self.trajectory[row_num + 1:]
-            for (let i = rowNum + 1; i < this.trajectory.length; i++) {
-                const primeRow = this.trajectory[i];
-                if (
-                    (centerRow.targetDrop.rawValue - primeRow.targetDrop.rawValue) >=
-                    _targetHeightHalf
-                ) {
-                    return primeRow;
+        }
+        if (!searchForward || targetIdx === -1) {
+            for (let i = startIdx; i > 0; i--) {
+                const curr = getKeyVal(traj[i]);
+                const prev = getKeyVal(traj[i - 1]);
+                if ((prev <= value && value < curr) || (curr < value && value <= prev)) {
+                    targetIdx = i;
+                    break;
                 }
             }
-            return this.trajectory[this.trajectory.length - 1];
-        };
+        }
 
-        return new DangerSpace(
-            this.trajectory[index],
-            _targetHeight,
-            findBeginDanger(index),
-            findEndDanger(index),
-            _lookAngle,
+        if (targetIdx === -1) {
+            throw new Error(`Trajectory does not reach the requested value ${value} for the specified key`);
+        }
+
+        // Check for exact match
+        if (Math.abs(getKeyVal(traj[targetIdx]) - value) < epsilon) {
+            return traj[targetIdx];
+        }
+
+        // Step forward from first point if needed
+        if (targetIdx === 0) {
+            targetIdx = 1;
+        }
+
+        // Choose three bracketing points (p0, p1, p2)
+        let p0: TrajectoryData, p1: TrajectoryData, p2: TrajectoryData;
+        if (targetIdx >= n - 1) {
+            p0 = traj[n - 3];
+            p1 = traj[n - 2];
+            p2 = traj[n - 1];
+        } else {
+            p0 = traj[targetIdx - 1];
+            p1 = traj[targetIdx];
+            p2 = traj[targetIdx + 1];
+        }
+
+        // Use WASM interpolation
+        const bclibc = await loadBclibc();
+        const interpolated = bclibc.interpolateTrajectoryData(
+            keyAttribute,
+            value,
+            p0.toWasmTrajectoryData(),
+            p1.toWasmTrajectoryData(),
+            p2.toWasmTrajectoryData(),
+            { value: TrajFlag.NONE },
+            bclibc._InterpMethod.PCHIP
         );
+
+        return TrajectoryData.fromWasmTrajectoryData(interpolated);
+    }
+
+    static fromWasmHitOutput(shot: Shot, hit: HitOutput, raiseRangeError: boolean = true, filterFlags: TrajFlag = TrajFlag.NONE) {
+        const trajectory = (hit.trajectory as _TrajectoryData[]).map(item => TrajectoryData.fromWasmTrajectoryData(item));
+
+        // Check termination reason and create error if needed
+        let error: Error | undefined = undefined;
+        const reasonValue = typeof hit.reason === 'object' && 'value' in hit.reason
+            ? hit.reason.value
+            : hit.reason;
+
+        if (reasonValue === TerminationReason.MINIMUM_VELOCITY_REACHED) {
+            error = new RangeError(RangeError.MinimumVelocityReached, trajectory);
+        } else if (reasonValue === TerminationReason.MAXIMUM_DROP_REACHED) {
+            error = new RangeError(RangeError.MaximumDropReached, trajectory);
+        } else if (reasonValue === TerminationReason.MINIMUM_ALTITUDE_REACHED) {
+            error = new RangeError(RangeError.MinimumAltitudeReached, trajectory);
+        }
+
+        // If raiseRangeError is true and there's an error, throw it
+        if (raiseRangeError && error) {
+            throw error;
+        }
+
+        return new HitResult(shot, trajectory, filterFlags, error);
     }
 }
 
-export {
-    TrajectoryData,
-    TrajFlag,
-    trajFlagName,
-    trajFlagNames,
-    DangerSpace,
-    HitResult,
-};
+export { TrajectoryData, trajFlagName, trajFlagNames, HitResult };

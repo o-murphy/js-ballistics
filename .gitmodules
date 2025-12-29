@@ -1,0 +1,6 @@
+[submodule "emsdk"]
+	path = lib/emsdk
+	url = https://github.com/emscripten-core/emsdk.git
+[submodule "py-ballisticcalc"]
+	path = lib/py-ballisticcalc
+	url = https://github.com/o-murphy/py-ballisticcalc.git

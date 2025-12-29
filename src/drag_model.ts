@@ -1,53 +1,11 @@
 // Import necessary modules and classes
-import {
-    Distance,
-    unitTypeCoerce,
-    Weight,
-    Velocity,
-    preferredUnits,
-} from "./unit";
+import { Distance, unitTypeCoerce, Weight, Velocity, preferredUnits } from "./unit";
 // @ts-ignore
-import Table from "./drag_tables.js";
-import {
-    cDegreesCtoK,
-    cSpeedOfSoundMetric,
-    cStandardTemperatureC,
-} from "./constants";
+import { DragTable, DragTableDataType, makeDataPoints } from "./drag_tables";
+import { cDegreesCtoK, cSpeedOfSoundMetric, cStandardTemperatureC } from "./constants";
 
-export {
-    Table,
-    DragModel,
-    DragTable,
-    DragTableDataType,
-    DragDataPoint,
-    BCPoint,
-    DragModelMultiBC,
-};
+export { DragModel, BCPoint, DragModelMultiBC };
 
-/**
- * Represents a data point for drag calculation.
- */
-class DragDataPoint {
-    /**
-     * @param {number} Mach - Mach number at the data point.
-     * @param {number} CD - Drag coefficient at the data point.
-     */
-    constructor(
-        public Mach: number,
-        public CD: number,
-    ) {}
-}
-
-/**
- * Type alias for drag table data.
- * Can be an array of objects with Mach and CD properties or DragDataPoint instances.
- */
-type DragTableDataType = Array<{ Mach: number; CD: number } | DragDataPoint>;
-
-/**
- * Type alias for an array of DragDataPoint instances.
- */
-type DragTable = DragDataPoint[];
 
 /**
  * Represents a ballistic coefficient point.
@@ -80,9 +38,7 @@ class BCPoint {
 
         if (Mach !== null && V !== null) {
             // More explicit check for null
-            throw new Error(
-                "You cannot specify both 'Mach' and 'V' at the same time",
-            );
+            throw new Error("You cannot specify both 'Mach' and 'V' at the same time");
         }
 
         if (Mach === null && V === null) {
@@ -102,17 +58,12 @@ class BCPoint {
             // This branch should theoretically not be reached due to the earlier check,
             // but if it somehow is, ensure a clear error or defined state.
             // For safety, re-throwing the error here emphasizes the contract.
-            throw new Error(
-                "Internal error: Mach or V should have been specified but were not.",
-            );
+            throw new Error("Internal error: Mach or V should have been specified but were not.");
         }
     }
 
     static _machC(): number {
-        return (
-            Math.sqrt(cStandardTemperatureC + cDegreesCtoK) *
-            cSpeedOfSoundMetric
-        );
+        return Math.sqrt(cStandardTemperatureC + cDegreesCtoK) * cSpeedOfSoundMetric;
     }
 }
 
@@ -169,21 +120,9 @@ class DragModel {
         this.dragTable = makeDataPoints(dragTable);
 
         this.bc = bc;
-        this.weight = unitTypeCoerce(
-            weight ?? 0,
-            Weight,
-            preferredUnits.weight,
-        );
-        this.diameter = unitTypeCoerce(
-            diameter ?? 0,
-            Distance,
-            preferredUnits.diameter,
-        );
-        this.length = unitTypeCoerce(
-            length ?? 0,
-            Distance,
-            preferredUnits.length,
-        );
+        this.weight = unitTypeCoerce(weight ?? 0, Weight, preferredUnits.weight);
+        this.diameter = unitTypeCoerce(diameter ?? 0, Distance, preferredUnits.diameter);
+        this.length = unitTypeCoerce(length ?? 0, Distance, preferredUnits.length);
         // Calculate and set the sectional density and form factor
         if (weight && diameter) {
             // FIXME: Check if both > 0
@@ -210,33 +149,12 @@ class DragModel {
      */
     _getSectionalDensity(): number {
         // Get weight in grains and diameter in inches
-        const w = this.weight.In(Weight.Grain);
-        const d = this.diameter.In(Distance.Inch);
+        const w = this.weight.grain;
+        const d = this.diameter.inch;
         // Call the sectionalDensity function to calculate and return the result
         return sectionalDensity(w, d);
     }
 }
-
-/**
- * Converts a drag table into an array of `DragDataPoint` objects.
- * @param {DragTableDataType} dragTable - The input drag table data, which can be a mix of `DragDataPoint` instances and objects with `Mach` and `CD` properties.
- * @returns {DragDataPoint[]} - An array of `DragDataPoint` objects.
- * @throws {TypeError} - If any item in the drag table is not a `DragDataPoint` or an object with `Mach` and `CD` properties.
- */
-const makeDataPoints = (dragTable: DragTableDataType): DragDataPoint[] => {
-    return dragTable.map((point) => {
-        if (point instanceof DragDataPoint) {
-            return point; // If already a DragDataPoint, return it
-        } else if ("Mach" in point && "CD" in point) {
-            // If it's a dictionary with 'Mach' and 'CD', create a new DragDataPoint
-            return new DragDataPoint(point.Mach, point.CD);
-        } else {
-            throw new TypeError(
-                "All items in dragTable must be of type DragDataPoint or an object with 'Mach' and 'CD' keys.",
-            );
-        }
-    });
-};
 
 /**
  * Calculates and returns the sectional density.
@@ -277,13 +195,10 @@ const DragModelMultiBC = ({
     const _diameter = unitTypeCoerce(
         diameter, // Use default parameter, no need for ?? 0
         Distance,
-        preferredUnits.diameter,
+        preferredUnits.diameter
     );
     if (_weight.rawValue > 0 && _diameter.rawValue > 0) {
-        bc = sectionalDensity(
-            _weight.In(Weight.Grain),
-            _diameter.In(Distance.Inch),
-        );
+        bc = sectionalDensity(_weight.grain, _diameter.inch);
     } else {
         bc = 1.0;
     }
@@ -293,7 +208,7 @@ const DragModelMultiBC = ({
     const bcInterp = linearInterpolation(
         _dragTable.map((point) => point.Mach),
         bcPoints.map((point) => point.Mach),
-        bcPoints.map((point) => point.BC / bc),
+        bcPoints.map((point) => point.BC / bc)
     );
 
     _dragTable.forEach((item, index) => {
@@ -301,7 +216,7 @@ const DragModelMultiBC = ({
         // to prevent division by zero or NaN propagation if interpolation fails.
         if (bcInterp[index] === 0 || isNaN(bcInterp[index])) {
             console.warn(
-                `Warning: Interpolated BC factor at index ${index} is zero or NaN. CD calculation may result in Infinity/NaN.`,
+                `Warning: Interpolated BC factor at index ${index} is zero or NaN. CD calculation may result in Infinity/NaN.`
             );
             // You might want to handle this more robustly, e.g., throw an error or use a default value.
         }
@@ -325,11 +240,7 @@ const DragModelMultiBC = ({
  * @returns {number[]} - An array of interpolated y-values corresponding to the x-values.
  * @throws {Error} - Throws an error if the lengths of `xp` and `yp` do not match, or if `x` is empty.
  */
-const linearInterpolation = (
-    x: number[],
-    xp: number[],
-    yp: number[],
-): number[] => {
+const linearInterpolation = (x: number[], xp: number[], yp: number[]): number[] => {
     if (xp.length !== yp.length) {
         throw new Error("xp and yp lists must have the same length");
     }
@@ -337,7 +248,7 @@ const linearInterpolation = (
         // Add explicit check for empty xp/yp
         if (x.length > 0) {
             throw new Error(
-                "Cannot interpolate with empty reference points (xp, yp) when x is not empty.",
+                "Cannot interpolate with empty reference points (xp, yp) when x is not empty."
             );
         }
         return []; // If all inputs are empty, return empty

@@ -1,22 +1,21 @@
 import { expect } from "@jest/globals";
 import {
     Ammo,
-    BaseEngineConfig,
-    Calculator,
     DragModel,
-    EulerIntegrationEngine,
-    RK4IntegrationEngine,
-    Shot,
-    Table,
+    IntegrationMethod,
+    DragTables,
+    TrajFlag,
     UNew,
     Unit,
     Weapon,
 } from "../src";
+import { Shot } from "../src/shot";
+import { Calculator } from "../src/interface";
 
 const createShot = () => {
     const dm = new DragModel({
         bc: 0.759,
-        dragTable: Table.G1,
+        dragTable: DragTables.G1,
         weight: UNew.Gram(108),
         diameter: UNew.Millimeter(23),
         length: UNew.Millimeter(108.2),
@@ -26,15 +25,15 @@ const createShot = () => {
     return new Shot({ weapon, ammo });
 };
 
-const DISTANCES_FOR_CHECKING = [7126.05];
+const DISTANCES_FOR_CHECKING = [100, 500, 1000];
 
-const engines = [
-    { engine: EulerIntegrationEngine },
-    { engine: RK4IntegrationEngine },
+const methods = [
+    { name: "RK4", method: IntegrationMethod.RK4 },
+    { name: "EULER", method: IntegrationMethod.EULER },
 ];
 
-const testCases = engines.flatMap((engineObj) =>
-    DISTANCES_FOR_CHECKING.map((distance) => ({ engineObj, distance })),
+const testCases = methods.flatMap((obj) =>
+    DISTANCES_FOR_CHECKING.map((distance) => ({ obj, distance }))
 );
 
 describe("Unit test for zero finding in ballistic calculator", () => {
@@ -42,29 +41,28 @@ describe("Unit test for zero finding in ballistic calculator", () => {
     // The test name now uses Jest's $propertyName syntax for interpolation
     test.each(testCases)(
         "test_set_weapon_zero with $engineObj.name and distance $distance",
-        ({ engineObj, distance }) => {
+        async ({ obj, distance }) => {
             // Destructure the properties from the single test case object
-            const { engine } = engineObj;
-            const config: Partial<BaseEngineConfig> = {
-                cMinimumVelocity: 0,
-            };
-            const zeroMinVelocityCalc = new Calculator({ engine, config });
+            const { method } = obj;
+            const zeroMinVelocityCalc = new Calculator({
+                method,
+                config: { cMinimumVelocity: 0 }
+            });
 
             const shot = createShot(); // Create a new shot for each test run
-            zeroMinVelocityCalc.setWeaponZero(shot, UNew.Meter(distance));
+            await zeroMinVelocityCalc.setWeaponZero(shot, UNew.Meter(distance));
             console.log(
-                `${engine} - barrelElevation for ${distance}m: ${shot.barrelElevation.In(Unit.Degree)} degrees`,
+                `${method} - barrelElevation for ${distance}m: ${shot.barrelElevation.In(Unit.Degree)} degrees`
             );
-            const t = zeroMinVelocityCalc.fire({
+            const hit = await zeroMinVelocityCalc.fire({
                 shot,
                 trajectoryRange: UNew.Meter(distance),
-                extraData: true,
-            }).trajectory;
+                filterFlags: TrajFlag.ALL,
+            })
+            const t = hit.trajectory;
 
             const finalHitDistance = t[t.length - 1].distance.In(Unit.Meter);
-            expect(Math.abs(finalHitDistance - distance)).toBeLessThanOrEqual(
-                1.0,
-            );
-        },
+            expect(Math.abs(finalHitDistance - distance)).toBeLessThanOrEqual(1.0);
+        }
     );
 });

@@ -45,7 +45,25 @@ enum Unit {
     Newton = 75,
 }
 
-class AbstractUnit {
+type AngularUnit = Unit.Radian | Unit.Degree | Unit.MOA | Unit.MIL | Unit.MRad | Unit.Thousand | Unit.InchesPer100Yd | Unit.CmPer100M | Unit.OClock
+type DistanceUnit = Unit.Inch | Unit.Foot | Unit.Yard | Unit.Mile | Unit.NauticalMile | Unit.Millimeter | Unit.Centimeter | Unit.Meter | Unit.Kilometer | Unit.Line
+type VelocityUnit = Unit.MPS | Unit.KMH | Unit.FPS | Unit.MPH | Unit.KT
+type WeightUnit = Unit.Grain | Unit.Ounce | Unit.Gram | Unit.Pound | Unit.Kilogram | Unit.Newton
+type TemperatureUnit = Unit.Fahrenheit | Unit.Celsius | Unit.Kelvin | Unit.Rankin
+type EnergyUnit = Unit.FootPound | Unit.Joule
+type PressureUnit = Unit.MmHg | Unit.InHg | Unit.Bar | Unit.hPa | Unit.PSI
+
+// interface Measurable<T> {
+//     rawValue: number;
+//     unitValue: number;
+//     units: Unit;
+//     constructor: (value: number, units: Unit) => Measurable<T>;
+//     toString: () => string;
+//     to: (units: Unit) => Measurable<T>;
+//     In: (units: Unit) => number;
+// }
+
+class Dimension<AllowedUnitT extends Unit> {
     /**
      * Abstract class for unit of measure instance definition.
      * Stores defined unit and value, applies conversions to other units.
@@ -54,11 +72,11 @@ class AbstractUnit {
      * @param {Unit} units - Unit as Unit enum.
      */
 
-    ["constructor"]: typeof AbstractUnit;
+    ["constructor"]: typeof Dimension;
     _value: number;
-    _definedUnits: Unit;
+    _definedUnits: AllowedUnitT;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: AllowedUnitT) {
         // this["constructor"] = this.constructor;
         this._value = this.toRaw(value, units);
         this._definedUnits = units;
@@ -85,7 +103,7 @@ class AbstractUnit {
      * Validates the units.
      *
      * @param {number} value - Value of the unit.
-     * @param {Unit} units - Unit enum type.
+     * @param {AllowedUnitT} units - Unit enum type.
      * @return {number} Value in specified units.
      * @throws {TypeError} When the provided units are not of the expected type.
      * @throws {Error} When the provided units are not supported.
@@ -97,9 +115,7 @@ class AbstractUnit {
         }
 
         if (!Object.values(this).includes(units)) {
-            throw new Error(
-                `${this.constructor.name}: unit ${units} is not supported`,
-            );
+            throw new Error(`${this.constructor.name}: unit ${units} is not supported`);
         }
 
         return 0;
@@ -109,10 +125,10 @@ class AbstractUnit {
      * Converts value with specified units to raw value.
      *
      * @param {number} value - Value of the unit.
-     * @param {Unit} units - Unit enum type.
+     * @param {AllowedUnitT} units - Unit enum type.
      * @return {number} Value in specified units.
      */
-    protected toRaw(value: number, units: Unit): number {
+    protected toRaw(value: number, units: AllowedUnitT): number {
         return this._unit_support_error(value, units);
     }
 
@@ -120,20 +136,22 @@ class AbstractUnit {
      * Converts raw value to specified units.
      *
      * @param {number} value - Raw value of the unit.
-     * @param {Unit} units - Unit enum type.
+     * @param {AllowedUnitT} units - Unit enum type.
      * @return {number} Value in specified units.
      */
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: AllowedUnitT): number {
         return this._unit_support_error(value, units);
     }
 
     /**
      * Returns a new unit instance in specified units.
      *
-     * @param {Unit} units - Unit enum type.
-     * @return {AbstractUnit} New unit instance in specified units.
+     * @param {AllowedUnitT} units - Unit enum type.
+     * @return {Dimension} New unit instance in specified units.
      */
-    to(units: Unit): AbstractUnit {
+    to(units: AllowedUnitT): Dimension<AllowedUnitT>;
+    to(units: Unit): Dimension<Unit>; // Додайте перевантаження
+    to(units: Unit): Dimension<Unit> {
         const value: number = this.In(units);
         return new this.constructor(value, units);
     }
@@ -141,19 +159,21 @@ class AbstractUnit {
     /**
      * Returns value in specified units.
      *
-     * @param {Unit} units - Unit enum type.
+     * @param {AllowedUnitT} units - Unit enum type.
      * @return {number} Value in specified units.
      */
+    In(units: AllowedUnitT): number;
+    In(units: Unit): number; // Додайте перевантаження
     In(units: Unit): number {
-        return this.fromRaw(this._value, units);
+        return this.fromRaw(this._value, units as AllowedUnitT);
     }
 
     /**
      * Returns defined units.
      *
-     * @return {Unit} Defined units.
+     * @return {AllowedUnitT} Defined units.
      */
-    get units(): Unit {
+    get units(): AllowedUnitT {
         return this._definedUnits;
     }
 
@@ -167,26 +187,31 @@ class AbstractUnit {
     }
 }
 
+
 /**
  * Angular unit
  */
-class Angular extends AbstractUnit {
+class Angular extends Dimension<AngularUnit> {
     // Angular unit constants
-    static Radian = Unit.Radian;
-    static Degree = Unit.Degree;
-    static MOA = Unit.MOA;
-    static MIL = Unit.MIL;
-    static MRad = Unit.MRad;
-    static Thousand = Unit.Thousand;
-    static InchesPer100Yd = Unit.InchesPer100Yd;
-    static CmPer100M = Unit.CmPer100M;
-    static OClock = Unit.OClock;
+    static readonly Radian: AngularUnit = Unit.Radian;
+    static readonly Degree: AngularUnit = Unit.Degree;
+    static readonly MOA: AngularUnit = Unit.MOA;
+    static readonly MIL: AngularUnit = Unit.MIL;
+    static readonly MRad: AngularUnit = Unit.MRad;
+    static readonly Thousand: AngularUnit = Unit.Thousand;
+    static readonly InchesPer100Yd: AngularUnit = Unit.InchesPer100Yd;
+    static readonly CmPer100M: AngularUnit = Unit.CmPer100M;
+    static readonly OClock: AngularUnit = Unit.OClock;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: AngularUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    get rad(): number {
+        return this.In(Unit.Radian);
+    }
+
+    protected toRaw(value: number, units: AngularUnit): number {
         let result = 0;
 
         switch (units) {
@@ -227,7 +252,7 @@ class Angular extends AbstractUnit {
         return result;
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: AngularUnit): number {
         switch (units) {
             case Unit.Radian:
                 return value;
@@ -256,24 +281,32 @@ class Angular extends AbstractUnit {
 /**
  * Distance unit
  */
-class Distance extends AbstractUnit {
+class Distance extends Dimension<DistanceUnit> {
     // Distance unit constants
-    static Inch = Unit.Inch;
-    static Foot = Unit.Foot;
-    static Yard = Unit.Yard;
-    static Mile = Unit.Mile;
-    static NauticalMile = Unit.NauticalMile;
-    static Line = Unit.Line;
-    static Millimeter = Unit.Millimeter;
-    static Centimeter = Unit.Centimeter;
-    static Meter = Unit.Meter;
-    static Kilometer = Unit.Kilometer;
+    static readonly Inch: DistanceUnit = Unit.Inch;
+    static readonly Foot: DistanceUnit = Unit.Foot;
+    static readonly Yard: DistanceUnit = Unit.Yard;
+    static readonly Mile: DistanceUnit = Unit.Mile;
+    static readonly NauticalMile: DistanceUnit = Unit.NauticalMile;
+    static readonly Line: DistanceUnit = Unit.Line;
+    static readonly Millimeter: DistanceUnit = Unit.Millimeter;
+    static readonly Centimeter: DistanceUnit = Unit.Centimeter;
+    static readonly Meter: DistanceUnit = Unit.Meter;
+    static readonly Kilometer: DistanceUnit = Unit.Kilometer;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: DistanceUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    get foot(): number {
+        return this.In(Unit.Foot);
+    }
+
+    get inch(): number {
+        return this.In(Unit.Inch);
+    }
+
+    protected toRaw(value: number, units: DistanceUnit): number {
         switch (units) {
             case Unit.Inch:
                 return value;
@@ -300,7 +333,7 @@ class Distance extends AbstractUnit {
         }
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: DistanceUnit): number {
         switch (units) {
             case Unit.Inch:
                 return value;
@@ -331,19 +364,27 @@ class Distance extends AbstractUnit {
 /**
  * Velocity unit
  */
-class Velocity extends AbstractUnit {
+class Velocity extends Dimension<VelocityUnit> {
     // Velocity unit constants
-    static MPS = Unit.MPS;
-    static KMH = Unit.KMH;
-    static FPS = Unit.FPS;
-    static MPH = Unit.MPH;
-    static KT = Unit.KT;
+    static readonly MPS: VelocityUnit = Unit.MPS;
+    static readonly KMH: VelocityUnit = Unit.KMH;
+    static readonly FPS: VelocityUnit = Unit.FPS;
+    static readonly MPH: VelocityUnit = Unit.MPH;
+    static readonly KT: VelocityUnit = Unit.KT;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: VelocityUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    get fps(): number {
+        return this.In(Unit.FPS);
+    }
+
+    get mps(): number {
+        return this.In(Unit.MPS);
+    }
+
+    protected toRaw(value: number, units: VelocityUnit): number {
         switch (units) {
             case Unit.MPS: // Meters Per Second
                 return value;
@@ -360,7 +401,7 @@ class Velocity extends AbstractUnit {
         }
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: VelocityUnit): number {
         switch (units) {
             case Unit.MPS: // Meters Per Second
                 return value;
@@ -381,20 +422,28 @@ class Velocity extends AbstractUnit {
 /**
  * Weight unit
  */
-class Weight extends AbstractUnit {
+class Weight extends Dimension<WeightUnit> {
     // Weight unit constants
-    static Grain = Unit.Grain;
-    static Ounce = Unit.Ounce;
-    static Gram = Unit.Gram;
-    static Pound = Unit.Pound;
-    static Kilogram = Unit.Kilogram;
-    static Newton = Unit.Newton;
+    static readonly Grain: WeightUnit = Unit.Grain;
+    static readonly Ounce: WeightUnit = Unit.Ounce;
+    static readonly Gram: WeightUnit = Unit.Gram;
+    static readonly Pound: WeightUnit = Unit.Pound;
+    static readonly Kilogram: WeightUnit = Unit.Kilogram;
+    static readonly Newton: WeightUnit = Unit.Newton;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: WeightUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    get grain(): number {
+        return this.In(Unit.Grain);
+    }
+
+    get pound(): number {
+        return this.In(Unit.Pound);
+    }
+
+    protected toRaw(value: number, units: WeightUnit): number {
         switch (units) {
             case Unit.Grain:
                 return value;
@@ -413,7 +462,7 @@ class Weight extends AbstractUnit {
         }
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: WeightUnit): number {
         switch (units) {
             case Unit.Grain:
                 return value;
@@ -436,19 +485,19 @@ class Weight extends AbstractUnit {
 /**
  * Pressure unit
  */
-class Pressure extends AbstractUnit {
+class Pressure extends Dimension<PressureUnit> {
     // Pressure unit constants
-    static MmHg = Unit.MmHg;
-    static InHg = Unit.InHg;
-    static Bar = Unit.Bar;
-    static hPa = Unit.hPa;
-    static PSI = Unit.PSI;
+    static readonly MmHg: PressureUnit = Unit.MmHg;
+    static readonly InHg: PressureUnit = Unit.InHg;
+    static readonly Bar: PressureUnit = Unit.Bar;
+    static readonly hPa: PressureUnit = Unit.hPa;
+    static readonly PSI: PressureUnit = Unit.PSI;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: PressureUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    protected toRaw(value: number, units: PressureUnit): number {
         switch (units) {
             case Unit.MmHg: // Millimeters of Mercury (base unit)
                 return value;
@@ -465,7 +514,7 @@ class Pressure extends AbstractUnit {
         }
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: PressureUnit): number {
         switch (units) {
             case Unit.MmHg: // Millimeters of Mercury (base unit)
                 return value;
@@ -486,18 +535,22 @@ class Pressure extends AbstractUnit {
 /**
  * Temperature unit
  */
-class Temperature extends AbstractUnit {
+class Temperature extends Dimension<TemperatureUnit> {
     // Temperature unit constants
-    static Fahrenheit = Unit.Fahrenheit;
-    static Celsius = Unit.Celsius;
-    static Kelvin = Unit.Kelvin;
-    static Rankin = Unit.Rankin;
+    static readonly Fahrenheit: TemperatureUnit = Unit.Fahrenheit;
+    static readonly Celsius: TemperatureUnit = Unit.Celsius;
+    static readonly Kelvin: TemperatureUnit = Unit.Kelvin;
+    static readonly Rankin: TemperatureUnit = Unit.Rankin;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: TemperatureUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    get celsius(): number {
+        return this.In(Unit.Celsius);
+    }
+
+    protected toRaw(value: number, units: TemperatureUnit): number {
         switch (units) {
             case Unit.Fahrenheit:
                 return value;
@@ -512,7 +565,7 @@ class Temperature extends AbstractUnit {
         }
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: TemperatureUnit): number {
         switch (units) {
             case Unit.Fahrenheit:
                 return value;
@@ -531,16 +584,20 @@ class Temperature extends AbstractUnit {
 /**
  * Energy unit
  */
-class Energy extends AbstractUnit {
+class Energy extends Dimension<EnergyUnit> {
     // Energy unit constants
-    static FootPound = Unit.FootPound;
-    static Joule = Unit.Joule;
+    static readonly FootPound: EnergyUnit = Unit.FootPound;
+    static readonly Joule: EnergyUnit = Unit.Joule;
 
-    constructor(value: number, units: Unit) {
+    constructor(value: number, units: EnergyUnit) {
         super(value, units);
     }
 
-    protected toRaw(value: number, units: Unit): number {
+    get footPound(): number {
+        return this.In(Unit.FootPound);
+    }
+
+    protected toRaw(value: number, units: EnergyUnit): number {
         if (units === Unit.FootPound) {
             return value;
         }
@@ -550,7 +607,7 @@ class Energy extends AbstractUnit {
         return super.toRaw(value, units);
     }
 
-    protected fromRaw(value: number, units: Unit): number {
+    protected fromRaw(value: number, units: EnergyUnit): number {
         if (units === Unit.FootPound) {
             return value;
         }
@@ -675,16 +732,14 @@ const UNew = {
     [Unit.MIL]: (value: number) => new Angular(value, Unit.MIL),
     [Unit.MRad]: (value: number) => new Angular(value, Unit.MRad),
     [Unit.Thousand]: (value: number) => new Angular(value, Unit.Thousand),
-    [Unit.InchesPer100Yd]: (value: number) =>
-        new Angular(value, Unit.InchesPer100Yd),
+    [Unit.InchesPer100Yd]: (value: number) => new Angular(value, Unit.InchesPer100Yd),
     [Unit.CmPer100M]: (value: number) => new Angular(value, Unit.CmPer100M),
     [Unit.OClock]: (value: number) => new Angular(value, Unit.OClock),
     [Unit.Inch]: (value: number) => new Distance(value, Unit.Inch),
     [Unit.Foot]: (value: number) => new Distance(value, Unit.Foot),
     [Unit.Yard]: (value: number) => new Distance(value, Unit.Yard),
     [Unit.Mile]: (value: number) => new Distance(value, Unit.Mile),
-    [Unit.NauticalMile]: (value: number) =>
-        new Distance(value, Unit.NauticalMile),
+    [Unit.NauticalMile]: (value: number) => new Distance(value, Unit.NauticalMile),
     [Unit.Millimeter]: (value: number) => new Distance(value, Unit.Millimeter),
     [Unit.Centimeter]: (value: number) => new Distance(value, Unit.Centimeter),
     [Unit.Meter]: (value: number) => new Distance(value, Unit.Meter),
@@ -697,8 +752,7 @@ const UNew = {
     [Unit.Bar]: (value: number) => new Pressure(value, Unit.Bar),
     [Unit.hPa]: (value: number) => new Pressure(value, Unit.hPa),
     [Unit.PSI]: (value: number) => new Pressure(value, Unit.PSI),
-    [Unit.Fahrenheit]: (value: number) =>
-        new Temperature(value, Unit.Fahrenheit),
+    [Unit.Fahrenheit]: (value: number) => new Temperature(value, Unit.Fahrenheit),
     [Unit.Celsius]: (value: number) => new Temperature(value, Unit.Celsius),
     [Unit.Kelvin]: (value: number) => new Temperature(value, Unit.Kelvin),
     [Unit.Rankin]: (value: number) => new Temperature(value, Unit.Rankin),
@@ -731,41 +785,39 @@ const UNew = {
  * @throws {TypeError} If the `instance` is not a `number` and not an instance of the `expectedClass`,
  * indicating an unsupported type for coercion.
  */
-function unitTypeCoerce<T extends AbstractUnit>(
+function unitTypeCoerce<
+    AllowedUnitT extends Unit,
+    T extends Dimension<AllowedUnitT>
+>(
     instance: number | T,
-    expectedClass: new (value: number, unit: Unit) => T, // Better type for constructor
-    defaultUnit: Unit,
+    expectedClass: new (value: number, unit: AllowedUnitT) => T,
+    defaultUnit: AllowedUnitT
 ): T {
     if (instance instanceof expectedClass) {
-        // If the instance is already of the expected class type, return it.
         return instance;
     } else if (typeof instance === "number") {
-        // If the instance is a number, create a new instance using the default unit.
         return new expectedClass(instance, defaultUnit);
     } else {
-        // If the instance is not of the expected type, throw a TypeError.
-        throw new TypeError(
-            `Instance must be a type of ${expectedClass.name} or 'number'`,
-        );
+        throw new TypeError(`Instance must be a type of ${expectedClass.name} or 'number'`);
     }
 }
 
 export interface IPreferredUnits {
-    angular: Unit;
-    distance: Unit;
-    velocity: Unit;
-    pressure: Unit;
-    temperature: Unit;
-    diameter: Unit;
-    length: Unit;
-    weight: Unit;
-    adjustment: Unit;
-    drop: Unit;
-    energy: Unit;
-    ogw: Unit;
-    sight_height: Unit;
-    target_height: Unit;
-    twist: Unit;
+    angular: AngularUnit;
+    distance: DistanceUnit;
+    velocity: VelocityUnit;
+    pressure: PressureUnit;
+    temperature: TemperatureUnit;
+    diameter: DistanceUnit;
+    length: DistanceUnit;
+    weight: WeightUnit;
+    adjustment: AngularUnit;
+    drop: DistanceUnit;
+    energy: EnergyUnit;
+    ogw: WeightUnit;
+    sight_height: DistanceUnit;
+    target_height: DistanceUnit;
+    twist: DistanceUnit;
     defaults(): void;
     setUnits(units: Partial<IPreferredUnits>): void;
 }
@@ -776,21 +828,21 @@ function isUnit(value: any): value is Unit {
 }
 
 export class PreferredUnits implements IPreferredUnits {
-    angular: Unit = Unit.Degree;
-    distance: Unit = Unit.Yard;
-    velocity: Unit = Unit.FPS;
-    pressure: Unit = Unit.InHg;
-    temperature: Unit = Unit.Fahrenheit;
-    diameter: Unit = Unit.Inch;
-    length: Unit = Unit.Inch;
-    weight: Unit = Unit.Grain;
-    adjustment: Unit = Unit.MIL;
-    drop: Unit = Unit.Inch;
-    energy: Unit = Unit.FootPound;
-    ogw: Unit = Unit.Pound;
-    sight_height: Unit = Unit.Inch;
-    target_height: Unit = Unit.Inch;
-    twist: Unit = Unit.Inch;
+    angular: AngularUnit = Unit.Degree;
+    distance: DistanceUnit = Unit.Yard;
+    velocity: VelocityUnit = Unit.FPS;
+    pressure: PressureUnit = Unit.InHg;
+    temperature: TemperatureUnit = Unit.Fahrenheit;
+    diameter: DistanceUnit = Unit.Inch;
+    length: DistanceUnit = Unit.Inch;
+    weight: WeightUnit = Unit.Grain;
+    adjustment: AngularUnit = Unit.MIL;
+    drop: DistanceUnit = Unit.Inch;
+    energy: EnergyUnit = Unit.FootPound;
+    ogw: WeightUnit = Unit.Pound;
+    sight_height: DistanceUnit = Unit.Inch;
+    target_height: DistanceUnit = Unit.Inch;
+    twist: DistanceUnit = Unit.Inch;
 
     defaults(): void {
         this.angular = Unit.Degree;
@@ -824,7 +876,7 @@ export class PreferredUnits implements IPreferredUnits {
 const preferredUnits = new PreferredUnits();
 
 export {
-    AbstractUnit,
+    Dimension,
     Angular,
     Distance,
     Velocity,
@@ -833,6 +885,13 @@ export {
     Pressure,
     Energy,
     Unit,
+    type AngularUnit,
+    type DistanceUnit,
+    type VelocityUnit,
+    type WeightUnit,
+    type TemperatureUnit,
+    type EnergyUnit,
+    type PressureUnit,
     UnitProps,
     unitTypeCoerce,
     UNew,
