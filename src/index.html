@@ -38,6 +38,25 @@
             gap: 20px;
         }
 
+        .results-grid {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            height: 400px;
+        }
+
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+
         .panel {
             background: white;
             border-radius: 12px;
@@ -237,17 +256,25 @@
             </div>
 
             <!-- Results Panel -->
-            <div class="panel results">
-                <h2>Results</h2>
-                <div id="output" class="output">Enter parameters and click Calculate...</div>
+            <div class="results-grid">
+                <div class="chart-container">
+                    <canvas id="chart"></canvas>
+                </div>
+
+                <div class="panel results">
+                    <h2>Results</h2>
+                    <div id="output" class="output">Enter parameters and click Calculate...</div>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script type="module">
         import { Calculator, Ammo, Atmo, DragModel, DragTables, UNew, Unit, Weapon, Wind, Shot } from './index.js';
 
         const output = document.getElementById('output');
+        let trajectoryChart = null;
 
         function log(msg) {
             output.textContent += msg + '\n';
@@ -255,6 +282,107 @@
 
         function clear() {
             output.textContent = '';
+        }
+
+        function updateChart(trajectoryData) {
+            const ctx = document.getElementById('chart').getContext('2d');
+
+            // Prepare data
+            const ranges = trajectoryData.map(d => d.distance.In(Unit.Yard));
+            const drops = trajectoryData.map(d => d.height.In(Unit.Inch));
+            const windages = trajectoryData.map(d => d.windage.In(Unit.Inch));
+
+            // Destroy existing chart
+            if (trajectoryChart) {
+                trajectoryChart.destroy();
+            }
+
+            // Create new chart
+            trajectoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ranges,
+                    datasets: [
+                        {
+                            label: 'Drop (inches)',
+                            data: drops,
+                            borderColor: '#2a5298',
+                            backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Windage (inches)',
+                            data: windages,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Trajectory Chart',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Range (yards)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Inches',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         document.getElementById('calculate').addEventListener('click', async () => {
@@ -360,6 +488,9 @@
                 log('═══════════════════════════════════════════════════');
                 log('');
                 log('✅ Calculation complete!');
+
+                // Update chart
+                updateChart(hit.trajectory);
 
             } catch (error) {
                 clear();
