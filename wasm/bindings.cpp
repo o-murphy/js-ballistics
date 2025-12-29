@@ -443,6 +443,53 @@ inline static BCLIBC_BaseTrajData interpolateBaseTrajData(
     return out;
 };
 
+// ============================================================================
+// Test Functions for Exception Handling
+// ============================================================================
+
+/**
+ * @brief Custom C++ exception class for testing
+ * Inherits from std::runtime_error and adds custom fields
+ */
+class TestCustomException : public std::runtime_error
+{
+public:
+    double customValue;
+    int customCount;
+
+    TestCustomException(const std::string& message, double value, int count)
+        : std::runtime_error(message), customValue(value), customCount(count) {}
+};
+
+/**
+ * @brief Test function that throws std::runtime_error as JavaScript Error
+ * Used to verify C++ exception to JavaScript exception conversion
+ */
+inline static void testThrowRuntimeError(const std::string& message)
+{
+    // Create and throw JavaScript Error object directly
+    val error = val::global("Error").new_(message);
+    error.throw_();
+}
+
+/**
+ * @brief Test function that throws custom C++ exception with additional fields
+ * Converts custom exception to JavaScript Error with properties
+ */
+inline static void testThrowCustomException(const std::string& message, double value, int count)
+{
+    try {
+        throw TestCustomException(message, value, count);
+    }
+    catch (const TestCustomException& e) {
+        // Create JavaScript Error with custom properties
+        val error = val::global("Error").new_(std::string(e.what()));
+        error.set("customValue", e.customValue);
+        error.set("customCount", e.customCount);
+        error.throw_();
+    }
+}
+
 EMSCRIPTEN_BINDINGS(bclibc)
 {
     // ========================================================================
@@ -644,6 +691,13 @@ EMSCRIPTEN_BINDINGS(bclibc)
     function("getCorrection", &BCLIBC_getCorrection);
     function("calculateEnergy", &BCLIBC_calculateEnergy);
     function("calculateOgw", &BCLIBC_calculateOgw);
+
+    // ========================================================================
+    // Test Functions (for exception handling verification)
+    // ========================================================================
+
+    function("testThrowRuntimeError", &testThrowRuntimeError);
+    function("testThrowCustomException", &testThrowCustomException);
 
     // ========================================================================
     // Interpolation Functions

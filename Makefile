@@ -12,11 +12,14 @@ CPP_SOURCES = $(wildcard $(BCLIBC_SRC)/*.cpp)
 
 # Emscripten paths
 EMSDK_DIR = ./lib/emsdk
+EMSDK_ENV = $(EMSDK_DIR)/emsdk_env.sh
 
-build-wasm: check-emsdk
+build-wasm:
 	@echo "🔨 Building WASM (ESM)..."
 	@mkdir -p $(WASM_OUT_DIR)
-	emcc wasm/bindings.cpp $(CPP_SOURCES) -o $(WASM_OUT_DIR)/bclibc.js \
+	@bash -c "source $(EMSDK_ENV) && \
+		(command -v emcc >/dev/null 2>&1 && echo '✅ Emscripten is available' || (echo '❌ Emscripten not found!' && exit 1)) && \
+		emcc wasm/bindings.cpp $(CPP_SOURCES) -o $(WASM_OUT_DIR)/bclibc.js \
 		--bind \
 		--post-js wasm/post.js \
 		-I$(BCLIBC_INCLUDE) \
@@ -26,7 +29,9 @@ build-wasm: check-emsdk
 		-s ENVIRONMENT='web,node,worker' \
 		--emit-tsd bclibc.d.ts \
 		-O3 \
-		-s ALLOW_MEMORY_GROWTH=1
+		-s ALLOW_MEMORY_GROWTH=1 \
+		-fexceptions \
+		-s DISABLE_EXCEPTION_CATCHING=0"
 	@echo "✅ ESM WASM built in $(WASM_OUT_DIR)"
 
 build-ts:
