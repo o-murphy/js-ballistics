@@ -1,5 +1,5 @@
-export type * from "./legacy/vector"
-export * from "./legacy/vector"
+export type * from "./vector"
+export * from "./vector"
 
 export type * from "./constants"
 export * from "./constants"

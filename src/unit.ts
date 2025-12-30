@@ -435,6 +435,10 @@ class Weight extends Dimension<WeightUnit> {
         return this.In(Unit.Grain);
     }
 
+    get pound(): number {
+        return this.In(Unit.Pound);
+    }
+
     protected toRaw(value: number, units: WeightUnit): number {
         switch (units) {
             case Unit.Grain:
@@ -579,6 +583,10 @@ class Energy extends Dimension<EnergyUnit> {
 
     constructor(value: number, units: EnergyUnit) {
         super(value, units);
+    }
+
+    get footPound(): number {
+        return this.In(Unit.FootPound);
     }
 
     protected toRaw(value: number, units: EnergyUnit): number {

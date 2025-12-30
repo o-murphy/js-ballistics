@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import Vector from "../src/legacy/vector";
+import Vector from "../src/vector";
 
 describe("VectorJs module", () => {
     test("Create", () => {

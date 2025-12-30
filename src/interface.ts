@@ -214,6 +214,6 @@ class Calculator {
             request
         );
 
-        return HitResult.fromWasmHitOutput(shot, hit_out, Boolean(filterFlags & TrajFlag.ALL));
+        return HitResult.fromWasmHitOutput(shot, hit_out);
     }
 }

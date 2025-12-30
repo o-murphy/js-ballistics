@@ -25,7 +25,7 @@ const createShot = () => {
     return new Shot({ weapon, ammo });
 };
 
-const DISTANCES_FOR_CHECKING = [7126.05];
+const DISTANCES_FOR_CHECKING = [100, 500, 1000];
 
 const methods = [
     { name: "RK4", method: IntegrationMethod.RK4 },
@@ -50,7 +50,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
             });
 
             const shot = createShot(); // Create a new shot for each test run
-            zeroMinVelocityCalc.setWeaponZero(shot, UNew.Meter(distance));
+            await zeroMinVelocityCalc.setWeaponZero(shot, UNew.Meter(distance));
             console.log(
                 `${method} - barrelElevation for ${distance}m: ${shot.barrelElevation.In(Unit.Degree)} degrees`
             );
