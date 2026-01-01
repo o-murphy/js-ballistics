@@ -13,7 +13,6 @@ import {
     cMaxWindDistanceFeet,
     cLowestTempF,
     cStandardDensityMetric,
-    cLapseRateKperFoot,
     cStandardPressureMetric,
     cLapseRateMetric,
     cStandardTemperatureC,
@@ -154,44 +153,6 @@ class Atmo {
 
     get densityImperial(): number {
         return this._densityRatio * cStandardDensity;
-    }
-
-    temperatureAtAltitude(altitude: number): number {
-        let t = (altitude - this._a0) * cLapseRateKperFoot + this._t0;
-        if (t < Atmo.cLowestTempC) {
-            t = Atmo.cLowestTempC;
-            console.warn(`Temperature interpolated from altitude fell below minimum temperature limit.
-                Model not accurate here.  Temperature bounded at cLowestTempF: ${cLowestTempF}°F.`);
-        }
-        return t;
-    }
-
-    pressureAtAltitude(altitude: number): number {
-        return (
-            this._p0 *
-            Math.pow(
-                1 + (cLapseRateKperFoot * (altitude - this._a0)) / (this._t0 + cDegreesCtoK),
-                cPressureExponent
-            )
-        );
-    }
-
-    getDensityFactorAndMachForAltitude(altitude: number): [number, number] {
-        // Within 30 ft of initial altitude use initial values to save compute
-        if (Math.abs(this._a0 - altitude) < 30) {
-            return [this._densityRatio, this._mach];
-        }
-        if (altitude > 36089) {
-            console.warn(
-                "Density request for altitude above troposphere. Atmospheric model not valid here."
-            );
-        }
-        const t = this.temperatureAtAltitude(altitude) + cDegreesCtoK;
-        const mach = UNew.MPS(Atmo.machK(t)).fps;
-        const p = this.pressureAtAltitude(altitude);
-        const densityDelta = ((this._t0 + cDegreesCtoK) * p) / (this._p0 * t);
-        const densityRatio = this._densityRatio * densityDelta;
-        return [densityRatio, mach];
     }
 
     static standardTemperature(altitude: Distance): Temperature {

@@ -59,26 +59,14 @@ describe("Atmo Class Tests", () => {
         expect(highISA.mach.In(Velocity.MPS)).toBeCloseTo(336.4, 1);
     });
 
-    test("altitude", () => {
-        // TODO: should warn
-        const _atmo = new Atmo();
-        _atmo.getDensityFactorAndMachForAltitude(100_000);
-    });
+    // Removed: getDensityFactorAndMachForAltitude is now handled by WASM
 
     test("density", () => {
         expect(Atmo.calculateAirDensity(20, 1013, 0)).toBeCloseTo(1.20383, 4);
         expect(Atmo.calculateAirDensity(20, 1013, 1)).toBeCloseTo(1.19332, 4);
     });
 
-    test("changes", () => {
-        expect(standard.temperatureAtAltitude(5000)).toBeLessThan(
-            standard.temperature.In(Temperature.Celsius)
-        );
-        expect(standard.pressureAtAltitude(5000)).toBeLessThan(standard.pressure.In(Pressure.hPa));
-        const [density_ratio, mach] = standard.getDensityFactorAndMachForAltitude(5000);
-        expect(density_ratio).toBeLessThan(standard.densityRatio);
-        expect(mach).toBeLessThan(standard.mach.In(Velocity.FPS));
-    });
+    // Removed: temperatureAtAltitude and pressureAtAltitude are now handled by WASM
 
     test.each(methods)("trajectory effects $name", async (obj) => {
         const { method } = obj;
