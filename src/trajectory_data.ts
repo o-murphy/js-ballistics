@@ -4,7 +4,6 @@ import {
     UnitProps,
     Unit,
     preferredUnits,
-    unitTypeCoerce,
     Angular,
     Distance,
     Velocity,

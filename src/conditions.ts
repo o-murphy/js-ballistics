@@ -16,7 +16,6 @@ import {
     cStandardPressureMetric,
     cLapseRateMetric,
     cStandardTemperatureC,
-    cSpeedOfSoundMetric,
 } from "./constants";
 import {
     unitTypeCoerce,
@@ -200,24 +199,6 @@ class Atmo {
             fahrenheit = cLowestTempF;  // ← ДОДАНО: коригування
         }
         return Math.sqrt(fahrenheit + cDegreesFtoR) * cSpeedOfSoundImperial;
-    }
-
-    static machC(celsius: number): number {
-        if (celsius < -cDegreesCtoK) {
-            const badTemp = celsius;
-            celsius = Atmo.cLowestTempC;
-            console.warn(`Invalid temperature: ${badTemp}°C. Adjusted to (${celsius}°C).`);
-        }
-        return Atmo.machK(celsius + cDegreesCtoK);
-    }
-
-    static machK(kelvin: number): number {
-        if (kelvin < 0) {
-            const badTemp = kelvin;
-            kelvin = Atmo.cLowestTempC + cDegreesCtoK;
-            console.warn(`Invalid temperature: ${badTemp}K. Adjusted to (${kelvin}K).`);
-        }
-        return Math.sqrt(kelvin) * cSpeedOfSoundMetric;
     }
 
     static calculateAirDensity(t: number, p_hpa: number, humidity: number): number {
