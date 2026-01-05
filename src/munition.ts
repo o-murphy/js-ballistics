@@ -11,6 +11,7 @@ import {
     preferredUnits,
 } from "./unit";
 import { DragModel } from "./drag_model.js";
+import { _ShotPropsInput, ShotPropsInput } from "./_wasm";
 
 class Weapon {
     readonly sightHeight: Distance;
@@ -37,68 +38,129 @@ class Weapon {
         this.twist = unitTypeCoerce(twist ?? 0, Distance, preferredUnits.twist);
         this.zeroElevation = unitTypeCoerce(zeroElevation ?? 0, Angular, preferredUnits.angular);
     }
+
+    toWasmWeaponInput(): Pick<_ShotPropsInput, "sight_height_ft" | "twist_inch"> {
+        return {
+            sight_height_ft: this.sightHeight.foot,
+            twist_inch: this.twist.inch,
+        }
+    }
+}
+
+/**
+ * Configuration properties for initializing or updating an Ammo instance.
+ */
+interface AmmoProps {
+    /** Ballistic Drag Model containing BC and drag table. */
+    dm: DragModel;
+    /** Muzzle velocity (MV) of the projectile. */
+    mv: number | Velocity;
+    /** Standard temperature at which the muzzle velocity was measured. @default 15°C */
+    powderTemp?: number | Temperature;
+    /** Sensitivity coefficient of the powder to temperature changes. @default 0 */
+    tempModifier?: number;
+    /** Enable or disable muzzle velocity adjustment based on current powder temperature. @default false */
+    usePowderSensitivity?: boolean;
 }
 
 class Ammo {
-    public dm: DragModel;
-    public mv: Velocity;
-    public powderTemp: Temperature;
-    public tempModifier: number;
-    public usePowderSensitivity: boolean;
+    private _dm!: DragModel;
+    private _mv!: Velocity;
+    private _powderTemp!: Temperature;
+    private _tempModifier!: number;
+    private _usePowderSensitivity!: boolean;
+
+    private _props: AmmoProps = {} as AmmoProps;
+
     /**
      * Creates an instance of Ammo with specified properties.
-     * @param {Object} options - Parameters for initializing the Ammo instance.
-     * @param {DragModel} options.dm - Drag model instance.
-     * @param {number | Velocity} options.mv - Velocity value.
-     * @param {number} [options.tempModifier=0] - Temperature modifier value. Defaults to 0.
-     * @param {number | Temperature} [options.powderTemp=undefined] - Powder temperature value. Defaults to undefined.
-     * @param {boolean} [options.usePowderSensitivity=false] - Use powder sensitivity value. Defaults to false.
+     * @param props - Parameters for initializing the Ammo instance.
+     * @param props.dm - Ballistic Drag Model containing BC and drag table.
+     * @param props.mv - Muzzle velocity (MV) of the projectile.
+     * @param props.powderTemp - Standard temperature at which the muzzle velocity was measured.
+     * @param props.tempModifier - Sensitivity coefficient of the powder.
+     * @param props.usePowderSensitivity - Enable/disable velocity adjustment.
      */
-    constructor({
-        dm,
-        mv,
-        powderTemp = undefined,
-        tempModifier = 0,
-        usePowderSensitivity = false,
-    }: {
-        dm: DragModel;
-        mv: number | Velocity;
-        powderTemp?: number | Temperature;
-        tempModifier?: number;
-        usePowderSensitivity?: boolean;
-    }) {
-        this.dm = dm;
-        this.mv = unitTypeCoerce(mv ?? 0, Velocity, preferredUnits.velocity);
-        this.powderTemp = unitTypeCoerce(
-            powderTemp ?? UNew.Celsius(15),
-            Temperature,
-            preferredUnits.temperature
-        );
-        this.tempModifier = tempModifier ?? 0;
-        this.usePowderSensitivity = usePowderSensitivity;
+    constructor(props: AmmoProps) {
+        this.update(props);
+    }
+
+    /** * Current Ballistic Drag Model.
+     */
+    get dm(): DragModel {
+        return this._dm;
+    }
+
+    /** * Base muzzle velocity at standard powder temperature.
+     */
+    get mv(): Velocity {
+        return this._mv;
+    }
+
+    /** * The temperature at which the base muzzle velocity was recorded.
+     */
+    get powderTemp(): Temperature {
+        return this._powderTemp;
+    }
+
+    /** * Powder sensitivity factor (velocity change per degree).
+     */
+    get tempModifier(): number {
+        return this._tempModifier;
+    }
+
+    /** * Indicates if powder temperature sensitivity is currently applied.
+     */
+    get usePowderSensitivity(): boolean {
+        return this._usePowderSensitivity;
     }
 
     /**
-     * Calculates the velocity correction based on the change in temperature and assigns it to the temperature modifier.
-     * @param {number | Velocity} otherVelocity - The velocity to compare with.
-     * @param {number | Temperature} otherTemperature - The temperature to compare with.
-     * @returns {number} - The calculated temperature sensitivity adjustment.
+     * Updates the ammo properties and triggers internal recalculation.
+     * Use this to change MV, powder properties, or the drag model.
+     * @param newProps - Object containing properties to update.
+     */
+    update(newProps: Partial<AmmoProps>) {
+        Object.assign(this._props, newProps);
+        this._recalculate();
+    }
+
+    /**
+     * Synchronizes internal calculated fields with the current properties.
+     * @private
+     */
+    private _recalculate(): void {
+        const p = this._props;
+
+        this._dm = p.dm;
+        this._mv = unitTypeCoerce(p.mv ?? 0, Velocity, preferredUnits.velocity);
+        this._powderTemp = unitTypeCoerce(
+            p.powderTemp ?? UNew.Celsius(15),
+            Temperature,
+            preferredUnits.temperature
+        );
+        this._tempModifier = p.tempModifier ?? 0;
+        this._usePowderSensitivity = p.usePowderSensitivity ?? false;
+    }
+
+    /**
+     * Calculates the velocity correction based on the change in temperature
+     * and updates the internal tempModifier.
+     * * @param otherVelocity - Secondary muzzle velocity measured at a different temperature.
+     * @param otherTemperature - The temperature at which the secondary velocity was measured.
+     * @returns The calculated temperature sensitivity adjustment factor.
      */
     calcPowderSens(
         otherVelocity: number | Velocity,
         otherTemperature: number | Temperature
     ): number {
-        const v0 = this.mv.In(Velocity.MPS);
-        const t0 = this.powderTemp.In(Temperature.Celsius);
-        const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).In(
-            Velocity.MPS
-        );
-        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature).In(
-            Temperature.Celsius
-        );
+        const v0 = this._mv.mps;
+        const t0 = this._powderTemp.celsius;
+        const v1 = unitTypeCoerce(otherVelocity, Velocity, preferredUnits.velocity).mps;
+        const t1 = unitTypeCoerce(otherTemperature, Temperature, preferredUnits.temperature).celsius;
 
         if (v0 <= 0 || v1 <= 0) {
-            throw new Error("calcPowderSens requires positive muzzle velocities")
+            throw new Error("calcPowderSens requires positive muzzle velocities");
         }
 
         const vDelta = Math.abs(v0 - v1);
@@ -107,33 +169,47 @@ class Ammo {
 
         if (vDelta === 0 || tDelta === 0) {
             throw new Error(
-                "Temperature modifier error, other velocity and temperature can't be same as default"
+                "Temperature modifier error: secondary values cannot be identical to defaults."
             );
         }
-        this.tempModifier = (vDelta / tDelta) * (15 / vLower); // * 100
-        return this.tempModifier;
+
+        const sens = (vDelta / tDelta) * (15 / vLower);
+        // update _props
+        this.update({ tempModifier: sens });
+        return sens;
     }
 
     /**
-     * Calculates the muzzle velocity at a given temperature based on the temperature modifier.
-     * @param {number | Temperature} currentTemp - The current temperature for which to calculate the velocity.
-     * @returns {Velocity} - The calculated muzzle velocity at the specified temperature.
+     * Calculates the expected muzzle velocity for a given powder temperature.
+     * Uses the temperature modifier if usePowderSensitivity is enabled.
+     * * @param currentTemp - The current temperature of the gunpowder.
+     * @returns Muzzle velocity adjusted for the given temperature.
      */
     getVelocityForTemp(currentTemp: number | Temperature): Velocity {
-        if (!this.usePowderSensitivity) {
-            return this.mv;
+        if (!this._usePowderSensitivity) {
+            return this._mv;
         }
-        const v0 = this.mv.In(Velocity.MPS);
+        const v0 = this._mv.mps;
         if (!isFinite(v0)) {
             return UNew.MPS(0);
         }
-        const t0 = this.powderTemp.In(Temperature.Celsius);
-        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).In(
-            Temperature.Celsius
-        );
+        const t0 = this._powderTemp.celsius;
+        const t1 = unitTypeCoerce(currentTemp, Temperature, preferredUnits.temperature).celsius;
         const tDelta = t1 - t0;
-        const muzzleVelocity = (this.tempModifier / (15 / v0)) * tDelta + v0;
+
+        // Formula: MV_adj = (Sens / (15 / V0)) * deltaT + V0
+        const muzzleVelocity = (this._tempModifier / (15 / v0)) * tDelta + v0;
         return UNew.MPS(muzzleVelocity);
+    }
+
+    toWasmAmmoInput(): Pick<ShotPropsInput, "bc" | "drag_table" | "weight_grain" | "diameter_inch" | "length_inch"> {
+        return {
+            bc: this.dm.bc,
+            drag_table: this._dm.dragTable,
+            weight_grain: this._dm.weight.grain,
+            diameter_inch: this._dm.diameter.inch,
+            length_inch: this._dm.length.inch,
+        }
     }
 }
 

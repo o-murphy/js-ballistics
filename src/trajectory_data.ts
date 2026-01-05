@@ -247,13 +247,13 @@ class HitResult {
     constructor(
         shot: Shot,
         trajectory: TrajectoryData[],
+        filterFlags: TrajFlag = TrajFlag.NONE,
         error?: Error,
-        filterFlags: TrajFlag = TrajFlag.NONE
     ) {
         this.shot = shot;
         this.trajectory = trajectory;
-        this.error = error;
         this.filterFlags = filterFlags;
+        this.error = error;
     }
 
     /**
@@ -519,7 +519,7 @@ class HitResult {
             throw error;
         }
 
-        return new HitResult(shot, trajectory, error, filterFlags);
+        return new HitResult(shot, trajectory, filterFlags, error);
     }
 }
 

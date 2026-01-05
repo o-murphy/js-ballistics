@@ -54,8 +54,10 @@ class Shot {
     cantAngle: Angular;
 
     protected _winds?: Wind[];
-    protected _azimuthDeg?: number;
-    protected _latitudeDeg?: number;
+    protected _coriolis: {
+        azimuthDeg?: number,
+        latitudeDeg?: number
+    };
 
     /**
      * Creates an instance of the Shot class.
@@ -72,9 +74,10 @@ class Shot {
      * @param options.relativeAngle - Elevation adjustment ("hold") added to `weapon.zeroElevation`
      * @param options.cantAngle - Tilt of gun from vertical. Shifts barrel elevation
      *        from vertical plane into horizontal plane by `sin(cantAngle)`
-     * @param options.azimuthDeg - Azimuth of shooting direction in degrees [0, 360). Optional, for Coriolis effects.
+     * @param options.coriolis - Coriolis azimuth and latitude
+     * @param options.coriolis.azimuthDeg - Azimuth of shooting direction in degrees [0, 360). Optional, for Coriolis effects.
      *        Geographic bearing: 0 = North, 90 = East, 180 = South, 270 = West
-     * @param options.latitudeDeg - Latitude of shooting location in degrees [-90, 90]. Optional, for Coriolis effects
+     * @param options.coriolis.latitudeDeg - Latitude of shooting location in degrees [-90, 90]. Optional, for Coriolis effects
      *
      * @example
      * ```typescript
@@ -95,8 +98,7 @@ class Shot {
         cantAngle = undefined,
         atmo = undefined,
         winds = undefined,
-        azimuthDeg = undefined,
-        latitudeDeg = undefined,
+        coriolis = undefined
     }: {
         ammo: Ammo,
         atmo?: Atmo,
@@ -105,8 +107,10 @@ class Shot {
         lookAngle?: number | Angular,
         relativeAngle?: number | Angular,
         cantAngle?: number | Angular,
-        azimuthDeg?: number,
-        latitudeDeg?: number
+        coriolis?: {
+            azimuthDeg?: number,
+            latitudeDeg?: number
+        }
     }) {
         this.lookAngle = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
         this.relativeAngle = unitTypeCoerce(relativeAngle ?? 0, Angular, preferredUnits.angular);
@@ -115,8 +119,7 @@ class Shot {
         this.ammo = ammo;
         this.atmo = atmo ?? Atmo.icao();
         this.winds = winds;
-        this.azimuthDeg = azimuthDeg;
-        this.latitudeDeg = latitudeDeg;
+        this._coriolis = coriolis ?? {};
     }
 
     /**
@@ -127,14 +130,14 @@ class Shot {
      * Optional, used for Coriolis effects.
      */
     get azimuthDeg(): number | undefined {
-        return this._azimuthDeg;
+        return this._coriolis?.azimuthDeg;
     }
 
     set azimuthDeg(value: number | undefined) {
         if (value !== undefined && (value < 0.0 || value >= 360.0)) {
             throw new Error("Azimuth must be in range [0, 360).");
         }
-        this._azimuthDeg = value;
+        this._coriolis.azimuthDeg = value;
     }
 
     /**
@@ -143,14 +146,14 @@ class Shot {
      * Optional, used for Coriolis effects.
      */
     get latitudeDeg(): number | undefined {
-        return this._latitudeDeg;
+        return this._coriolis.latitudeDeg;
     }
 
     set latitudeDeg(value: number | undefined) {
         if (value !== undefined && (value < -90.0 || value > 90.0)) {
             throw new Error("Latitude must be in range [-90, 90].");
         }
-        this._latitudeDeg = value;
+        this._coriolis.latitudeDeg = value;
     }
 
     /**
@@ -260,11 +263,7 @@ class Shot {
 
         return {
             // Ballistic properties
-            bc: this.ammo.dm.bc,
-            drag_table: this.ammo.dm.dragTable,
-            weight_grain: this.ammo.dm.weight.grain,
-            diameter_inch: this.ammo.dm.diameter.inch,
-            length_inch: this.ammo.dm.length.inch,
+            ...this.ammo.toWasmAmmoInput(),
 
             // Velocity (adjusted for powder temperature)
             muzzle_velocity_fps: muzzle_velocity_fps,
@@ -276,8 +275,7 @@ class Shot {
             cant_angle_rad: this.cantAngle.rad,
 
             // Weapon properties
-            sight_height_ft: this.weapon.sightHeight.foot,
-            twist_inch: this.weapon.twist.inch,
+            ...this.weapon.toWasmWeaponInput(),
 
             // Environmental conditions
             alt0_ft: this.atmo.altitude.foot,

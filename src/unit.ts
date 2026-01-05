@@ -380,6 +380,10 @@ class Velocity extends Dimension<VelocityUnit> {
         return this.In(Unit.FPS);
     }
 
+    get mps(): number {
+        return this.In(Unit.MPS);
+    }
+
     protected toRaw(value: number, units: VelocityUnit): number {
         switch (units) {
             case Unit.MPS: // Meters Per Second
@@ -540,6 +544,10 @@ class Temperature extends Dimension<TemperatureUnit> {
 
     constructor(value: number, units: TemperatureUnit) {
         super(value, units);
+    }
+
+    get celsius(): number {
+        return this.In(Unit.Celsius);
     }
 
     protected toRaw(value: number, units: TemperatureUnit): number {
