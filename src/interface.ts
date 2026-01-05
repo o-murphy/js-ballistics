@@ -78,8 +78,8 @@ class Calculator {
         // Ensure maximumDrop and minimumAltitude are negative (like Python does)
         // C++ engine expects: height < maximumDrop (triggers when bullet drops too far)
         // C++ engine expects: altitude < minimumAltitude (triggers when too low)
-        this.config.maximumDrop = -Math.abs(this.config.maximumDrop);
-        this.config.minimumAltitude = -Math.abs(this.config.minimumAltitude);
+        // this.config.maximumDrop = -Math.abs(this.config.maximumDrop);
+        // this.config.minimumAltitude = -Math.abs(this.config.minimumAltitude);
     }
 
     /**
@@ -216,6 +216,19 @@ class Calculator {
             dense_output: denseOutput,
             filter_flags: filterFlags as unknown as _TrajFlag
         };
+
+        // Debug: log request for vertical shot
+        const angleInDeg = shot.relativeAngle.rad * 180 / Math.PI;
+        if (Math.abs(angleInDeg - 90) < 0.1) {  // If near-vertical
+            console.log('[Calculator.fire] Vertical shot request:', {
+                angleInDeg,
+                range_limit_ft: request.range_limit_ft,
+                range_step_ft: request.range_step_ft,
+                filter_flags: filterFlags,
+                filter_flags_typeof: typeof request.filter_flags,
+                filter_flags_value: request.filter_flags
+            });
+        }
 
         // Calculate trajectory
         const hit_out: HitOutput = engine.integrate(
