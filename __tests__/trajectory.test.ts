@@ -95,7 +95,7 @@ const allValidations: Validation[] = [
     },
     {
         name: "hold",
-        get: (d, unit) => d.dropAdjustment.In(unit!),
+        get: (d, unit) => d.dropAngle.In(unit!),
         expected: (item) => item[6],
         accuracy: 0.5,
         skip: (item) => item[1] <= 1
@@ -108,7 +108,7 @@ const allValidations: Validation[] = [
     },
     {
         name: "wind adjust",
-        get: (d, unit) => d.windageAdjustment.In(unit!),
+        get: (d, unit) => d.windageAngle.In(unit!),
         expected: (item) => item[8],
         accuracy: 0.5,
         skip: (item) => item[1] <= 1

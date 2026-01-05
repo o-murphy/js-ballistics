@@ -19,8 +19,10 @@ import {
     _InterpMethod,
     HitOutput,
     TrajFlag,
-    loadBclibc
+    loadBclibc,
+    TerminationReason
 } from "./_wasm";
+import { RangeError } from "./exceptions";
 
 const trajFlagNames: Record<number, string> = {
     [TrajFlag.NONE]: "NONE",
@@ -78,22 +80,22 @@ class TrajectoryData {
      * This class is used solely as a return value from trajectory calculations.
      *
      * @class
-     * @param {number} time - The time elapsed in the trajectory calculation.
-     * @param {Distance} distance - The distance traveled.
+     * @param {number} time - Flight time in seconds
+     * @param {Distance} distance - Down-range (x-axis) coordinate of this point
      * @param {Velocity} velocity - The velocity at the given point.
-     * @param {number} mach - The Mach number at the given point.
-     * @param {Distance} height - The height above the reference point.
-     * @param {Distance} targetDrop - The drop from the target elevation.
-     * @param {Angular} dropAdjustment - Adjustment in angle due to drop.
-     * @param {Distance} windage - The amount of windage correction.
-     * @param {Angular} windageAdjustment - Adjustment in angle due to windage.
-     * @param {Distance} lookDistance - The distance to the target.
-     * @param {Angular} angle - The angle of the trajectory.
-     * @param {number} densityFactor - Factor representing air density effects.
-     * @param {number} drag - The drag experienced by the projectile.
-     * @param {Energy} energy - The energy of the projectile.
-     * @param {Weight} ogw - The optimal gun weight.
-     * @param {TrajFlag} flag - Flags representing various trajectory characteristics.
+     * @param {number} mach - Velocity in Mach terms
+     * @param {Distance} height - Vertical (y-axis) coordinate of this point
+     * @param {Distance} slantHeight - Distance orthogonal to sight-line
+     * @param {Angular} dropAngle - Slant_height in angular terms
+     * @param {Distance} windage - Windage (z-axis) coordinate of this point
+     * @param {Angular} windageAngle - Windage in angular terms
+     * @param {Distance} slantDistance - Distance along sight line that is closest to this point
+     * @param {Angular} angle - Angle of velocity vector relative to x-axis
+     * @param {number} densityRatio - Ratio of air density here to standard density
+     * @param {number} drag - Standard Drag Factor at this point
+     * @param {Energy} energy - Energy of bullet at this point
+     * @param {Weight} ogw - Optimal game weight, given .energy
+     * @param {TrajFlag} flag - Row type
      */
     constructor(
         readonly time: number,
@@ -101,13 +103,13 @@ class TrajectoryData {
         readonly velocity: Velocity,
         readonly mach: number,
         readonly height: Distance,
-        readonly targetDrop: Distance,
-        readonly dropAdjustment: Angular,
+        readonly slantHeight: Distance,
+        readonly dropAngle: Angular,
         readonly windage: Distance,
-        readonly windageAdjustment: Angular,
-        readonly lookDistance: Distance,
+        readonly windageAngle: Angular,
+        readonly slantDistance: Distance,
         readonly angle: Angular,
-        readonly densityFactor: number,
+        readonly densityRatio: number,
         readonly drag: number,
         readonly energy: Energy,
         readonly ogw: Weight,
@@ -127,13 +129,13 @@ class TrajectoryData {
             this.velocity.In(preferredUnits.velocity),
             this.mach,
             this.height.In(preferredUnits.drop), // Changed to preferredUnits.drop as per python
-            this.targetDrop.In(preferredUnits.drop),
-            this.dropAdjustment.In(preferredUnits.adjustment),
+            this.slantHeight.In(preferredUnits.drop),
+            this.dropAngle.In(preferredUnits.adjustment),
             this.windage.In(preferredUnits.drop),
-            this.windageAdjustment.In(preferredUnits.adjustment),
-            this.lookDistance.In(preferredUnits.distance),
+            this.windageAngle.In(preferredUnits.adjustment),
+            this.slantDistance.In(preferredUnits.distance),
             this.angle.In(preferredUnits.angular),
-            this.densityFactor,
+            this.densityRatio,
             this.drag,
             this.energy.In(preferredUnits.energy),
             this.ogw.In(preferredUnits.ogw),
@@ -162,13 +164,13 @@ class TrajectoryData {
             _fmt(this.velocity, preferredUnits.velocity),
             `${this.mach.toFixed(2)} mach`,
             _fmt(this.height, preferredUnits.drop), // Changed to preferredUnits.drop as per python
-            _fmt(this.targetDrop, preferredUnits.drop),
-            _fmt(this.dropAdjustment, preferredUnits.adjustment),
+            _fmt(this.slantHeight, preferredUnits.drop),
+            _fmt(this.dropAngle, preferredUnits.adjustment),
             _fmt(this.windage, preferredUnits.drop),
-            _fmt(this.windageAdjustment, preferredUnits.adjustment),
-            _fmt(this.lookDistance, preferredUnits.distance),
+            _fmt(this.windageAngle, preferredUnits.adjustment),
+            _fmt(this.slantDistance, preferredUnits.distance),
             _fmt(this.angle, preferredUnits.angular),
-            `${this.densityFactor.toFixed(3)}`,
+            `${this.densityRatio.toFixed(3)}`,
             `${this.drag.toFixed(3)}`,
             _fmt(this.energy, preferredUnits.energy),
             _fmt(this.ogw, preferredUnits.ogw),
@@ -191,13 +193,13 @@ class TrajectoryData {
             velocity_fps: this.velocity.fps,
             mach: this.mach,
             height_ft: this.height.foot,
-            slant_height_ft: this.targetDrop.foot,
-            drop_angle_rad: this.dropAdjustment.rad,
+            slant_height_ft: this.slantHeight.foot,
+            drop_angle_rad: this.dropAngle.rad,
             windage_ft: this.windage.foot,
-            windage_angle_rad: this.windageAdjustment.rad,
-            slant_distance_ft: this.lookDistance.foot,
+            windage_angle_rad: this.windageAngle.rad,
+            slant_distance_ft: this.slantDistance.foot,
             angle_rad: this.angle.rad,
-            density_ratio: this.densityFactor,
+            density_ratio: this.densityRatio,
             drag: this.drag,
             energy_ft_lb: this.energy.footPound,
             ogw_lb: this.ogw.pound,
@@ -234,20 +236,24 @@ class HitResult {
      * @param shot - The parameters of the shot calculation
      * @param trajectory - Computed TrajectoryData points
      * @param error - RangeError if any (optional)
+     * @param filterFlags - Flags that were requested in the trajectory calculation
      */
 
     readonly shot: Shot;
     readonly trajectory: TrajectoryData[];
     error?: Error;
+    readonly filterFlags: TrajFlag;
 
     constructor(
         shot: Shot,
         trajectory: TrajectoryData[],
-        error?: Error
+        error?: Error,
+        filterFlags: TrajFlag = TrajFlag.NONE
     ) {
         this.shot = shot;
         this.trajectory = trajectory;
         this.error = error;
+        this.filterFlags = filterFlags;
     }
 
     /**
@@ -284,10 +290,9 @@ class HitResult {
      * @throws Error if the flag was not requested
      */
     protected _checkFlag(flag: TrajFlag): void {
-        // In Python, this checks props.filter_flags & flag
-        // Since we don't have filter_flags tracking yet, we'll just check if any trajectory point has this flag
-        const hasFlag = this.trajectory.some(row => row.flag & flag);
-        if (!hasFlag) {
+        // Check if the flag was requested in filter_flags
+        const wasRequested = (this.filterFlags & flag) !== 0;
+        if (!wasRequested) {
             const flagName = trajFlagName(flag);
             throw new Error(
                 `${flagName} was not requested in trajectory. Use Calculator.fire(..., flags=TrajFlag.${flagName}) to include it.`
@@ -378,13 +383,13 @@ class HitResult {
                 case 2: return td.velocity.rawValue;
                 case 3: return td.mach;
                 case 4: return td.height.rawValue;
-                case 5: return td.targetDrop.rawValue;
-                case 6: return td.dropAdjustment.rawValue;
+                case 5: return td.slantHeight.rawValue;
+                case 6: return td.dropAngle.rawValue;
                 case 7: return td.windage.rawValue;
-                case 8: return td.windageAdjustment.rawValue;
-                case 9: return td.lookDistance.rawValue;
+                case 8: return td.windageAngle.rawValue;
+                case 9: return td.slantDistance.rawValue;
                 case 10: return td.angle.rawValue;
-                case 11: return td.densityFactor;
+                case 11: return td.densityRatio;
                 case 12: return td.drag;
                 case 13: return td.energy.rawValue;
                 case 14: return td.ogw.rawValue;
@@ -492,11 +497,29 @@ class HitResult {
         return TrajectoryData.fromWasmTrajectoryData(interpolated);
     }
 
-    static fromWasmHitOutput(shot: Shot, hit: HitOutput) {
-        return new HitResult(
-            shot,
-            (hit.trajectory as _TrajectoryData[]).map(item => TrajectoryData.fromWasmTrajectoryData(item))
-        );
+    static fromWasmHitOutput(shot: Shot, hit: HitOutput, raiseRangeError: boolean = true, filterFlags: TrajFlag = TrajFlag.NONE) {
+        const trajectory = (hit.trajectory as _TrajectoryData[]).map(item => TrajectoryData.fromWasmTrajectoryData(item));
+
+        // Check termination reason and create error if needed
+        let error: Error | undefined = undefined;
+        const reasonValue = typeof hit.reason === 'object' && 'value' in hit.reason
+            ? hit.reason.value
+            : hit.reason;
+
+        if (reasonValue === TerminationReason.MINIMUM_VELOCITY_REACHED) {
+            error = new RangeError(RangeError.MinimumVelocityReached, trajectory);
+        } else if (reasonValue === TerminationReason.MAXIMUM_DROP_REACHED) {
+            error = new RangeError(RangeError.MaximumDropReached, trajectory);
+        } else if (reasonValue === TerminationReason.MINIMUM_ALTITUDE_REACHED) {
+            error = new RangeError(RangeError.MinimumAltitudeReached, trajectory);
+        }
+
+        // If raiseRangeError is true and there's an error, throw it
+        if (raiseRangeError && error) {
+            throw error;
+        }
+
+        return new HitResult(shot, trajectory, error, filterFlags);
     }
 }
 

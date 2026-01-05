@@ -10,7 +10,6 @@ import {
     IntegrationMethod,
     loadBclibc,
 } from "../src"; // Assuming these are in '../src'
-import { RangeError } from "../src/exceptions"; // Assuming exceptions are here
 import { expect, describe, test, beforeEach } from "@jest/globals";
 import { Shot } from "../src/shot";
 import { Calculator } from "../src/interface";
@@ -19,27 +18,28 @@ import { TrajFlag } from "../src/_wasm";
 // --- Helper Functions Mimicking Python Fixtures ---
 
 // Helper to create a shot with a relative angle in degrees
+// Matches Python's create_5_56_mm_shot() fixture
 const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
+    // 5.56x45mm NATO SS109
     const dm = new DragModel({
-        bc: 0.223,
+        bc: 0.151,  // Match Python
         dragTable: DragTables.G7,
-        weight: 168,
-        diameter: 0.308,
-        length: UNew.Inch(1.282),
+        weight: 62,  // grains, match Python
+        diameter: 5.56 / 25.4,  // Convert 5.56mm to inches
+        length: 21.0 / 25.4,  // Convert 21.0mm to inches
     });
     const ammo = new Ammo({
         dm: dm,
-        mv: UNew.FPS(2750),
+        mv: 900 * 3.28084,  // Convert 900 m/s to fps
         powderTemp: UNew.Celsius(15),
     });
-    ammo.calcPowderSens(2723, 0);
     const currentWinds = [new Wind({ velocity: 2, directionFrom: 90 })];
 
     const shot = new Shot({
-        weapon: new Weapon({ sightHeight: UNew.Inch(0) }), // Assuming zero sight height for this fixture
+        weapon: new Weapon({ sightHeight: UNew.Inch(0) }),
         ammo: ammo,
         winds: currentWinds,
-        lookAngle: UNew.Degree(angleInDegrees), // Set the look angle directly
+        relativeAngle: UNew.Degree(angleInDegrees),  // Use relativeAngle to match Python's shot.relative_angle
     });
     return shot;
 };
@@ -54,7 +54,15 @@ const methods = [
 // Use describe.each to iterate over different engine implementations
 describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
     const { method } = obj;
-    const zeroHeightCalc = new Calculator({ method }); // Declare with 'let' to be reassigned in beforeEach
+    // Match Python's zero_height_calc fixture with cMinimumVelocity=0.0
+    const zeroHeightCalc = new Calculator({
+        method,
+        config: {
+            minimumVelocity: 0.0,
+            minimumAltitude: 0.0,
+            maximumDrop: 0.0,
+        }
+    });
 
     // This beforeEach hook runs before each 'test' function in this describe block.
     beforeEach(async () => {
@@ -68,6 +76,12 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         const shot = shotWithRelativeAngleInDegrees(angleInDegrees);
 
         const checkEndPoint = (hitResult: HitResult) => {
+            console.log(`=== Trajectory points (${hitResult.trajectory.length} total) ===`);
+            hitResult.trajectory.forEach((point, i) => {
+                console.log(`${i}: distance=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft`);
+            });
+            console.log(`Error: ${hitResult.error?.message || 'none'}`);
+
             const lastPoint = hitResult.trajectory[hitResult.trajectory.length - 1];
             const lastPointDistance = lastPoint.distance.In(Distance.Foot);
             const lastPointHeight = lastPoint.height.In(Distance.Foot);
@@ -81,7 +95,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
 
         // Case 1: flags = NONE
         trajFlags = TrajFlag.NONE;
-        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: distance, filterFlags: trajFlags });
+        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: distance, filterFlags: trajFlags, raiseRangeError: false });
         checkEndPoint(hitResult);
 
         // Case 2: flags = NONE, trajectory_step = distance (single point)
@@ -91,12 +105,13 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
             trajectoryRange: distance,
             filterFlags: trajFlags,
             trajectoryStep: distance,
+            raiseRangeError: false
         });
         checkEndPoint(hitResult);
 
         // Case 3: flags = ALL
         trajFlags = TrajFlag.ALL;
-        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: distance, filterFlags: trajFlags });
+        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: distance, filterFlags: trajFlags, raiseRangeError: false });
         checkEndPoint(hitResult);
 
         // Case 4: flags = ALL, trajectory_step = distance (single point)
@@ -106,6 +121,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
             trajectoryRange: distance,
             filterFlags: trajFlags,
             trajectoryStep: distance,
+            raiseRangeError: false
         });
         checkEndPoint(hitResult);
     });
@@ -117,7 +133,16 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         let hitResult: HitResult;
 
         // Case 1: Without flags - should have exactly 2 points
-        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: range });
+        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: range, raiseRangeError: false });
+
+        // Debug output
+        console.log('=== Vertical Shot Debug ===');
+        console.log('Trajectory length:', hitResult.trajectory.length);
+        console.log('Error:', hitResult.error);
+        hitResult.trajectory.forEach((point, i) => {
+            console.log(`Point ${i}: dist=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft, time=${point.time.toFixed(3)}s`);
+        });
+
         expect(hitResult.trajectory.length).toBe(2);
         expect(hitResult.trajectory[hitResult.trajectory.length - 1].height.rawValue).toBeLessThan(1e-9);
 
@@ -125,12 +150,12 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         const calcWithConfig = new Calculator({
             method,
             config: {
-                cMinimumVelocity: 0.0,
-                cMinimumAltitude: -1.0,
-                cMaximumDrop: -1.0,
+                minimumVelocity: 0.0,
+                minimumAltitude: -1.0,
+                maximumDrop: -1.0,
             }
         });
-        hitResult = await calcWithConfig.fire({ shot, trajectoryRange: range, filterFlags: TrajFlag.ALL });
+        hitResult = await calcWithConfig.fire({ shot, trajectoryRange: range, filterFlags: TrajFlag.ALL, raiseRangeError: false });
 
         const zeroDown = hitResult.flag(TrajFlag.ZERO_DOWN);
         expect(zeroDown).not.toBeNull();
@@ -153,9 +178,9 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         const calcWithConfig = new Calculator({
             method,
             config: {
-                cMinimumVelocity: 0.0,
-                cMinimumAltitude: -10.0,
-                cMaximumDrop: -10.0,
+                minimumVelocity: 0.0,
+                minimumAltitude: -10.0,
+                maximumDrop: -10.0,
             }
         });
 
@@ -163,6 +188,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
             shot,
             trajectoryRange: range,
             trajectoryStep: UNew.Foot(100),
+            raiseRangeError: false
         });
 
         expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(2);
@@ -196,30 +222,14 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         for (const filterFlags of [TrajFlag.RANGE, TrajFlag.ALL]) {
             for (let angle = 0; angle <= 90; angle += 10) {
                 const shot = shotWithRelativeAngleInDegrees(angle);
-                let hitResult: HitResult;
 
-                try {
-                    hitResult = await zeroHeightCalc.fire({
-                        shot,
-                        trajectoryRange: range,
-                        filterFlags: filterFlags,
-                    });
-                } catch (e: any) {
-                    console.log(
-                        `Caught error in test_no_duplicated_point_many_trajectories for angle ${angle} (extraData=${filterFlags}): ${e.reason || e.message}`
-                    );
-                    if (
-                        e instanceof RangeError &&
-                        [
-                            RangeError.MaximumDropReached,
-                            RangeError.MinimumAltitudeReached,
-                        ].includes(e.reason)
-                    ) {
-                        hitResult = new HitResult(shot, e.incompleteTrajectory, Boolean(filterFlags & TrajFlag.ALL));
-                    } else {
-                        throw e;
-                    }
-                }
+                const hitResult = await zeroHeightCalc.fire({
+                    shot,
+                    trajectoryRange: range,
+                    filterFlags: filterFlags,
+                    raiseRangeError: false
+                });
+
                 expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(0); // Ensure trajectory is not null/undefined/empty on error
                 // console.log(`len(hitResult.trajectory)=${hitResult.trajectory.length}`);
                 // In JS, converting array to Set removes duplicates if elements are primitive.
@@ -266,32 +276,12 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
 
                 // Test with extra_data = true
                 const extraDataFlag = TrajFlag.ALL;
-                try {
-                    hitResultExtraData = await zeroHeightCalc.fire({
-                        shot,
-                        trajectoryRange: range,
-                        filterFlags: extraDataFlag,
-                    });
-                } catch (e: any) {
-                    console.log(
-                        `Caught error in test_end_points_are_included (extraData=true): ${e.reason || e.message}`
-                    ); // Added logging
-                    if (
-                        e instanceof RangeError &&
-                        [
-                            RangeError.MaximumDropReached,
-                            RangeError.MinimumAltitudeReached,
-                        ].includes(e.reason)
-                    ) {
-                        hitResultExtraData = new HitResult(
-                            shot,
-                            e.incompleteTrajectory,
-                            true
-                        );
-                    } else {
-                        throw e;
-                    }
-                }
+                hitResultExtraData = await zeroHeightCalc.fire({
+                    shot,
+                    trajectoryRange: range,
+                    filterFlags: extraDataFlag,
+                    raiseRangeError: false
+                });
                 // Ensure trajectory is not empty before accessing elements.
                 expect(hitResultExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
                 let distanceExtraData = 0;
@@ -308,32 +298,12 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
 
                 // Test with extra_data = false
                 const noExtraDataFlag = TrajFlag.RANGE;
-                try {
-                    hitResultNoExtraData = await zeroHeightCalc.fire({
-                        shot,
-                        trajectoryRange: range,
-                        filterFlags: noExtraDataFlag,
-                    });
-                } catch (e: any) {
-                    console.log(
-                        `Caught error in test_end_points_are_included (extraData=false): ${e.reason || e.message}`
-                    ); // Added logging
-                    if (
-                        e instanceof RangeError &&
-                        [
-                            RangeError.MaximumDropReached,
-                            RangeError.MinimumAltitudeReached,
-                        ].includes(e.reason)
-                    ) {
-                        hitResultNoExtraData = new HitResult(
-                            shot,
-                            e.incompleteTrajectory,
-                            false
-                        );
-                    } else {
-                        throw e;
-                    }
-                }
+                hitResultNoExtraData = await zeroHeightCalc.fire({
+                    shot,
+                    trajectoryRange: range,
+                    filterFlags: noExtraDataFlag,
+                    raiseRangeError: false
+                });
                 // Ensure trajectory is not empty before accessing elements.
                 expect(hitResultNoExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
                 let distanceNoExtraData = 0;

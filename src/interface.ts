@@ -74,6 +74,12 @@ class Calculator {
         options = options ?? {};
         this.method = options.method ?? IntegrationMethod.RK4;
         this.config = { ...DEFAULT_CONFIG, ...options.config ?? {} };
+
+        // Ensure maximumDrop and minimumAltitude are negative (like Python does)
+        // C++ engine expects: height < maximumDrop (triggers when bullet drops too far)
+        // C++ engine expects: altitude < minimumAltitude (triggers when too low)
+        this.config.maximumDrop = -Math.abs(this.config.maximumDrop);
+        this.config.minimumAltitude = -Math.abs(this.config.minimumAltitude);
     }
 
     /**
@@ -140,6 +146,7 @@ class Calculator {
      * @param options.timeStep Time step for integration (default: 0)
      * @param options.filterFlags Trajectory data filter flags (default: ALL)
      * @param options.denseOutput Whether to generate dense output (default: false)
+     * @param options.raiseRangeError Should throw an error on termination (default: false)
      * @returns The complete trajectory result including hit data
      *
      * @example
@@ -172,7 +179,8 @@ class Calculator {
         trajectoryStep = 0.0,
         timeStep = 0.0,
         filterFlags = TrajFlag.RANGE,
-        denseOutput = false
+        denseOutput = false,
+        raiseRangeError = true
     }: {
         shot: Shot;
         trajectoryRange: number | Distance;
@@ -180,6 +188,7 @@ class Calculator {
         timeStep?: number;
         filterFlags?: TrajFlag;
         denseOutput?: boolean;
+        raiseRangeError?: boolean;
     }): Promise<HitResult> {
         // Convert trajectory range to Distance
         const _trajectoryRange = unitTypeCoerce(
@@ -188,10 +197,10 @@ class Calculator {
             preferredUnits.distance
         );
 
-        // Calculate step size (default: 1/10 of range)
+        // Calculate step size (default: same as range to match Python behavior)
         let step: Distance;
         if (!trajectoryStep) {
-            step = UNew.Inch(_trajectoryRange.rawValue / 10.0);
+            step = _trajectoryRange;  // Match Python: dist_step = trajectory_range
         } else {
             step = unitTypeCoerce(trajectoryStep, Distance, preferredUnits.distance);
         }
@@ -214,6 +223,6 @@ class Calculator {
             request
         );
 
-        return HitResult.fromWasmHitOutput(shot, hit_out);
+        return HitResult.fromWasmHitOutput(shot, hit_out, raiseRangeError, filterFlags);
     }
 }

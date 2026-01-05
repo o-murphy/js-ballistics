@@ -70,6 +70,15 @@ export enum TrajFlag {
     MRT = 32
 }
 
+export enum TerminationReason {
+    NO_TERMINATE = 0,
+    TARGET_RANGE_REACHED = 1,
+    MINIMUM_VELOCITY_REACHED = 2,
+    MAXIMUM_DROP_REACHED = 3,
+    MINIMUM_ALTITUDE_REACHED = 4,
+    HANDLER_REQUESTED_STOP = 5
+}
+
 export type Config = bclibc._Config;
 export type HitOutput = bclibc._HitOutput;
 export type TrajectoryRequest = bclibc._TrajectoryRequest;
