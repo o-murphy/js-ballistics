@@ -8,26 +8,40 @@ on:
     types: [created]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 16
-      - run: npm ci
-      - run: npm test
+          node-version: 20
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - run: yarn test
 
   publish-npm:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v6
+
+      - name: Init C++ source submodule
+        run: git submodule update --init lib/py-ballisticcalc
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Create emsdk stub for Makefile compatibility
+        run: mkdir -p lib/emsdk && echo "" > lib/emsdk/emsdk_env.sh
+
+      - uses: actions/setup-node@v6
         with:
-          node-version: 16
+          node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm publish
+          cache: "yarn"
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

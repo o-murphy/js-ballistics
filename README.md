@@ -25,6 +25,12 @@
 npm i js-ballistics@latest
 ```
 
+### Via YARn
+
+```shell
+yarn add js-ballistics@latest
+```
+
 ### Load dynamically
 
 ```html
