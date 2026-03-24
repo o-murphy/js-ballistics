@@ -1,12 +1,12 @@
 // tests/wasm/vector.test.js
 
-import { loadBclibc } from "../../src";
+import { WasmManager } from "../../src";
 
 describe("BCLIBC Vector Tests", () => {
     let BCLIBC;
 
     beforeAll(async () => {
-        BCLIBC = await loadBclibc();
+        BCLIBC = await WasmManager.init();
     });
 
     describe("Vector Creation", () => {

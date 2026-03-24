@@ -5,7 +5,7 @@
  * from src/exceptions.ts
  */
 
-import { loadBclibc } from "../src/_wasm";
+import { WasmManager } from "../src/_wasm";
 import {
     SolverRuntimeError,
     ZeroFindingError,
@@ -22,7 +22,7 @@ describe("Exception Type Conversion", () => {
     });
 
     test("C++ SolverRuntimeError should become JS SolverRuntimeError", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         try {
             (bclibc as any).testThrowSolverError("Test solver error");

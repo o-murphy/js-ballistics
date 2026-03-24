@@ -4,11 +4,11 @@
  * Tests C++ exception to JavaScript exception conversion
  */
 
-import { loadBclibc } from "../src/_wasm";
+import { WasmManager } from "../src/_wasm";
 
 describe("Basic Exception Handling", () => {
     test("C++ runtime_error should be caught as JavaScript Error", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         const testMessage = "Test exception from C++";
 
@@ -18,7 +18,7 @@ describe("Basic Exception Handling", () => {
     });
 
     test("C++ exception should contain the original message", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         const testMessage = "Custom error message";
 
@@ -37,7 +37,7 @@ describe("Basic Exception Handling", () => {
     });
 
     test("C++ exception should have Error type", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         try {
             bclibc.testThrowRuntimeError("test");
@@ -52,7 +52,7 @@ describe("Basic Exception Handling", () => {
 
 describe("Custom C++ Exception Handling", () => {
     test("Custom C++ exception should be caught as JavaScript Error", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         expect(() => {
             bclibc.testThrowCustomException("Custom exception", 42.5, 100);
@@ -60,7 +60,7 @@ describe("Custom C++ Exception Handling", () => {
     });
 
     test("Custom C++ exception should preserve custom fields", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         const testMessage = "Exception with custom fields";
         const testValue = 123.456;
@@ -81,7 +81,7 @@ describe("Custom C++ Exception Handling", () => {
     });
 
     test("Custom exception fields should have correct types", async () => {
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
 
         try {
             bclibc.testThrowCustomException("test", 3.14, 42);

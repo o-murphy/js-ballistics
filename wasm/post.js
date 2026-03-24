@@ -2,48 +2,6 @@
 // Post-processing script for Emscripten module to improve JavaScript API ergonomics
 
 // ============================================================================
-// Enum Conversion: Convert Emscripten enums to plain number objects
-// ============================================================================
-// Emscripten creates enums as objects with {value: number}, we convert them
-// to simple {KEY: number} for easier usage in TypeScript/JavaScript
-
-const convertEnum = (enumObj) => {
-    if (!enumObj) return enumObj;
-
-    const converted = {};
-    for (const key in enumObj) {
-        if (Object.prototype.hasOwnProperty.call(enumObj, key)) {
-            const item = enumObj[key];
-            if (typeof item === 'object' && item !== null && 'value' in item) {
-                converted[key] = item.value;
-            }
-        }
-    }
-    return converted;
-};
-
-// Convert all enums
-// if (Module._IntegrationMethod) {
-//     Module._IntegrationMethod = convertEnum(Module._IntegrationMethod);
-// }
-
-if (Module._TerminationReason) {
-    Module._TerminationReason = convertEnum(Module._TerminationReason);
-}
-
-// if (Module._TrajFlag) {
-//     Module._TrajFlag = convertEnum(Module._TrajFlag);
-// }
-
-if (Module._BaseTrajDataInterpKey) {
-    Module._BaseTrajDataInterpKey = convertEnum(Module._BaseTrajDataInterpKey);
-}
-
-if (Module._TrajectoryDataInterpKey) {
-    Module._TrajectoryDataInterpKey = convertEnum(Module._TrajectoryDataInterpKey);
-}
-
-// ============================================================================
 // Vector Enhancements: Method chaining for in-place operations
 // ============================================================================
 // Make in-place operations chainable for better DX:

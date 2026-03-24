@@ -4,7 +4,9 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/lib/**/"
+                "${workspaceFolder}/lib/**/",
+                "${workspaceFolder}/lib/emsdk/upstream/emscripten/cache/sysroot/include/**",
+                "${workspaceFolder}/lib/emsdk/upstream/emscripten/system/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

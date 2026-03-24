@@ -6,81 +6,99 @@
  * Usage:
  * ```typescript
  * import { WasmManager } from './_wasm';
- *
- * // Initialize once
  * await WasmManager.init();
- *
- * // Use synchronously everywhere
  * const bclibc = WasmManager.get();
- * const result = bclibc.findZeroAngle(...);
  * ```
  */
-import MainModuleFactory, * as bclibc from '@wasm/bclibc'
-import {
-    type MainModule as BCLIBC,
+
+import MainModuleFactory from '@wasm/bclibc';
+import type {
+    MainModule as BCLIBC,
+    _TrajFlag,
+    _IntegrationMethod,
+    _TerminationReason
 } from '@wasm/bclibc';
-import {
-    SolverRuntimeError,
-    ZeroFindingError,
-    OutOfRangeError,
-    InterceptionError,
-} from './exceptions';
+import * as Exceptions from './exceptions';
 
+// Export all raw types from the WASM module
 export type * from '@wasm/bclibc';
-export * from '@wasm/bclibc';
 
-export { type BCLIBC };
-
-// Register exception classes in globalThis for WASM access
+// Register exception classes in globalThis for C++ Embind access
 if (typeof globalThis !== 'undefined') {
-    (globalThis as any).SolverRuntimeError = SolverRuntimeError;
-    (globalThis as any).ZeroFindingError = ZeroFindingError;
-    (globalThis as any).OutOfRangeError = OutOfRangeError;
-    (globalThis as any).InterceptionError = InterceptionError;
+    Object.assign(globalThis, Exceptions);
 }
-
-const BclibcFactory = MainModuleFactory
 
 let bclibcReady: Promise<BCLIBC> | null = null;
+let instance: BCLIBC | null = null;
 
+/**
+ * Initializes the WASM module factory
+ */
 export const loadBclibc = (): Promise<BCLIBC> => {
     if (!bclibcReady) {
-        bclibcReady = BclibcFactory();
+        bclibcReady = MainModuleFactory().then(module => {
+            instance = module;
+            return module;
+        });
     }
     return bclibcReady;
-}
+};
 
+/**
+ * Singleton Manager for BCLIBC WASM
+ */
+export const WasmManager = {
+    init: loadBclibc,
+    get: (): BCLIBC => {
+        if (!instance) {
+            throw new Error("BCLIBC_WasmManager: WASM module not initialized. Call await WasmManager.init() first.");
+        }
+        return instance;
+    }
+};
+
+/**
+ * Ballistic Solver Integration Methods
+ */
 export const IntegrationMethod = {
-    RK4: { value: 0 } as const,
-    EULER: { value: 1 } as const,
+    RK4: 0 as any,
+    EULER: 1 as any,
 } as const;
 
-export type IntegrationMethod = typeof IntegrationMethod[keyof typeof IntegrationMethod];
+/**
+ * Trajectory Data Flags
+ */
+export const TrajFlag = {
+    NONE: 0 as any,
+    ZERO_UP: 1 as any,
+    ZERO_DOWN: 2 as any,
+    ZERO: 3 as any, // ZERO_UP | ZERO_DOWN
+    MACH: 4 as any,
+    RANGE: 8 as any,
+    APEX: 16 as any,
+    ALL: 31 as any,
+    MRT: 32 as any
+} as const;
 
+/**
+ * Trajectory Termination Reasons
+ */
+export const TerminationReason = {
+    NO_TERMINATE: 0 as any,
+    TARGET_RANGE_REACHED: 1 as any,
+    MINIMUM_VELOCITY_REACHED: 2 as any,
+    MAXIMUM_DROP_REACHED: 3 as any,
+    MINIMUM_ALTITUDE_REACHED: 4 as any,
+    HANDLER_REQUESTED_STOP: 5 as any
+} as const;
 
-export enum TrajFlag {
-    NONE = 0,
-    ZERO_UP = 1,
-    ZERO_DOWN = 2,
-    ZERO = ZERO_UP | ZERO_DOWN,
-    MACH = 4,
-    RANGE = 8,
-    APEX = 16,
-    ALL = RANGE | ZERO_UP | ZERO_DOWN | MACH | APEX,
-    MRT = 32
-}
+// Clean type exports for TypeScript
+export type IntegrationMethod = _IntegrationMethod;
+export type TrajFlag = _TrajFlag;
+export type TerminationReason = _TerminationReason;
 
-export enum TerminationReason {
-    NO_TERMINATE = 0,
-    TARGET_RANGE_REACHED = 1,
-    MINIMUM_VELOCITY_REACHED = 2,
-    MAXIMUM_DROP_REACHED = 3,
-    MINIMUM_ALTITUDE_REACHED = 4,
-    HANDLER_REQUESTED_STOP = 5
-}
-
-export type Config = bclibc._Config;
-export type HitOutput = bclibc._HitOutput;
-export type TrajectoryRequest = bclibc._TrajectoryRequest;
-export type BaseTrajData = bclibc._BaseTrajData;
-export type ShotPropsInput = bclibc._ShotPropsInput
+export type Config = import('@wasm/bclibc')._Config;
+export type HitOutput = import('@wasm/bclibc')._HitOutput;
+export type TrajectoryRequest = import('@wasm/bclibc')._TrajectoryRequest;
+export type BaseTrajData = import('@wasm/bclibc')._BaseTrajData;
+export type ShotPropsInput = import('@wasm/bclibc')._ShotPropsInput;

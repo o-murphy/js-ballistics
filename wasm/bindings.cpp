@@ -311,19 +311,24 @@ BCLIBC_ShotProps shotPropsFromVal(const ShotPropsInput &props)
  * @param className Name of the Error class (e.g., "SolverRuntimeError")
  * @return JavaScript Error constructor function
  */
-inline static val getErrorConstructor(const std::string& className)
+inline static val getErrorConstructor(const std::string &className)
 {
     // Try to get custom error class from globalThis, fall back to Error
-    try {
+    try
+    {
         val globalThis = val::global("globalThis");
-        if (!globalThis.isUndefined()) {
+        if (!globalThis.isUndefined())
+        {
             val errorClass = globalThis[className];
             // Check if it's a function by trying to use it as a constructor
-            if (!errorClass.isUndefined()) {
+            if (!errorClass.isUndefined())
+            {
                 return errorClass;
             }
         }
-    } catch (...) {
+    }
+    catch (...)
+    {
         // Fall back to standard Error
     }
     return val::global("Error");
@@ -334,8 +339,8 @@ inline static val getErrorConstructor(const std::string& className)
  * @param e C++ exception
  * @param errorType JavaScript error type name
  */
-template<typename ExceptionType>
-inline static void throwAsJsError(const ExceptionType& e, const std::string& errorType)
+template <typename ExceptionType>
+inline static void throwAsJsError(const ExceptionType &e, const std::string &errorType)
 {
     val ErrorClass = getErrorConstructor(errorType);
     // Call the constructor with 'new' keyword
@@ -349,7 +354,7 @@ inline static void throwAsJsError(const ExceptionType& e, const std::string& err
 /**
  * @brief Converts BCLIBC_OutOfRangeError to JavaScript OutOfRangeError
  */
-inline static void throwOutOfRangeError(const BCLIBC_OutOfRangeError& e)
+inline static void throwOutOfRangeError(const BCLIBC_OutOfRangeError &e)
 {
     val ErrorClass = getErrorConstructor("OutOfRangeError");
     val error = ErrorClass.new_(std::string(e.what()));
@@ -364,7 +369,7 @@ inline static void throwOutOfRangeError(const BCLIBC_OutOfRangeError& e)
 /**
  * @brief Converts BCLIBC_ZeroFindingError to JavaScript ZeroFindingError
  */
-inline static void throwZeroFindingError(const BCLIBC_ZeroFindingError& e)
+inline static void throwZeroFindingError(const BCLIBC_ZeroFindingError &e)
 {
     val ErrorClass = getErrorConstructor("ZeroFindingError");
     val error = ErrorClass.new_(std::string(e.what()));
@@ -379,7 +384,7 @@ inline static void throwZeroFindingError(const BCLIBC_ZeroFindingError& e)
 /**
  * @brief Converts BCLIBC_InterceptionError to JavaScript InterceptionError
  */
-inline static void throwInterceptionError(const BCLIBC_InterceptionError& e)
+inline static void throwInterceptionError(const BCLIBC_InterceptionError &e)
 {
     val ErrorClass = getErrorConstructor("InterceptionError");
     val error = ErrorClass.new_(std::string(e.what()));
@@ -393,29 +398,35 @@ inline static void throwInterceptionError(const BCLIBC_InterceptionError& e)
  * @brief Universal exception handler wrapper template
  * Wraps any callable and converts C++ exceptions to JavaScript errors
  */
-template<typename Func>
-inline static auto wrapExceptions(Func&& func) -> decltype(func())
+template <typename Func>
+inline static auto wrapExceptions(Func &&func) -> decltype(func())
 {
-    try {
+    try
+    {
         return func();
     }
-    catch (const BCLIBC_OutOfRangeError& e) {
+    catch (const BCLIBC_OutOfRangeError &e)
+    {
         throwOutOfRangeError(e);
         throw; // unreachable, but needed for compiler
     }
-    catch (const BCLIBC_ZeroFindingError& e) {
+    catch (const BCLIBC_ZeroFindingError &e)
+    {
         throwZeroFindingError(e);
         throw; // unreachable, but needed for compiler
     }
-    catch (const BCLIBC_InterceptionError& e) {
+    catch (const BCLIBC_InterceptionError &e)
+    {
         throwInterceptionError(e);
         throw; // unreachable, but needed for compiler
     }
-    catch (const BCLIBC_SolverRuntimeError& e) {
+    catch (const BCLIBC_SolverRuntimeError &e)
+    {
         throwAsJsError(e, "SolverRuntimeError");
         throw; // unreachable, but needed for compiler
     }
-    catch (const std::exception& e) {
+    catch (const std::exception &e)
+    {
         // Generic fallback for any other std::exception
         val error = val::global("Error").new_(std::string(e.what()));
         error.throw_();
@@ -433,45 +444,46 @@ inline static void initEngine(BCLIBC_BaseEngine &engine, const ShotPropsInput &s
 
 inline static BCLIBC_TrajectoryData findApex(const ShotPropsInput &shotProps)
 {
-    return wrapExceptions([&]() {
+    return wrapExceptions([&]()
+                          {
         BCLIBC_BaseEngine engine;
         initEngine(engine, shotProps);
 
         BCLIBC_BaseTrajData apex;
         engine.find_apex(apex);
 
-        return BCLIBC_TrajectoryData(engine.shot, apex, BCLIBC_TRAJ_FLAG_APEX);
-    });
+        return BCLIBC_TrajectoryData(engine.shot, apex, BCLIBC_TRAJ_FLAG_APEX); });
 }
 
 inline static BCLIBC_MaxRangeResult findMaxRange(const ShotPropsInput &shotProps, double low_angle_deg, double high_angle_deg)
 {
-    return wrapExceptions([&]() {
+    return wrapExceptions([&]()
+                          {
         BCLIBC_BaseEngine engine;
         initEngine(engine, shotProps);
 
         return engine.find_max_range(
             low_angle_deg,
             high_angle_deg,
-            APEX_IS_MAX_RANGE_RADIANS);
-    });
+            APEX_IS_MAX_RANGE_RADIANS); });
 }
 
 inline static double findZeroAngle(const ShotPropsInput &shotProps, double distance)
 {
-    return wrapExceptions([&]() {
+    return wrapExceptions([&]()
+                          {
         BCLIBC_BaseEngine engine;
         initEngine(engine, shotProps);
         return engine.zero_angle_with_fallback(
             distance,
             APEX_IS_MAX_RANGE_RADIANS,
-            ALLOWED_ZERO_ERROR_FEET);
-    });
+            ALLOWED_ZERO_ERROR_FEET); });
 }
 
 inline static HitOutput integrate(const ShotPropsInput &shotProps, const TrajectoryRequest &request)
 {
-    return wrapExceptions([&]() {
+    return wrapExceptions([&]()
+                          {
         HitOutput obj = HitOutput();
 
         std::vector<BCLIBC_TrajectoryData> filtered_records;
@@ -501,13 +513,13 @@ inline static HitOutput integrate(const ShotPropsInput &shotProps, const Traject
                 obj.dense_trajectory.call<void>("push", dense_trajectory[i]);
             }
         }
-        return obj;
-    });
+        return obj; });
 }
 
 inline static Interception integrateRawAt(const ShotPropsInput &shotProps, const BCLIBC_BaseTrajData_InterpKey &key, const double &target_value)
 {
-    return wrapExceptions([&]() {
+    return wrapExceptions([&]()
+                          {
         BCLIBC_TerminationReason reason;
         BCLIBC_BaseTrajSeq dense_trajectory;
 
@@ -516,8 +528,7 @@ inline static Interception integrateRawAt(const ShotPropsInput &shotProps, const
         Interception result = {};
 
         engine.integrate_at(key, target_value, result.raw_data, result.full_data);
-        return result;
-    });
+        return result; });
 }
 
 inline static bool get_flat_fire_only(const BCLIBC_Coriolis &obj)
@@ -588,7 +599,7 @@ public:
     double customValue;
     int customCount;
 
-    TestCustomException(const std::string& message, double value, int count)
+    TestCustomException(const std::string &message, double value, int count)
         : std::runtime_error(message), customValue(value), customCount(count) {}
 };
 
@@ -596,7 +607,7 @@ public:
  * @brief Test function that throws std::runtime_error as JavaScript Error
  * Used to verify C++ exception to JavaScript exception conversion
  */
-inline static void testThrowRuntimeError(const std::string& message)
+inline static void testThrowRuntimeError(const std::string &message)
 {
     // Create and throw JavaScript Error object directly
     val error = val::global("Error").new_(message);
@@ -607,24 +618,27 @@ inline static void testThrowRuntimeError(const std::string& message)
  * @brief Test function that throws BCLIBC_SolverRuntimeError for testing
  * This will be caught by wrapExceptions and converted to JS SolverRuntimeError
  */
-inline static void testThrowSolverError(const std::string& message)
+inline static void testThrowSolverError(const std::string &message)
 {
-    wrapExceptions([&]() {
-        throw BCLIBC_SolverRuntimeError(message);
-        return; // needed for template deduction
-    });
+    wrapExceptions([&]()
+                   {
+                       throw BCLIBC_SolverRuntimeError(message);
+                       return; // needed for template deduction
+                   });
 }
 
 /**
  * @brief Test function that throws custom C++ exception with additional fields
  * Converts custom exception to JavaScript Error with properties
  */
-inline static void testThrowCustomException(const std::string& message, double value, int count)
+inline static void testThrowCustomException(const std::string &message, double value, int count)
 {
-    try {
+    try
+    {
         throw TestCustomException(message, value, count);
     }
-    catch (const TestCustomException& e) {
+    catch (const TestCustomException &e)
+    {
         // Create JavaScript Error with custom properties
         val error = val::global("Error").new_(std::string(e.what()));
         error.set("customValue", e.customValue);
@@ -646,11 +660,11 @@ EMSCRIPTEN_BINDINGS(bclibc)
     // Enums
     // ========================================================================
 
-    enum_<BCLIBC_InterpMethod>("_InterpMethod")
+    enum_<BCLIBC_InterpMethod>("_InterpMethod", enum_value_type::number)
         .value("PCHIP", BCLIBC_InterpMethod::PCHIP)
         .value("LINEAR", BCLIBC_InterpMethod::LINEAR);
 
-    enum_<BCLIBC_TerminationReason>("_TerminationReason")
+    enum_<BCLIBC_TerminationReason>("_TerminationReason", enum_value_type::number)
         .value("NO_TERMINATE", BCLIBC_TerminationReason::NO_TERMINATE)
         .value("TARGET_RANGE_REACHED", BCLIBC_TerminationReason::TARGET_RANGE_REACHED)
         .value("MINIMUM_VELOCITY_REACHED", BCLIBC_TerminationReason::MINIMUM_VELOCITY_REACHED)
@@ -658,7 +672,7 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .value("MINIMUM_ALTITUDE_REACHED", BCLIBC_TerminationReason::MINIMUM_ALTITUDE_REACHED)
         .value("HANDLER_REQUESTED_STOP", BCLIBC_TerminationReason::HANDLER_REQUESTED_STOP);
 
-    enum_<BCLIBC_TrajFlag>("_TrajFlag")
+    enum_<BCLIBC_TrajFlag>("_TrajFlag", enum_value_type::number)
         .value("NONE", BCLIBC_TrajFlag::BCLIBC_TRAJ_FLAG_NONE)
         .value("ZERO_UP", BCLIBC_TrajFlag::BCLIBC_TRAJ_FLAG_ZERO_UP)
         .value("ZERO_DOWN", BCLIBC_TrajFlag::BCLIBC_TRAJ_FLAG_ZERO_DOWN)
@@ -669,11 +683,11 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .value("ALL", BCLIBC_TrajFlag::BCLIBC_TRAJ_FLAG_ALL)
         .value("MRT", BCLIBC_TrajFlag::BCLIBC_TRAJ_FLAG_MRT);
 
-    enum_<IntegrationMethod>("_IntegrationMethod")
+    enum_<IntegrationMethod>("_IntegrationMethod", enum_value_type::number)
         .value("RK4", IntegrationMethod::RK4)
         .value("EULER", IntegrationMethod::EULER);
 
-    enum_<BCLIBC_BaseTrajData_InterpKey>("_BaseTrajDataInterpKey")
+    enum_<BCLIBC_BaseTrajData_InterpKey>("_BaseTrajDataInterpKey", enum_value_type::number)
         .value("TIME", BCLIBC_BaseTrajData_InterpKey::TIME)
         .value("POS_X", BCLIBC_BaseTrajData_InterpKey::POS_X)
         .value("POS_Y", BCLIBC_BaseTrajData_InterpKey::POS_Y)
@@ -683,7 +697,7 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .value("VEL_Z", BCLIBC_BaseTrajData_InterpKey::VEL_Z)
         .value("MACH", BCLIBC_BaseTrajData_InterpKey::MACH);
 
-    enum_<BCLIBC_TrajectoryData_InterpKey>("_TrajectoryDataInterpKey")
+    enum_<BCLIBC_TrajectoryData_InterpKey>("_TrajectoryDataInterpKey", enum_value_type::number)
         .value("TIME", BCLIBC_TrajectoryData_InterpKey::TIME)
         .value("DISTANCE", BCLIBC_TrajectoryData_InterpKey::DISTANCE)
         .value("VELOCITY", BCLIBC_TrajectoryData_InterpKey::VELOCITY)

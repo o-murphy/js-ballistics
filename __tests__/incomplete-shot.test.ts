@@ -8,7 +8,7 @@ import {
     Weapon,
     Wind,
     IntegrationMethod,
-    loadBclibc,
+    WasmManager,
 } from "../src"; // Assuming these are in '../src'
 import { expect, describe, test, beforeEach } from "@jest/globals";
 import { Shot } from "../src/shot";
@@ -197,7 +197,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         );
 
         const resultAtZero = await hitResult.getAt(
-            (await loadBclibc())._TrajectoryDataInterpKey.DISTANCE,
+            (await WasmManager.init())._TrajectoryDataInterpKey.DISTANCE,
             zeroDistance.foot
         );
         expect(resultAtZero).not.toBeNull();
@@ -218,7 +218,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
     test("test_no_duplicated_point_many_trajectories", async () => {
         // Bigger than max range of weapon
         const range = UNew.Meter(8000);
-        const bclibc = await loadBclibc()
+        const bclibc = await WasmManager.init()
         for (const filterFlags of [TrajFlag.RANGE, TrajFlag.ALL]) {
             for (let angle = 0; angle <= 90; angle += 10) {
                 const shot = shotWithRelativeAngleInDegrees(angle);

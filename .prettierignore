@@ -44,5 +44,5 @@ pnpm-lock.yaml
 .gitmodules
 
 # Submodules
-py-ballisticcalc/
+bclibc/
 emsdk/

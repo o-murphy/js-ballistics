@@ -1,9 +1,11 @@
 # Makefile
-.PHONY: build build-wasm-esm build-wasm-cjs build-ts copy-artifacts clean install-emsdk setup-emsdk
+.PHONY: build build-wasm build-ts build-copy-html clean \
+        clone-submodules install-emsdk setup-emsdk update-emsdk clean-emsdk \
+        check-emsdk show-sources help
 
 # Source files
-BCLIBC_SRC = lib/py-ballisticcalc/py_ballisticcalc.exts/py_ballisticcalc_exts/src
-BCLIBC_INCLUDE = lib/py-ballisticcalc/py_ballisticcalc.exts/py_ballisticcalc_exts/include
+BCLIBC_SRC = lib/bclibc/src
+BCLIBC_INCLUDE = lib/bclibc/include
 WASM_OUT_DIR = ./build
 DIST_DIR = ./dist
 
@@ -14,7 +16,10 @@ CPP_SOURCES = $(wildcard $(BCLIBC_SRC)/*.cpp)
 EMSDK_DIR = ./lib/emsdk
 EMSDK_ENV = $(EMSDK_DIR)/emsdk_env.sh
 
-build-wasm:
+build: build-wasm build-ts build-copy-html
+
+
+build-wasm: clone-submodules
 	@echo "🔨 Building WASM (ESM)..."
 	@mkdir -p $(WASM_OUT_DIR)
 	@bash -c "source $(EMSDK_ENV) && \
@@ -46,13 +51,24 @@ build-copy-html:
 	cp src/index.html dist/
 
 
-# build: build-wasm-esm build-wasm-cjs build-ts copy-artifacts
-build: build-wasm build-ts build-copy-html
-
-
 clean:
 	rm -rf dist lib
 	@echo "🧹 Cleaned!"
+
+
+# ============================================================================
+# Submodules Setup
+# ============================================================================
+
+clone-submodules:
+	@echo "📂 Checking submodules..."
+	@if [ ! -f "$(BCLIBC_SRC)/main.cpp" ]; then \
+		echo "📥 Cloning/Updating submodules (bclibc)..."; \
+		git submodule update --init --recursive; \
+		echo "✅ Submodules ready!"; \
+	else \
+		echo "✅ Submodules already present."; \
+	fi
 
 # ============================================================================
 # Emscripten Setup
@@ -95,6 +111,20 @@ setup-emsdk: install-emsdk
 	@echo "4. Build the project:"
 	@echo "   make build"
 	@echo ""
+
+update-emsdk:
+	@echo "🔄 Оновлення Emscripten SDK..."
+	@if [ -d "$(EMSDK_DIR)" ]; then \
+		cd $(EMSDK_DIR) && \
+		git fetch origin && \
+		git checkout main || git checkout master && \
+		git pull origin main || git pull origin master && \
+		./emsdk install latest && \
+		./emsdk activate latest && \
+		echo "✅ Emscripten оновлено до останньої версії!"; \
+	else \
+		echo "❌ EMSDK не знайдено в $(EMSDK_DIR). Спробуйте 'make install-emsdk'"; \
+	fi
 
 clean-emsdk:
 	@echo "🗑️  Removing Emscripten SDK..."

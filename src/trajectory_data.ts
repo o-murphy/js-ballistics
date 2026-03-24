@@ -19,8 +19,8 @@ import {
     _InterpMethod,
     HitOutput,
     TrajFlag,
-    loadBclibc,
-    TerminationReason
+    TerminationReason,
+    WasmManager
 } from "./_wasm";
 import { RangeError } from "./exceptions";
 
@@ -203,7 +203,7 @@ class TrajectoryData {
             drag: this.drag,
             energy_ft_lb: this.energy.footPound,
             ogw_lb: this.ogw.pound,
-            flag: { value: this.flag }
+            flag: this.flag
         };
     }
 
@@ -224,7 +224,7 @@ class TrajectoryData {
             data.drag,
             UNew.FootPound(data.energy_ft_lb),
             UNew.Pound(data.ogw_lb),
-            data.flag.value as TrajFlag
+            data.flag
         )
     }
 }
@@ -374,8 +374,8 @@ class HitResult {
         // Helper to get raw value of the key attribute from TrajectoryData
         const getKeyVal = (td: TrajectoryData): number => {
             // Map _TrajectoryDataInterpKey to TrajectoryData property
-            const keyIndex = typeof keyAttribute === 'object' && 'value' in keyAttribute
-                ? keyAttribute.value
+            const keyIndex = typeof keyAttribute === 'object'
+                ? keyAttribute
                 : keyAttribute;
             switch (keyIndex) {
                 case 0: return td.time;
@@ -483,14 +483,14 @@ class HitResult {
         }
 
         // Use WASM interpolation
-        const bclibc = await loadBclibc();
+        const bclibc = await WasmManager.init();
         const interpolated = bclibc.interpolateTrajectoryData(
             keyAttribute,
             value,
             p0.toWasmTrajectoryData(),
             p1.toWasmTrajectoryData(),
             p2.toWasmTrajectoryData(),
-            { value: TrajFlag.NONE },
+            TrajFlag.NONE,
             bclibc._InterpMethod.PCHIP
         );
 
@@ -502,9 +502,7 @@ class HitResult {
 
         // Check termination reason and create error if needed
         let error: Error | undefined = undefined;
-        const reasonValue = typeof hit.reason === 'object' && 'value' in hit.reason
-            ? hit.reason.value
-            : hit.reason;
+        const reasonValue = hit.reason;
 
         if (reasonValue === TerminationReason.MINIMUM_VELOCITY_REACHED) {
             error = new RangeError(RangeError.MinimumVelocityReached, trajectory);

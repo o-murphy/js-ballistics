@@ -1,6 +1,6 @@
 import { Shot } from "./shot";
 import { UNew, Angular, Distance, unitTypeCoerce, preferredUnits } from "./unit";
-import { loadBclibc, ShotPropsInput, Config, IntegrationMethod, TrajectoryRequest, _TrajFlag, HitOutput, TrajFlag } from "./_wasm";
+import { WasmManager, ShotPropsInput, Config, IntegrationMethod, TrajectoryRequest, _TrajFlag, HitOutput, TrajFlag } from "./_wasm";
 import { HitResult } from "./trajectory_data";
 import { cGravityImperial } from "./constants";
 
@@ -102,7 +102,7 @@ class Calculator {
         const _targetDistance = unitTypeCoerce(targetDistance, Distance, preferredUnits.distance);
 
         // Auto-initialize WASM if needed
-        const engine = await loadBclibc();
+        const engine = await WasmManager.init();
 
         const totalElevationRad = engine.findZeroAngle(
             shot.toWasmShotProps(this.method, this.config),
@@ -206,7 +206,7 @@ class Calculator {
         }
 
         // Auto-initialize WASM if needed
-        const engine = await loadBclibc();
+        const engine = await WasmManager.init();
 
         // Build trajectory request
         const request: TrajectoryRequest = {

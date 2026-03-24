@@ -1,12 +1,12 @@
 // tests/wasm/interp.test.js
 
-import { loadBclibc } from "../src";
+import { WasmManager } from "../src";
 
 describe("BCLIBC Interpolation Tests (WASM)", () => {
     let BCLIBC;
 
     beforeAll(async () => {
-        BCLIBC = await loadBclibc();
+        BCLIBC = await WasmManager.init();
     });
 
     // =========================================================================
@@ -14,8 +14,8 @@ describe("BCLIBC Interpolation Tests (WASM)", () => {
     // =========================================================================
     describe("Enums", () => {
         test("InterpMethod values", () => {
-            expect(BCLIBC._InterpMethod.PCHIP.value).toBe(0);
-            expect(BCLIBC._InterpMethod.LINEAR.value).toBe(1);
+            expect(BCLIBC._InterpMethod.PCHIP).toBe(0);
+            expect(BCLIBC._InterpMethod.LINEAR).toBe(1);
         });
     });
 
