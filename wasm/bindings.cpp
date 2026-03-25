@@ -136,13 +136,11 @@ inline static BCLIBC_Curve curveFromVal(const DragTableIface &drag_table)
     }
 
     unsigned n = drag_table["length"].as<unsigned>();
-
     if (n < 2)
     {
         throw std::invalid_argument("BCLIBC_Curve requires at least 2 data points");
     }
 
-    // Extract x (Mach) and y (CD)
     std::vector<double> x(n);
     std::vector<double> y(n);
 
@@ -153,81 +151,7 @@ inline static BCLIBC_Curve curveFromVal(const DragTableIface &drag_table)
         y[i] = item["CD"].as<double>();
     }
 
-    // Calculate PCHIP slopes and coefficients
-    int nm1 = n - 1;
-
-    std::vector<double> h(nm1);
-    std::vector<double> d(nm1);
-    std::vector<double> m(n);
-
-    BCLIBC_Curve curve_points(nm1);
-
-    // Steps and finite differences
-    for (int i = 0; i < nm1; ++i)
-    {
-        h[i] = x[i + 1] - x[i];
-        d[i] = (y[i + 1] - y[i]) / h[i];
-    }
-
-    // Calculate slopes
-    if (n == 2)
-    {
-        m[0] = d[0];
-        m[1] = d[0];
-    }
-    else
-    {
-        // Interior slopes (Fritsch–Carlson)
-        for (int i = 1; i < (int)n - 1; ++i)
-        {
-            if (d[i - 1] == 0.0 || d[i] == 0.0 || d[i - 1] * d[i] < 0.0)
-            {
-                m[i] = 0.0;
-            }
-            else
-            {
-                double w1 = 2.0 * h[i] + h[i - 1];
-                double w2 = h[i] + 2.0 * h[i - 1];
-                m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i]);
-            }
-        }
-
-        // Left endpoint
-        double m0 = ((2.0 * h[0] + h[1]) * d[0] - h[0] * d[1]) / (h[0] + h[1]);
-        if (m0 * d[0] <= 0.0)
-            m0 = 0.0;
-        else if ((d[0] * d[1] < 0.0) && (std::fabs(m0) > 3.0 * std::fabs(d[0])))
-            m0 = 3.0 * d[0];
-        m[0] = m0;
-
-        // Right endpoint
-        double mn = ((2.0 * h[n - 2] + h[n - 3]) * d[n - 2] - h[n - 2] * d[n - 3]) /
-                    (h[n - 2] + h[n - 3]);
-        if (mn * d[n - 2] <= 0.0)
-            mn = 0.0;
-        else if ((d[n - 2] * d[n - 3] < 0.0) && (std::fabs(mn) > 3.0 * std::fabs(d[n - 2])))
-            mn = 3.0 * d[n - 2];
-        m[n - 1] = mn;
-    }
-
-    // Build cubic coefficients
-    for (int i = 0; i < nm1; ++i)
-    {
-        double H = h[i];
-        double yi = y[i];
-        double mi = m[i];
-        double mip1 = m[i + 1];
-
-        double A = (y[i + 1] - yi - mi * H) / (H * H);
-        double B = (mip1 - mi) / H;
-
-        curve_points[i].a = (B - 2.0 * A) / H;
-        curve_points[i].b = 3.0 * A - B;
-        curve_points[i].c = mi;
-        curve_points[i].d = yi;
-    }
-
-    return curve_points;
+    return bclibc::build_pchip_curve_from_arrays(x, y);
 }
 
 double interpolate2pt(
