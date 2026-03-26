@@ -30,5 +30,6 @@
         "strings": true
     },
     "editor.parameterHints.enabled": true,
-    "editor.suggest.snippetsPreventQuickSuggestions": false
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "cmake.sourceDirectory": "/home/murphy/jsproj/js-ballistics/lib/bclibc"
 }
