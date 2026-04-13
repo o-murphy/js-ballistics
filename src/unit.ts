@@ -45,13 +45,32 @@ enum Unit {
     Newton = 75,
 }
 
-type AngularUnit = Unit.Radian | Unit.Degree | Unit.MOA | Unit.MIL | Unit.MRad | Unit.Thousand | Unit.InchesPer100Yd | Unit.CmPer100M | Unit.OClock
-type DistanceUnit = Unit.Inch | Unit.Foot | Unit.Yard | Unit.Mile | Unit.NauticalMile | Unit.Millimeter | Unit.Centimeter | Unit.Meter | Unit.Kilometer | Unit.Line
-type VelocityUnit = Unit.MPS | Unit.KMH | Unit.FPS | Unit.MPH | Unit.KT
-type WeightUnit = Unit.Grain | Unit.Ounce | Unit.Gram | Unit.Pound | Unit.Kilogram | Unit.Newton
-type TemperatureUnit = Unit.Fahrenheit | Unit.Celsius | Unit.Kelvin | Unit.Rankin
-type EnergyUnit = Unit.FootPound | Unit.Joule
-type PressureUnit = Unit.MmHg | Unit.InHg | Unit.Bar | Unit.hPa | Unit.PSI
+type AngularUnit =
+    | Unit.Radian
+    | Unit.Degree
+    | Unit.MOA
+    | Unit.MIL
+    | Unit.MRad
+    | Unit.Thousand
+    | Unit.InchesPer100Yd
+    | Unit.CmPer100M
+    | Unit.OClock;
+type DistanceUnit =
+    | Unit.Inch
+    | Unit.Foot
+    | Unit.Yard
+    | Unit.Mile
+    | Unit.NauticalMile
+    | Unit.Millimeter
+    | Unit.Centimeter
+    | Unit.Meter
+    | Unit.Kilometer
+    | Unit.Line;
+type VelocityUnit = Unit.MPS | Unit.KMH | Unit.FPS | Unit.MPH | Unit.KT;
+type WeightUnit = Unit.Grain | Unit.Ounce | Unit.Gram | Unit.Pound | Unit.Kilogram | Unit.Newton;
+type TemperatureUnit = Unit.Fahrenheit | Unit.Celsius | Unit.Kelvin | Unit.Rankin;
+type EnergyUnit = Unit.FootPound | Unit.Joule;
+type PressureUnit = Unit.MmHg | Unit.InHg | Unit.Bar | Unit.hPa | Unit.PSI;
 
 // interface Measurable<T> {
 //     rawValue: number;
@@ -186,7 +205,6 @@ class Dimension<AllowedUnitT extends Unit> {
         return this._value;
     }
 }
-
 
 /**
  * Angular unit
@@ -785,10 +803,7 @@ const UNew = {
  * @throws {TypeError} If the `instance` is not a `number` and not an instance of the `expectedClass`,
  * indicating an unsupported type for coercion.
  */
-function unitTypeCoerce<
-    AllowedUnitT extends Unit,
-    T extends Dimension<AllowedUnitT>
->(
+function unitTypeCoerce<AllowedUnitT extends Unit, T extends Dimension<AllowedUnitT>>(
     instance: number | T,
     expectedClass: new (value: number, unit: AllowedUnitT) => T,
     defaultUnit: AllowedUnitT

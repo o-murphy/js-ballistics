@@ -20,7 +20,7 @@ const methods = [
 ];
 
 describe.each(methods)("TestComputer $name", (obj) => {
-    const { method } = obj
+    const { method } = obj;
     const calc: Calculator = new Calculator({ method });
     const range: number = 1000;
     const step: number = 100;
@@ -40,7 +40,6 @@ describe.each(methods)("TestComputer $name", (obj) => {
         atmo: atmo,
     });
 
-
     let baselineTrajectory: TrajectoryData[];
 
     beforeAll(async () => {
@@ -49,10 +48,10 @@ describe.each(methods)("TestComputer $name", (obj) => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        baselineTrajectory = hit.trajectory
-    })
+        baselineTrajectory = hit.trajectory;
+    });
 
-    beforeEach(() => { });
+    beforeEach(() => {});
 
     // region Cant_angle
 
@@ -68,7 +67,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: cantedShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const cantedTrajectory = hit.trajectory;
 
         // Perform the assertion comparing height and windage adjustments
@@ -100,7 +99,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: canted,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const t = hit.trajectory;
 
         // Assert height difference with baseline
@@ -133,7 +132,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: cantedShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const cantedTrajectory = hit.trajectory;
 
         // Assert that height difference matches the baseline with adjusted sight height
@@ -171,7 +170,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithWind,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithWind = hit.trajectory;
 
         // Assert that the windage is greater due to wind from the left
@@ -199,7 +198,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithWind,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithWind = hit.trajectory;
 
         // Assert that the windage is less due to wind from the right
@@ -227,7 +226,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithWind,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithWind = hit.trajectory;
 
         // Assert that the trajectory height is greater with wind from behind
@@ -255,7 +254,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithWind,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithWind = hit.trajectory;
 
         // Assert that the trajectory height is less with wind from the front
@@ -288,7 +287,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const t = hit.trajectory;
 
         expect(t[5].windage.rawValue).toBeLessThan(baselineTrajectory[5].windage.rawValue);
@@ -313,12 +312,12 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shot1,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const hit2 = await calc.fire({
             shot: shot2,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
 
         const trajectory1 = hit1.trajectory;
         const trajectory2 = hit2.trajectory;
@@ -342,7 +341,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithNoTwist,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithNoTwist = hit.trajectory;
 
         // Assert that the windage is 0 with no twist
@@ -362,7 +361,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotRightTwist,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryRightTwist = hit1.trajectory;
 
         // Assert that windage is positive with right-hand twist
@@ -380,7 +379,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotLeftTwist,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryLeftTwist = hit2.trajectory;
 
         // Assert that windage is negative with left-hand twist
@@ -412,7 +411,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithHumidity,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithHumidity = hit.trajectory;
 
         // Assert that height is greater with increased humidity
@@ -437,7 +436,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotInCold,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryInCold = hit.trajectory;
 
         // Assert that the height is less in colder temperature, indicating increased drop
@@ -462,7 +461,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotAtHighAltitude,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryAtHighAltitude = hit.trajectory;
 
         // Assert that the height is greater at higher altitude, indicating decreased drop
@@ -487,7 +486,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotInLowPressure,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryInLowPressure = hit.trajectory;
 
         // Assert that the height is greater in lower pressure, indicating decreased drop
@@ -528,7 +527,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithSlickAmmo,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithSlickAmmo = hit.trajectory;
 
         // Assert that the height is greater with the increased ballistic coefficient, indicating decreased drop
@@ -562,7 +561,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotWithReducedAmmo,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const trajectoryWithReducedAmmo = hit.trajectory;
 
         // Assert that the height is the same as with the baseline, indicating no change in drop
@@ -583,7 +582,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotNoSens,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const tNoSens = hit1.trajectory;
         expect(tNoSens[0].velocity.rawValue).toBeCloseTo(baselineTrajectory[0].velocity.rawValue);
 
@@ -595,7 +594,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotSameTemp,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const tSameTemp = hit2.trajectory;
         expect(tSameTemp[0].velocity.rawValue).toBeLessThan(
             baselineTrajectory[0].velocity.rawValue
@@ -608,7 +607,7 @@ describe.each(methods)("TestComputer $name", (obj) => {
             shot: shotDiffTemp,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const tDiffTemp = hit3.trajectory;
         expect(tDiffTemp[0].velocity.rawValue).toBeLessThan(
             baselineTrajectory[0].velocity.rawValue

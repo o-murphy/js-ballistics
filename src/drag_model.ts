@@ -6,7 +6,6 @@ import { cDegreesCtoK, cSpeedOfSoundMetric, cStandardTemperatureC } from "./cons
 
 export { DragModel, BCPoint, DragModelMultiBC };
 
-
 /**
  * Represents a ballistic coefficient point.
  */

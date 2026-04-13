@@ -34,7 +34,7 @@ describe.each(methods)("TestMultiBC $name", (obj) => {
             shot: baseLineShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         baselineTrajectory = hit.trajectory;
     });
 
@@ -55,7 +55,7 @@ describe.each(methods)("TestMultiBC $name", (obj) => {
             shot: multiShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const multiTrajectory = hit.trajectory;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
@@ -79,7 +79,7 @@ describe.each(methods)("TestMultiBC $name", (obj) => {
             shot: multiShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const multiTrajectory = hit.trajectory;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
@@ -103,7 +103,7 @@ describe.each(methods)("TestMultiBC $name", (obj) => {
             shot: multiShot,
             trajectoryRange: range,
             trajectoryStep: step,
-        })
+        });
         const multiTrajectory = hit.trajectory;
 
         expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(

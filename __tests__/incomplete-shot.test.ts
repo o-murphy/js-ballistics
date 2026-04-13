@@ -22,15 +22,15 @@ import { TrajFlag } from "../src/_wasm";
 const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
     // 5.56x45mm NATO SS109
     const dm = new DragModel({
-        bc: 0.151,  // Match Python
+        bc: 0.151, // Match Python
         dragTable: DragTables.G7,
-        weight: 62,  // grains, match Python
-        diameter: 5.56 / 25.4,  // Convert 5.56mm to inches
-        length: 21.0 / 25.4,  // Convert 21.0mm to inches
+        weight: 62, // grains, match Python
+        diameter: 5.56 / 25.4, // Convert 5.56mm to inches
+        length: 21.0 / 25.4, // Convert 21.0mm to inches
     });
     const ammo = new Ammo({
         dm: dm,
-        mv: 900 * 3.28084,  // Convert 900 m/s to fps
+        mv: 900 * 3.28084, // Convert 900 m/s to fps
         powderTemp: UNew.Celsius(15),
     });
     const currentWinds = [new Wind({ velocity: 2, directionFrom: 90 })];
@@ -39,7 +39,7 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
         weapon: new Weapon({ sightHeight: UNew.Inch(0) }),
         ammo: ammo,
         winds: currentWinds,
-        relativeAngle: UNew.Degree(angleInDegrees),  // Use relativeAngle to match Python's shot.relative_angle
+        relativeAngle: UNew.Degree(angleInDegrees), // Use relativeAngle to match Python's shot.relative_angle
     });
     return shot;
 };
@@ -61,13 +61,11 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
             minimumVelocity: 0.0,
             minimumAltitude: 0.0,
             maximumDrop: 0.0,
-        }
+        },
     });
 
     // This beforeEach hook runs before each 'test' function in this describe block.
-    beforeEach(async () => {
-
-    });
+    beforeEach(async () => {});
 
     test("test_shot_incomplete", async () => {
         const angleInDegrees = 5.0;
@@ -78,9 +76,11 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         const checkEndPoint = (hitResult: HitResult) => {
             console.log(`=== Trajectory points (${hitResult.trajectory.length} total) ===`);
             hitResult.trajectory.forEach((point, i) => {
-                console.log(`${i}: distance=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft`);
+                console.log(
+                    `${i}: distance=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft`
+                );
             });
-            console.log(`Error: ${hitResult.error?.message || 'none'}`);
+            console.log(`Error: ${hitResult.error?.message || "none"}`);
 
             const lastPoint = hitResult.trajectory[hitResult.trajectory.length - 1];
             const lastPointDistance = lastPoint.distance.In(Distance.Foot);
@@ -95,7 +95,12 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
 
         // Case 1: flags = NONE
         trajFlags = TrajFlag.NONE;
-        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: distance, filterFlags: trajFlags, raiseRangeError: false });
+        hitResult = await zeroHeightCalc.fire({
+            shot,
+            trajectoryRange: distance,
+            filterFlags: trajFlags,
+            raiseRangeError: false,
+        });
         checkEndPoint(hitResult);
 
         // Case 2: flags = NONE, trajectory_step = distance (single point)
@@ -105,13 +110,18 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
             trajectoryRange: distance,
             filterFlags: trajFlags,
             trajectoryStep: distance,
-            raiseRangeError: false
+            raiseRangeError: false,
         });
         checkEndPoint(hitResult);
 
         // Case 3: flags = ALL
         trajFlags = TrajFlag.ALL;
-        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: distance, filterFlags: trajFlags, raiseRangeError: false });
+        hitResult = await zeroHeightCalc.fire({
+            shot,
+            trajectoryRange: distance,
+            filterFlags: trajFlags,
+            raiseRangeError: false,
+        });
         checkEndPoint(hitResult);
 
         // Case 4: flags = ALL, trajectory_step = distance (single point)
@@ -121,7 +131,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
             trajectoryRange: distance,
             filterFlags: trajFlags,
             trajectoryStep: distance,
-            raiseRangeError: false
+            raiseRangeError: false,
         });
         checkEndPoint(hitResult);
     });
@@ -133,18 +143,26 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
         let hitResult: HitResult;
 
         // Case 1: Without flags - should have exactly 2 points
-        hitResult = await zeroHeightCalc.fire({ shot, trajectoryRange: range, raiseRangeError: false });
+        hitResult = await zeroHeightCalc.fire({
+            shot,
+            trajectoryRange: range,
+            raiseRangeError: false,
+        });
 
         // Debug output
-        console.log('=== Vertical Shot Debug ===');
-        console.log('Trajectory length:', hitResult.trajectory.length);
-        console.log('Error:', hitResult.error);
+        console.log("=== Vertical Shot Debug ===");
+        console.log("Trajectory length:", hitResult.trajectory.length);
+        console.log("Error:", hitResult.error);
         hitResult.trajectory.forEach((point, i) => {
-            console.log(`Point ${i}: dist=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft, time=${point.time.toFixed(3)}s`);
+            console.log(
+                `Point ${i}: dist=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft, time=${point.time.toFixed(3)}s`
+            );
         });
 
         expect(hitResult.trajectory.length).toBe(2);
-        expect(hitResult.trajectory[hitResult.trajectory.length - 1].height.rawValue).toBeLessThan(1e-9);
+        expect(hitResult.trajectory[hitResult.trajectory.length - 1].height.rawValue).toBeLessThan(
+            1e-9
+        );
 
         // Case 2: With ALL flags and config to allow crossing zero
         const calcWithConfig = new Calculator({
@@ -153,9 +171,14 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
                 minimumVelocity: 0.0,
                 minimumAltitude: -1.0,
                 maximumDrop: -1.0,
-            }
+            },
         });
-        hitResult = await calcWithConfig.fire({ shot, trajectoryRange: range, filterFlags: TrajFlag.ALL, raiseRangeError: false });
+        hitResult = await calcWithConfig.fire({
+            shot,
+            trajectoryRange: range,
+            filterFlags: TrajFlag.ALL,
+            raiseRangeError: false,
+        });
 
         const zeroDown = hitResult.flag(TrajFlag.ZERO_DOWN);
         expect(zeroDown).not.toBeNull();
@@ -181,14 +204,14 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
                 minimumVelocity: 0.0,
                 minimumAltitude: -10.0,
                 maximumDrop: -10.0,
-            }
+            },
         });
 
         const hitResult = await calcWithConfig.fire({
             shot,
             trajectoryRange: range,
             trajectoryStep: UNew.Foot(100),
-            raiseRangeError: false
+            raiseRangeError: false,
         });
 
         expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(2);
@@ -218,7 +241,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
     test("test_no_duplicated_point_many_trajectories", async () => {
         // Bigger than max range of weapon
         const range = UNew.Meter(8000);
-        const bclibc = await WasmManager.init()
+        const bclibc = await WasmManager.init();
         for (const filterFlags of [TrajFlag.RANGE, TrajFlag.ALL]) {
             for (let angle = 0; angle <= 90; angle += 10) {
                 const shot = shotWithRelativeAngleInDegrees(angle);
@@ -227,7 +250,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
                     shot,
                     trajectoryRange: range,
                     filterFlags: filterFlags,
-                    raiseRangeError: false
+                    raiseRangeError: false,
                 });
 
                 expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(0); // Ensure trajectory is not null/undefined/empty on error
@@ -280,7 +303,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
                     shot,
                     trajectoryRange: range,
                     filterFlags: extraDataFlag,
-                    raiseRangeError: false
+                    raiseRangeError: false,
                 });
                 // Ensure trajectory is not empty before accessing elements.
                 expect(hitResultExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
@@ -302,7 +325,7 @@ describe.each(methods)("Test Incomplete Shots with $name", (obj) => {
                     shot,
                     trajectoryRange: range,
                     filterFlags: noExtraDataFlag,
-                    raiseRangeError: false
+                    raiseRangeError: false,
                 });
                 // Ensure trajectory is not empty before accessing elements.
                 expect(hitResultNoExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start

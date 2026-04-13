@@ -11,9 +11,9 @@ if (Module._Vector) {
     const VectorProto = Module._Vector.prototype;
 
     // List of in-place methods that should return 'this' for chaining
-    const chainableMethods = ['iadd', 'isub', 'imul', 'idiv', 'inorm'];
+    const chainableMethods = ["iadd", "isub", "imul", "idiv", "inorm"];
 
-    chainableMethods.forEach(methodName => {
+    chainableMethods.forEach((methodName) => {
         const originalMethod = VectorProto[methodName];
         if (!originalMethod) return;
 
@@ -54,9 +54,11 @@ if (Module._Vector) {
      * @returns {boolean}
      */
     VectorProto.equals = function (other, epsilon = 1e-10) {
-        return Math.abs(this.x - other.x) < epsilon &&
+        return (
+            Math.abs(this.x - other.x) < epsilon &&
             Math.abs(this.y - other.y) < epsilon &&
-            Math.abs(this.z - other.z) < epsilon;
+            Math.abs(this.z - other.z) < epsilon
+        );
     };
 
     /**

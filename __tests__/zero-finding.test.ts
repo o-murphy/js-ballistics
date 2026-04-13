@@ -46,7 +46,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
             const { method } = obj;
             const zeroMinVelocityCalc = new Calculator({
                 method,
-                config: { cMinimumVelocity: 0 }
+                config: { cMinimumVelocity: 0 },
             });
 
             const shot = createShot(); // Create a new shot for each test run
@@ -58,7 +58,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
                 shot,
                 trajectoryRange: UNew.Meter(distance),
                 filterFlags: TrajFlag.ALL,
-            })
+            });
             const t = hit.trajectory;
 
             const finalHitDistance = t[t.length - 1].distance.In(Unit.Meter);

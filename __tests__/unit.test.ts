@@ -18,7 +18,7 @@ import {
     type PressureUnit,
     type EnergyUnit,
     UnitProps,
-    unitTypeCoerce
+    unitTypeCoerce,
 } from "../src";
 
 describe("Unit back'n'forth", () => {
@@ -138,16 +138,16 @@ describe("Unit coercion", () => {
 
     test("Invalid value (string)", () => {
         // @ts-expect-error - Testing invalid input
-        expect(() => unitTypeCoerce<DistanceUnit, Distance>("invalid", Distance, Unit.Yard)).toThrow(
-            `Instance must be a type of Distance or 'number'`
-        );
+        expect(() =>
+            unitTypeCoerce<DistanceUnit, Distance>("invalid", Distance, Unit.Yard)
+        ).toThrow(`Instance must be a type of Distance or 'number'`);
     });
 
     test("Undefined value", () => {
         // @ts-expect-error - Testing invalid input
-        expect(() => unitTypeCoerce<DistanceUnit, Distance>(undefined, Distance, Unit.Yard)).toThrow(
-            `Instance must be a type of Distance or 'number'`
-        );
+        expect(() =>
+            unitTypeCoerce<DistanceUnit, Distance>(undefined, Distance, Unit.Yard)
+        ).toThrow(`Instance must be a type of Distance or 'number'`);
     });
 
     test("Null value", () => {

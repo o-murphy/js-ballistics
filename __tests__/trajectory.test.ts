@@ -29,7 +29,7 @@ type TestItem = [
     number, // windAdj
     number, // time
     number, // ogw
-    number  // unit
+    number, // unit
 ];
 
 function customAssertEqual(a: number, b: number, accuracy: number, name: string) {
@@ -55,63 +55,63 @@ const allValidations: Validation[] = [
         name: "distance",
         get: (d) => d.distance.In(Unit.Yard),
         expected: (item) => item[1],
-        accuracy: 0.001
+        accuracy: 0.001,
     },
     {
         name: "velocity",
         get: (d) => d.velocity.In(Unit.FPS),
         expected: (item) => item[2],
-        accuracy: 5
+        accuracy: 5,
     },
     {
         name: "mach",
         get: (d) => d.mach,
         expected: (item) => item[3],
-        accuracy: 0.005
+        accuracy: 0.005,
     },
     {
         name: "energy",
         get: (d) => d.energy.In(Unit.FootPound),
         expected: (item) => item[4],
-        accuracy: 5
+        accuracy: 5,
     },
     {
         name: "time",
         get: (d) => d.time,
         expected: (item) => item[9],
-        accuracy: 0.06
+        accuracy: 0.06,
     },
     {
         name: "ogw",
         get: (d) => d.ogw.In(Unit.Pound),
         expected: (item) => item[10],
-        accuracy: 1
+        accuracy: 1,
     },
     {
         name: "height",
         get: (d) => d.height.In(Unit.Inch),
         expected: (item) => item[5],
-        accuracy: (item) => getAccuracy(item[1], false)
+        accuracy: (item) => getAccuracy(item[1], false),
     },
     {
         name: "hold",
         get: (d, unit) => d.dropAngle.In(unit!),
         expected: (item) => item[6],
         accuracy: 0.5,
-        skip: (item) => item[1] <= 1
+        skip: (item) => item[1] <= 1,
     },
     {
         name: "windage",
         get: (d) => d.windage.In(Unit.Inch),
         expected: (item) => item[7],
-        accuracy: (item) => getAccuracy(item[1], true)
+        accuracy: (item) => getAccuracy(item[1], true),
     },
     {
         name: "wind adjust",
         get: (d, unit) => d.windageAngle.In(unit!),
         expected: (item) => item[8],
         accuracy: 0.5,
-        skip: (item) => item[1] <= 1
+        skip: (item) => item[1] <= 1,
     },
 ];
 
@@ -188,10 +188,12 @@ describe.each(methods)("trajectory $name", (obj) => {
                 weapon,
                 ammo,
                 atmo,
-                winds: [new Wind({
-                    velocity: UNew.MPH(5),
-                    directionFrom: UNew.OClock(10.5),
-                })],
+                winds: [
+                    new Wind({
+                        velocity: UNew.MPH(5),
+                        directionFrom: UNew.OClock(10.5),
+                    }),
+                ],
             });
 
             const calc = new Calculator({ method });
@@ -222,7 +224,8 @@ describe.each(methods)("trajectory $name", (obj) => {
 
                 const data = tData[item[0]];
                 const expectedValue = val.expected(item);
-                const accuracy = typeof val.accuracy === 'function' ? val.accuracy(item) : val.accuracy;
+                const accuracy =
+                    typeof val.accuracy === "function" ? val.accuracy(item) : val.accuracy;
 
                 customAssertEqual(expectedValue, val.get(data, item[11]), accuracy, val.name);
             });
@@ -255,10 +258,12 @@ describe.each(methods)("trajectory $name", (obj) => {
                 weapon,
                 ammo,
                 atmo,
-                winds: [new Wind({
-                    velocity: UNew.MPH(5),
-                    directionFrom: UNew.Degree(-45),
-                })],
+                winds: [
+                    new Wind({
+                        velocity: UNew.MPH(5),
+                        directionFrom: UNew.Degree(-45),
+                    }),
+                ],
             });
 
             const calc = new Calculator({ method });
@@ -289,7 +294,8 @@ describe.each(methods)("trajectory $name", (obj) => {
 
                 const data = tData[item[0]];
                 const expectedValue = val.expected(item);
-                const accuracy = typeof val.accuracy === 'function' ? val.accuracy(item) : val.accuracy;
+                const accuracy =
+                    typeof val.accuracy === "function" ? val.accuracy(item) : val.accuracy;
 
                 customAssertEqual(expectedValue, val.get(data, item[11]), accuracy, val.name);
             });

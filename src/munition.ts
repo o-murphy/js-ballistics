@@ -43,7 +43,7 @@ class Weapon {
         return {
             sight_height_ft: this.sightHeight.foot,
             twist_inch: this.twist.inch,
-        }
+        };
     }
 }
 
@@ -106,7 +106,7 @@ class Ammo {
         );
 
         if (v0 <= 0 || v1 <= 0) {
-            throw new Error("calcPowderSens requires positive muzzle velocities")
+            throw new Error("calcPowderSens requires positive muzzle velocities");
         }
 
         const vDelta = Math.abs(v0 - v1);
@@ -144,14 +144,17 @@ class Ammo {
         return UNew.MPS(muzzleVelocity);
     }
 
-    toWasmAmmoInput(): Pick<_ShotPropsInput, "bc" | "drag_table" | "weight_grain" | "diameter_inch" | "length_inch"> {
+    toWasmAmmoInput(): Pick<
+        _ShotPropsInput,
+        "bc" | "drag_table" | "weight_grain" | "diameter_inch" | "length_inch"
+    > {
         return {
             bc: this.dm.bc,
             drag_table: this.dm.dragTable,
             weight_grain: this.dm.weight.grain,
             diameter_inch: this.dm.diameter.inch,
             length_inch: this.dm.length.inch,
-        }
+        };
     }
 }
 

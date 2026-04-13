@@ -55,8 +55,8 @@ class Shot {
 
     protected _winds?: Wind[];
     protected _coriolis: {
-        azimuthDeg?: number,
-        latitudeDeg?: number
+        azimuthDeg?: number;
+        latitudeDeg?: number;
     };
 
     /**
@@ -98,19 +98,19 @@ class Shot {
         cantAngle = undefined,
         atmo = undefined,
         winds = undefined,
-        coriolis = undefined
+        coriolis = undefined,
     }: {
-        ammo: Ammo,
-        atmo?: Atmo,
-        weapon: Weapon,
-        winds?: Wind[],
-        lookAngle?: number | Angular,
-        relativeAngle?: number | Angular,
-        cantAngle?: number | Angular,
+        ammo: Ammo;
+        atmo?: Atmo;
+        weapon: Weapon;
+        winds?: Wind[];
+        lookAngle?: number | Angular;
+        relativeAngle?: number | Angular;
+        cantAngle?: number | Angular;
         coriolis?: {
-            azimuthDeg?: number,
-            latitudeDeg?: number
-        }
+            azimuthDeg?: number;
+            latitudeDeg?: number;
+        };
     }) {
         this.lookAngle = unitTypeCoerce(lookAngle ?? 0, Angular, preferredUnits.angular);
         this.relativeAngle = unitTypeCoerce(relativeAngle ?? 0, Angular, preferredUnits.angular);
@@ -187,8 +187,7 @@ class Shot {
      */
     get barrelAzimuth(): Angular {
         return UNew.Radian(
-            Math.sin(this.cantAngle.rad)
-            * (this.weapon.zeroElevation.rad + this.relativeAngle.rad)
+            Math.sin(this.cantAngle.rad) * (this.weapon.zeroElevation.rad + this.relativeAngle.rad)
         );
     }
 
@@ -205,9 +204,9 @@ class Shot {
      */
     get barrelElevation(): Angular {
         return UNew.Radian(
-            this.lookAngle.rad
-            + Math.cos(this.cantAngle.rad)
-            * (this.weapon.zeroElevation.rad + this.relativeAngle.rad)
+            this.lookAngle.rad +
+                Math.cos(this.cantAngle.rad) *
+                    (this.weapon.zeroElevation.rad + this.relativeAngle.rad)
         );
     }
 
@@ -221,9 +220,9 @@ class Shot {
      */
     set barrelElevation(value: Angular | number) {
         this.relativeAngle = UNew.Radian(
-            unitTypeCoerce(value, Angular, preferredUnits.angular).rad
-            - this.lookAngle.rad
-            - Math.cos(this.cantAngle.rad) * this.weapon.zeroElevation.rad
+            unitTypeCoerce(value, Angular, preferredUnits.angular).rad -
+                this.lookAngle.rad -
+                Math.cos(this.cantAngle.rad) * this.weapon.zeroElevation.rad
         );
     }
 
@@ -281,18 +280,18 @@ class Shot {
             alt0_ft: this.atmo.altitude.foot,
             atmo: this.atmo.toWasmAtmo(),
             // winds: this.winds.map(wind => wind.toWasmWind()),
-            winds: this.winds.map(wind => wind.toWasmWind()),
+            winds: this.winds.map((wind) => wind.toWasmWind()),
 
             // Coriolis
             coriolis: new Coriolis({
                 latitudeDeg: this.latitudeDeg,
                 azimuthDeg: this.azimuthDeg,
-                muzzleVelocityFps: muzzle_velocity_fps
+                muzzleVelocityFps: muzzle_velocity_fps,
             }).toWasmCoriolis(),
 
             // Calculation options
             method: method,
-            config: config
+            config: config,
         };
     }
 }

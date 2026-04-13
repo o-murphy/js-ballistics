@@ -3,7 +3,7 @@ class Vector {
         public x: number,
         public y: number,
         public z: number
-    ) { }
+    ) {}
 
     copy() {
         return new Vector(this.x, this.y, this.z);

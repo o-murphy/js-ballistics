@@ -1,11 +1,19 @@
 import { Shot } from "./shot";
 import { UNew, Angular, Distance, unitTypeCoerce, preferredUnits } from "./unit";
-import { WasmManager, ShotPropsInput, Config, IntegrationMethod, TrajectoryRequest, _TrajFlag, HitOutput, TrajFlag } from "./_wasm";
+import {
+    WasmManager,
+    ShotPropsInput,
+    Config,
+    IntegrationMethod,
+    TrajectoryRequest,
+    _TrajFlag,
+    HitOutput,
+    TrajFlag,
+} from "./_wasm";
 import { HitResult } from "./trajectory_data";
 import { cGravityImperial } from "./constants";
 
 export { Calculator };
-
 
 /** Maximum allowed slant-error in feet to end zero search */
 export const cZeroFindingAccuracy = 0.000005;
@@ -36,9 +44,8 @@ export const DEFAULT_CONFIG: Config = {
     maximumDrop: cMaximumDrop,
     minimumVelocity: cMinimumVelocity,
     gravityConstant: cGravityConstant,
-    stepMultiplier: cStepMultiplier
+    stepMultiplier: cStepMultiplier,
 };
-
 
 /**
  * A class for performing ballistic trajectory calculations.
@@ -70,10 +77,10 @@ class Calculator {
      * @param options.method The integration method to use
      * @param options.config The calculation configuration
      */
-    constructor(options?: Partial<Pick<ShotPropsInput, 'config' | 'method'>>) {
+    constructor(options?: Partial<Pick<ShotPropsInput, "config" | "method">>) {
         options = options ?? {};
         this.method = options.method ?? IntegrationMethod.RK4;
-        this.config = { ...DEFAULT_CONFIG, ...options.config ?? {} };
+        this.config = { ...DEFAULT_CONFIG, ...(options.config ?? {}) };
 
         // Ensure maximumDrop and minimumAltitude are negative (like Python does)
         // C++ engine expects: height < maximumDrop (triggers when bullet drops too far)
@@ -98,7 +105,10 @@ class Calculator {
      * console.log(`Elevation: ${elevation.In(Angular.Radian)} rad`);
      * ```
      */
-    async barrelElevationForTarget(shot: Shot, targetDistance: number | Distance): Promise<Angular> {
+    async barrelElevationForTarget(
+        shot: Shot,
+        targetDistance: number | Distance
+    ): Promise<Angular> {
         const _targetDistance = unitTypeCoerce(targetDistance, Distance, preferredUnits.distance);
 
         // Auto-initialize WASM if needed
@@ -180,7 +190,7 @@ class Calculator {
         timeStep = 0.0,
         filterFlags = TrajFlag.RANGE,
         denseOutput = false,
-        raiseRangeError = true
+        raiseRangeError = true,
     }: {
         shot: Shot;
         trajectoryRange: number | Distance;
@@ -191,16 +201,12 @@ class Calculator {
         raiseRangeError?: boolean;
     }): Promise<HitResult> {
         // Convert trajectory range to Distance
-        const _trajectoryRange = unitTypeCoerce(
-            trajectoryRange,
-            Distance,
-            preferredUnits.distance
-        );
+        const _trajectoryRange = unitTypeCoerce(trajectoryRange, Distance, preferredUnits.distance);
 
         // Calculate step size (default: same as range to match Python behavior)
         let step: Distance;
         if (!trajectoryStep) {
-            step = _trajectoryRange;  // Match Python: dist_step = trajectory_range
+            step = _trajectoryRange; // Match Python: dist_step = trajectory_range
         } else {
             step = unitTypeCoerce(trajectoryStep, Distance, preferredUnits.distance);
         }
@@ -214,19 +220,20 @@ class Calculator {
             range_step_ft: step.foot,
             time_step: timeStep,
             dense_output: denseOutput,
-            filter_flags: filterFlags as unknown as _TrajFlag
+            filter_flags: filterFlags as unknown as _TrajFlag,
         };
 
         // Debug: log request for vertical shot
-        const angleInDeg = shot.relativeAngle.rad * 180 / Math.PI;
-        if (Math.abs(angleInDeg - 90) < 0.1) {  // If near-vertical
-            console.log('[Calculator.fire] Vertical shot request:', {
+        const angleInDeg = (shot.relativeAngle.rad * 180) / Math.PI;
+        if (Math.abs(angleInDeg - 90) < 0.1) {
+            // If near-vertical
+            console.log("[Calculator.fire] Vertical shot request:", {
                 angleInDeg,
                 range_limit_ft: request.range_limit_ft,
                 range_step_ft: request.range_step_ft,
                 filter_flags: filterFlags,
                 filter_flags_typeof: typeof request.filter_flags,
-                filter_flags_value: request.filter_flags
+                filter_flags_value: request.filter_flags,
             });
         }
 

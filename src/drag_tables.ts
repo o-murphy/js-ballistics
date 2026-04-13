@@ -15,7 +15,6 @@ export interface DragDataPoint {
  */
 export type DragTable = DragDataPoint[];
 
-
 export const DragTables: Record<string, DragTable> = {
     G1: [
         {
@@ -2634,21 +2633,21 @@ export type DragTableDataType = DragTable | keyof typeof DragTables;
  */
 export const makeDataPoints = (dragTable: DragTableDataType): DragDataPoint[] => {
     // If string provided, get table from Table object
-    if (typeof dragTable === 'string') {
+    if (typeof dragTable === "string") {
         const tableName = dragTable.toUpperCase();
         if (!(tableName in DragTables)) {
-            throw new Error(`Drag table "${dragTable}" not found. Available tables: ${Object.keys(DragTables).join(', ')}`);
+            throw new Error(
+                `Drag table "${dragTable}" not found. Available tables: ${Object.keys(DragTables).join(", ")}`
+            );
         }
         return DragTables[tableName];
     }
 
     // If array provided, validate and return
     return dragTable.map((point) => {
-        if (typeof point === 'object' && point !== null && 'Mach' in point && 'CD' in point) {
+        if (typeof point === "object" && point !== null && "Mach" in point && "CD" in point) {
             return { Mach: point.Mach, CD: point.CD };
         }
-        throw new TypeError(
-            "All items in dragTable must be objects with 'Mach' and 'CD' keys."
-        );
+        throw new TypeError("All items in dragTable must be objects with 'Mach' and 'CD' keys.");
     });
 };

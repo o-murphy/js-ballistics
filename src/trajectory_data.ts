@@ -20,7 +20,7 @@ import {
     HitOutput,
     TrajFlag,
     TerminationReason,
-    WasmManager
+    WasmManager,
 } from "./_wasm";
 import { RangeError } from "./exceptions";
 
@@ -114,7 +114,7 @@ class TrajectoryData {
         readonly energy: Energy,
         readonly ogw: Weight,
         readonly flag: TrajFlag
-    ) { } // Properties are automatically assigned due to 'readonly' and constructor parameters
+    ) {} // Properties are automatically assigned due to 'readonly' and constructor parameters
 
     /**
      * Returns an array of numerical values representing the trajectory data in default units.
@@ -154,7 +154,10 @@ class TrajectoryData {
          * @param {Unit} unit
          * @return {string} time
          */
-        function _fmt<AllowedUnitT extends Unit>(value: Dimension<AllowedUnitT>, unit: AllowedUnitT): string {
+        function _fmt<AllowedUnitT extends Unit>(
+            value: Dimension<AllowedUnitT>,
+            unit: AllowedUnitT
+        ): string {
             return `${value.In(unit).toFixed(UnitProps[unit].accuracy)} ${UnitProps[unit].symbol}`;
         }
 
@@ -203,7 +206,7 @@ class TrajectoryData {
             drag: this.drag,
             energy_ft_lb: this.energy.footPound,
             ogw_lb: this.ogw.pound,
-            flag: this.flag
+            flag: this.flag,
         };
     }
 
@@ -225,7 +228,7 @@ class TrajectoryData {
             UNew.FootPound(data.energy_ft_lb),
             UNew.Pound(data.ogw_lb),
             data.flag
-        )
+        );
     }
 }
 
@@ -248,7 +251,7 @@ class HitResult {
         shot: Shot,
         trajectory: TrajectoryData[],
         filterFlags: TrajFlag = TrajFlag.NONE,
-        error?: Error,
+        error?: Error
     ) {
         this.shot = shot;
         this.trajectory = trajectory;
@@ -308,7 +311,7 @@ class HitResult {
      */
     flag(flag: TrajFlag): TrajectoryData | undefined {
         this._checkFlag(flag);
-        return this.trajectory.find(row => row.flag & flag);
+        return this.trajectory.find((row) => row.flag & flag);
     }
 
     /**
@@ -374,26 +377,40 @@ class HitResult {
         // Helper to get raw value of the key attribute from TrajectoryData
         const getKeyVal = (td: TrajectoryData): number => {
             // Map _TrajectoryDataInterpKey to TrajectoryData property
-            const keyIndex = typeof keyAttribute === 'object'
-                ? keyAttribute
-                : keyAttribute;
+            const keyIndex = typeof keyAttribute === "object" ? keyAttribute : keyAttribute;
             switch (keyIndex) {
-                case 0: return td.time;
-                case 1: return td.distance.rawValue;
-                case 2: return td.velocity.rawValue;
-                case 3: return td.mach;
-                case 4: return td.height.rawValue;
-                case 5: return td.slantHeight.rawValue;
-                case 6: return td.dropAngle.rawValue;
-                case 7: return td.windage.rawValue;
-                case 8: return td.windageAngle.rawValue;
-                case 9: return td.slantDistance.rawValue;
-                case 10: return td.angle.rawValue;
-                case 11: return td.densityRatio;
-                case 12: return td.drag;
-                case 13: return td.energy.rawValue;
-                case 14: return td.ogw.rawValue;
-                default: throw new Error(`Invalid interpolation key: ${keyIndex}`);
+                case 0:
+                    return td.time;
+                case 1:
+                    return td.distance.rawValue;
+                case 2:
+                    return td.velocity.rawValue;
+                case 3:
+                    return td.mach;
+                case 4:
+                    return td.height.rawValue;
+                case 5:
+                    return td.slantHeight.rawValue;
+                case 6:
+                    return td.dropAngle.rawValue;
+                case 7:
+                    return td.windage.rawValue;
+                case 8:
+                    return td.windageAngle.rawValue;
+                case 9:
+                    return td.slantDistance.rawValue;
+                case 10:
+                    return td.angle.rawValue;
+                case 11:
+                    return td.densityRatio;
+                case 12:
+                    return td.drag;
+                case 13:
+                    return td.energy.rawValue;
+                case 14:
+                    return td.ogw.rawValue;
+                default:
+                    throw new Error(`Invalid interpolation key: ${keyIndex}`);
             }
         };
 
@@ -411,7 +428,7 @@ class HitResult {
         // Find starting index based on startFromTime
         let startIdx = 0;
         if (startFromTime > 0) {
-            startIdx = traj.findIndex(td => td.time >= startFromTime);
+            startIdx = traj.findIndex((td) => td.time >= startFromTime);
             if (startIdx < 0) startIdx = 0;
         }
 
@@ -457,7 +474,9 @@ class HitResult {
         }
 
         if (targetIdx === -1) {
-            throw new Error(`Trajectory does not reach the requested value ${value} for the specified key`);
+            throw new Error(
+                `Trajectory does not reach the requested value ${value} for the specified key`
+            );
         }
 
         // Check for exact match
@@ -497,8 +516,15 @@ class HitResult {
         return TrajectoryData.fromWasmTrajectoryData(interpolated);
     }
 
-    static fromWasmHitOutput(shot: Shot, hit: HitOutput, raiseRangeError: boolean = true, filterFlags: TrajFlag = TrajFlag.NONE) {
-        const trajectory = (hit.trajectory as _TrajectoryData[]).map(item => TrajectoryData.fromWasmTrajectoryData(item));
+    static fromWasmHitOutput(
+        shot: Shot,
+        hit: HitOutput,
+        raiseRangeError: boolean = true,
+        filterFlags: TrajFlag = TrajFlag.NONE
+    ) {
+        const trajectory = (hit.trajectory as _TrajectoryData[]).map((item) =>
+            TrajectoryData.fromWasmTrajectoryData(item)
+        );
 
         // Check termination reason and create error if needed
         let error: Error | undefined = undefined;

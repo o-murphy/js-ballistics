@@ -30,7 +30,6 @@ import {
 
 export { Atmo, Vacuum, Wind, Coriolis };
 
-
 class Atmo {
     protected _altitude: Distance;
     protected _pressure: Pressure;
@@ -155,20 +154,18 @@ class Atmo {
     }
 
     static standardTemperature(altitude: Distance): Temperature {
-        return UNew.Fahrenheit(
-            cStandardTemperatureF + altitude.foot * cLapseRateImperial
-        );
+        return UNew.Fahrenheit(cStandardTemperatureF + altitude.foot * cLapseRateImperial);
     }
 
     static standardPressure(altitude: Distance): Pressure {
         return UNew.hPa(
             cStandardPressureMetric *
-            Math.pow(
-                1 +
-                (cLapseRateMetric * altitude.In(Distance.Meter)) /
-                (cStandardTemperatureC + cDegreesCtoK),
-                cPressureExponent
-            )
+                Math.pow(
+                    1 +
+                        (cLapseRateMetric * altitude.In(Distance.Meter)) /
+                            (cStandardTemperatureC + cDegreesCtoK),
+                    cPressureExponent
+                )
         );
     }
 
@@ -196,15 +193,15 @@ class Atmo {
     static machF(fahrenheit: number): number {
         if (fahrenheit < -cDegreesFtoR) {
             console.warn(`Invalid temperature: ${fahrenheit}°F. Adjusted to (${cLowestTempF}°F).`);
-            fahrenheit = cLowestTempF;  // ← ДОДАНО: коригування
+            fahrenheit = cLowestTempF; // Clamp to the minimum temperature
         }
         return Math.sqrt(fahrenheit + cDegreesFtoR) * cSpeedOfSoundImperial;
     }
 
     static calculateAirDensity(t: number, p_hpa: number, humidity: number): number {
-        const R = 8.314472;  // J/(mol·K), universal gas constant
-        const M_a = 28.96546e-3;  // kg/mol, molar mass of dry air
-        const M_v = 18.01528e-3;  // kg/mol, molar mass of water vapor
+        const R = 8.314472; // J/(mol·K), universal gas constant
+        const M_a = 28.96546e-3; // kg/mol, molar mass of dry air
+        const M_v = 18.01528e-3; // kg/mol, molar mass of water vapor
 
         const saturationVaporPressure = (T: number): number => {
             const A = [1.2378847e-5, -1.9121316e-2, 33.93711047, -6.3431645e3];
@@ -233,7 +230,11 @@ class Atmo {
             const Z =
                 1 -
                 (p / T) *
-                (a0 + a1 * t_l + a2 * t_l ** 2 + (b0 + b1 * t_l) * x_v + (c0 + c1 * t_l) * x_v ** 2) +
+                    (a0 +
+                        a1 * t_l +
+                        a2 * t_l ** 2 +
+                        (b0 + b1 * t_l) * x_v +
+                        (c0 + c1 * t_l) * x_v ** 2) +
                 (p / T) ** 2 * (d + e * x_v ** 2);
             return Z;
         };
@@ -244,11 +245,11 @@ class Atmo {
 
         // Convert inputs for CIPM equations
         const T_K = t + cDegreesCtoK;
-        const p = p_hpa * 100.0;  // hPa -> Pa
+        const p = p_hpa * 100.0; // hPa -> Pa
 
         // Calculation of saturated vapor pressure and enhancement factor
-        const p_sv = saturationVaporPressure(T_K);  // Pa (saturated vapor pressure)
-        const f = enchancementFactor(p, t);  // Enhancement factor (p in Pa, t in °C)
+        const p_sv = saturationVaporPressure(T_K); // Pa (saturated vapor pressure)
+        const f = enchancementFactor(p, t); // Enhancement factor (p in Pa, t in °C)
 
         // Partial pressure of water vapor and mole fraction
         const p_v = rh_frac * f * p_sv;
@@ -266,8 +267,8 @@ class Atmo {
             p0: this._p0,
             mach: this._mach,
             density_ratio: this.densityRatio,
-            cLowestTempC: Atmo.cLowestTempC
-        }
+            cLowestTempC: Atmo.cLowestTempC,
+        };
     }
 }
 
@@ -295,7 +296,7 @@ class Vacuum extends Atmo {
         this._densityRatio = 0;
     }
 
-    updateDensityRatio() { }
+    updateDensityRatio() {}
 }
 
 class Wind {
@@ -341,7 +342,7 @@ class Wind {
             direction_from_rad: this.directionFrom.rad,
             until_distance_ft: this.untilDistance.foot,
             MAX_DISTANCE_FEET: Wind.MAX_DISTANCE_FEET,
-        }
+        };
     }
 }
 
@@ -438,11 +439,11 @@ class Coriolis {
     constructor({
         latitudeDeg,
         azimuthDeg,
-        muzzleVelocityFps
+        muzzleVelocityFps,
     }: {
-        latitudeDeg?: number,
-        azimuthDeg?: number,
-        muzzleVelocityFps: number
+        latitudeDeg?: number;
+        azimuthDeg?: number;
+        muzzleVelocityFps: number;
     }) {
         // No Coriolis - fill with zeros
         if (latitudeDeg === undefined) {
@@ -459,7 +460,7 @@ class Coriolis {
             return;
         }
 
-        const lat_rad = latitudeDeg * Math.PI / 180;
+        const lat_rad = (latitudeDeg * Math.PI) / 180;
         const sin_lat = Math.sin(lat_rad);
         const cos_lat = Math.cos(lat_rad);
 
@@ -479,7 +480,7 @@ class Coriolis {
         }
 
         // Full 3D Coriolis
-        const azimuth_rad = azimuthDeg * Math.PI / 180;
+        const azimuth_rad = (azimuthDeg * Math.PI) / 180;
         const azimuth_sin = Math.sin(azimuth_rad);
         const azimuth_cos = Math.cos(azimuth_rad);
 

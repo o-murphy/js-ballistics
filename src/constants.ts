@@ -38,9 +38,9 @@ export const cPressureExponent = 5.255876 as const; // =g*M/R*L
 export const cA0 = 1.24871 as const;
 export const cA1 = 0.0988438 as const;
 export const cA2 = 0.00152907 as const;
-export const cA3 = -3.07031e-06 as const;
-export const cA4 = 4.21329e-07 as const;
-export const cA5 = 3.342e-04 as const;
+export const cA3 = -3.07031e-6 as const;
+export const cA4 = 4.21329e-7 as const;
+export const cA5 = 3.342e-4 as const;
 
 // =============================================================================
 // ISA Metric Constants (International Standard Atmosphere)
@@ -53,7 +53,7 @@ export const cStandardTemperatureC = 15.0 as const;
 export const cLapseRateKperFoot = -0.0019812 as const;
 
 /** Temperature lapse rate in metric units (°C/m) */
-export const cLapseRateMetric = -6.5e-03 as const;
+export const cLapseRateMetric = -6.5e-3 as const;
 
 /** Standard atmospheric pressure at sea level (hPa) */
 export const cStandardPressureMetric = 1013.25 as const;
@@ -62,7 +62,7 @@ export const cStandardPressureMetric = 1013.25 as const;
 export const cSpeedOfSoundMetric = 20.0467 as const; // Mach1 in m/s = cSpeedOfSound * sqrt(K)
 
 /** Standard air density at sea level in metric units (kg/m³) */
-export const cStandardDensityMetric = 1.2250 as const;
+export const cStandardDensityMetric = 1.225 as const;
 
 // =============================================================================
 // ICAO Standard Atmosphere Constants
@@ -72,7 +72,7 @@ export const cStandardDensityMetric = 1.2250 as const;
 export const cStandardTemperatureF = 59.0 as const;
 
 /** Temperature lapse rate in imperial units (°F/ft) */
-export const cLapseRateImperial = -3.56616e-03 as const;
+export const cLapseRateImperial = -3.56616e-3 as const;
 
 /** Standard atmospheric pressure at sea level (InHg) */
 export const cStandardPressure = 29.92 as const;

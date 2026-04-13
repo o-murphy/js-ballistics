@@ -22,7 +22,7 @@
 
 import { Angular, Distance } from "./unit";
 import { TrajectoryData } from "./trajectory_data";
-import { BaseTrajData } from "./_wasm"
+import { BaseTrajData } from "./_wasm";
 
 export {
     UnitTypeError,
