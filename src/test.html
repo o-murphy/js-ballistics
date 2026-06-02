@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ballistics Calculator Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        h1 {
+            color: #4ec9b0;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            cursor: pointer;
+            background: #0e639c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #1177bb;
+        }
+
+        #output {
+            background: #252526;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎯 Ballistics Calculator Test</h1>
+    <p>Check browser console (F12) for detailed output</p>
+
+    <button id="testG1">Test G1 Trajectory</button>
+    <button id="testG7">Test G7 Trajectory</button>
+    <button id="testZero">Test Zero Calculation</button>
+
+    <div id="output">Waiting for test...</div>
+
+    <script type="module">
+        import { Calculator, Ammo, Atmo, DragModel, DragTables, UNew, Unit, Weapon, Wind, Shot } from './index.js';
+
+        const output = document.getElementById('output');
+
+        function log(msg) {
+            console.log(msg);
+            output.textContent += msg + '\n';
+        }
+
+        function clear() {
+            output.textContent = '';
+        }
+
+        // Test G1 trajectory
+        document.getElementById('testG1').addEventListener('click', async () => {
+            clear();
+            log('=== Testing G1 Trajectory ===\n');
+
+            try {
+                const dm = new DragModel({
+                    bc: 0.223,
+                    dragTable: DragTables.G1,
+                    weight: 168,
+                    diameter: 0.308,
+                    length: 1.282,
+                });
+
+                const ammo = new Ammo({ dm: dm, mv: 2750 });
+                const weapon = new Weapon({
+                    sightHeight: UNew.Inch(2),
+                    zeroElevation: UNew.Radian(0.001228),
+                });
+
+                const atmo = Atmo.icao();
+                const shot = new Shot({
+                    weapon,
+                    ammo,
+                    atmo,
+                    winds: [new Wind({
+                        velocity: UNew.MPH(5),
+                        directionFrom: UNew.OClock(10.5),
+                    })],
+                });
+
+                const calc = new Calculator();
+                const hit = await calc.fire({
+                    shot: shot,
+                    trajectoryRange: UNew.Yard(1000),
+                    trajectoryStep: UNew.Yard(100),
+                });
+
+                log(`Trajectory points: ${hit.trajectory.length}\n`);
+
+                // Show first few points
+                for (let i = 0; i < Math.min(5, hit.trajectory.length); i++) {
+                    const d = hit.trajectory[i];
+                    log(`[${i}] ${d.distance.In(Unit.Yard).toFixed(0)} yd:`);
+                    log(`  Velocity: ${d.velocity.In(Unit.FPS).toFixed(1)} fps`);
+                    log(`  Drop: ${d.height.In(Unit.Inch).toFixed(1)} in`);
+                    log(`  Windage: ${d.windage.In(Unit.Inch).toFixed(1)} in`);
+                    log(`  Energy: ${d.energy.In(Unit.FootPound).toFixed(0)} ft-lbs\n`);
+                }
+
+                log('✅ G1 Test Complete!');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                console.error(error);
+            }
+        });
+
+        // Test G7 trajectory
+        document.getElementById('testG7').addEventListener('click', async () => {
+            clear();
+            log('=== Testing G7 Trajectory ===\n');
+
+            try {
+                const dm = new DragModel({
+                    bc: 0.223,
+                    dragTable: DragTables.G7,
+                    weight: 168,
+                    diameter: 0.308,
+                    length: 1.282,
+                });
+
+                const ammo = new Ammo({ dm: dm, mv: UNew.FPS(2750) });
+                const weapon = new Weapon({
+                    sightHeight: UNew.Inch(2),
+                    twist: UNew.Inch(12),
+                    zeroElevation: UNew.MOA(4.221),
+                });
+
+                const shot = new Shot({
+                    weapon,
+                    ammo,
+                    atmo: Atmo.icao(),
+                    winds: [new Wind({
+                        velocity: UNew.MPH(5),
+                        directionFrom: UNew.Degree(-45),
+                    })],
+                });
+
+                const calc = new Calculator();
+                const hit = await calc.fire({
+                    shot: shot,
+                    trajectoryRange: UNew.Yard(1000),
+                    trajectoryStep: UNew.Yard(100),
+                });
+
+                log(`Trajectory points: ${hit.trajectory.length}\n`);
+
+                // Show some key distances
+                [0, 5, 10].forEach(i => {
+                    if (i < hit.trajectory.length) {
+                        const d = hit.trajectory[i];
+                        log(`[${i}] ${d.distance.In(Unit.Yard).toFixed(0)} yd:`);
+                        log(`  Velocity: ${d.velocity.In(Unit.FPS).toFixed(0)} fps`);
+                        log(`  Drop: ${d.height.In(Unit.Inch).toFixed(1)} in`);
+                        log(`  Time: ${d.time.toFixed(3)} s\n`);
+                    }
+                });
+
+                log('✅ G7 Test Complete!');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                console.error(error);
+            }
+        });
+
+        // Test zero calculation
+        document.getElementById('testZero').addEventListener('click', async () => {
+            clear();
+            log('=== Testing Zero Calculation ===\n');
+
+            try {
+                const dm = new DragModel({
+                    bc: 0.365,
+                    dragTable: DragTables.G1,
+                    weight: 69,
+                    diameter: 0.223,
+                    length: 0.9,
+                });
+
+                const ammo = new Ammo({ dm: dm, mv: 2600 });
+                const weapon = new Weapon({ sightHeight: UNew.Inch(3.2) });
+                const shot = new Shot({ weapon, ammo, atmo: Atmo.icao() });
+
+                const calc = new Calculator();
+                const zeroAngle = await calc.barrelElevationForTarget(shot, UNew.Yard(100));
+
+                log(`Zero angle at 100 yards:`);
+                log(`  ${zeroAngle.In(Unit.Radian).toFixed(6)} rad`);
+                log(`  ${zeroAngle.In(Unit.MOA).toFixed(3)} MOA`);
+                log(`  ${zeroAngle.In(Unit.MIL).toFixed(3)} MIL\n`);
+
+                log('✅ Zero Test Complete!');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                console.error(error);
+            }
+        });
+
+        log('Ready! Click a button to run a test.\n');
+        log('Open DevTools (F12) for full console output.');
+
+    </script>
+</body>
+
+</html>

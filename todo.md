@@ -1,38 +1,42 @@
-### bump to 2.1
+### Stable WASM release checklist
 
-- [x] constants
+#### Core
+- [x] WASM engine (bclibc submodule, RK4 + Euler)
+- [x] All bindings aligned with bclibc v1.1.2
+- [x] Fix DragModel weight/diameter zero-check (FIXME removed)
+- [x] DangerSpace / HitResult.dangerSpace()
+
+#### Tests
+- [x] atmosphere
+- [x] computer (cant, wind, powder sensitivity, limits)
+- [x] danger space → hitresult.test.ts
+- [x] coriolis
+- [x] incomplete shots
+- [x] mbc
+- [x] trajectory
+- [x] units
 - [x] vector
-- [x] munition
-  - [x] weapon
-  - [x] ammo
-  - [ ] sight ?
-- [x] conditions
-  - [x] atmo
-  - [x] vacuum
-  - [x] wind
-  - [x] shot
-- [x] drag model
-- [x] exceptions
-- [ ] helpers (partially)
-- [x] interface
-- [x] interface_config ?
-- [x] base engine
-- [x] euler engine
-- [x] rk4 engine
-- [x] trajectory data
-- [x] unit
+- [x] zero finding
+- [x] exceptions (basic + types)
+- [x] interpolation (interp.test.js)
 
+#### CI
+- [x] Build WASM before tests
+- [x] emsdk cache (emscripten-core/setup-emsdk@v15)
+- [x] TypeScript type check (tsc --noEmit)
+- [x] Bundle verification (WASM inlined, no unresolved @wasm)
+- [x] Concurrency group
 
-- [tests]
-  - [x] atmosphere
-  - [x] computer
-  - [ч] danger space
-  - [ ] helpers
-  - [ ] incomplete shots
-  - [ ] issues
-  - [x] mbc
-  - [ ] sight ?
-  - [x] trajectory
-  - [x] units
-  - [x] vector
-  - [x] zero finding
+#### Release pipeline
+- [x] Tag-driven release workflow
+- [x] Draft release + manual approval (release environment)
+- [x] CHANGELOG.md (Keep a Changelog format)
+
+#### Docs
+- [x] README: installation (npm/yarn/CDN), API overview, full examples
+- [x] index.html browser demo
+
+#### Pending
+- [ ] Version bump to stable (3.0.0 or 2.3.0 — decide)
+- [ ] CHANGELOG [Unreleased] → release section
+- [ ] sight ? (optional, low priority)
