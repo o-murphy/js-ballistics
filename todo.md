@@ -25,7 +25,7 @@
 #### CI
 
 - [x] Build WASM before tests
-- [x] emsdk cache (emscripten-core/setup-emsdk@v15)
+- [x] emsdk cache (emscripten-core/setup-emsdk@v16)
 - [x] TypeScript type check (tsc --noEmit)
 - [x] Bundle verification (WASM inlined, no unresolved @wasm)
 - [x] Concurrency group
