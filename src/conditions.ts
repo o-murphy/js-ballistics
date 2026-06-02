@@ -259,7 +259,6 @@ class Atmo {
         const Z = compressibilityFactor(p, T_K, x_v);
         return ((p * M_a) / (Z * R * T_K)) * (1 - x_v * (1 - M_v / M_a));
     }
-
 }
 
 class Vacuum extends Atmo {
@@ -485,5 +484,4 @@ class Coriolis {
         this.cross_north = -azimuth_sin;
         this.flat_fire_only = false;
     }
-
 }

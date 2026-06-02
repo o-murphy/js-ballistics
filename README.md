@@ -6,14 +6,18 @@ powered by a C++ engine compiled to WebAssembly via Emscripten.
 ![NPM version](https://img.shields.io/npm/v/js-ballistics?style=flat-square&logo=npm)
 ![License](https://img.shields.io/npm/l/js-ballistics?style=flat-square)
 [![Jest](https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml/badge.svg)](https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml)
+[![Demo](https://img.shields.io/badge/demo-live-blue?style=flat-square)](https://o-murphy.github.io/js-ballistics/)
 
 [![SWUbanner]][SWUBadge]
 
-[SWUbanner]: https://img.shields.io/badge/made_in-Ukraine-ffd700.svg?labelColor=0057b7&style=flat-square
+[SWUbanner]:
+    https://img.shields.io/badge/made_in-Ukraine-ffd700.svg?labelColor=0057b7&style=flat-square
 [SWUBadge]: https://stand-with-ukraine.pp.ua
 
 > **Related projects**
-> - Python reference implementation: [py-ballisticcalc](https://github.com/o-murphy/py-ballisticcalc)
+>
+> - Python reference implementation:
+>   [py-ballisticcalc](https://github.com/o-murphy/py-ballisticcalc)
 > - C++ core library: [bclibc](https://github.com/ballistics-lab/bclibc)
 > - Mobile app: [eBalistyka](https://github.com/o-murphy/ebalistyka)
 
@@ -21,21 +25,86 @@ powered by a C++ engine compiled to WebAssembly via Emscripten.
 
 ## Table of Contents
 
+- [Development](#development)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Core Concepts](#core-concepts)
 - [Usage Examples](#usage-examples)
-  - [Basic Trajectory](#basic-trajectory)
-  - [Zero-Finding](#zero-finding)
-  - [Wind Layers](#wind-layers)
-  - [Custom Atmosphere](#custom-atmosphere)
-  - [Multi-BC Drag Model](#multi-bc-drag-model)
-  - [Coriolis Effect](#coriolis-effect)
-  - [Trajectory Flags](#trajectory-flags)
-  - [Danger Space](#danger-space)
+    - [Basic Trajectory](#basic-trajectory)
+    - [Zero-Finding](#zero-finding)
+    - [Wind Layers](#wind-layers)
+    - [Custom Atmosphere](#custom-atmosphere)
+    - [Multi-BC Drag Model](#multi-bc-drag-model)
+    - [Coriolis Effect](#coriolis-effect)
+    - [Trajectory Flags](#trajectory-flags)
+    - [Danger Space](#danger-space)
 - [Browser / CDN Usage](#browser--cdn-usage)
 - [API Reference](#api-reference)
 - [Risk Notice](#risk-notice)
+
+---
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn (`npm install -g yarn`)
+- Emscripten (for WASM build — see below)
+
+### Clone
+
+```bash
+git clone --recursive https://github.com/o-murphy/js-ballistics.git
+cd js-ballistics
+yarn install
+```
+
+If you already cloned without `--recursive`:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Emscripten setup
+
+```bash
+make install-emsdk                  # clone & install Emscripten SDK
+source lib/emsdk/emsdk_env.sh       # activate in current shell
+```
+
+Add the `source` line to your `~/.bashrc` / `~/.zshrc` to avoid running it every
+time.
+
+### Build
+
+```bash
+make build          # WASM + TypeScript (full build)
+make build-wasm     # WASM only  → generates build/bclibc.{js,d.ts} and updates __stubs__/bclibc.d.ts
+make build-ts       # TypeScript only  → generates dist/
+```
+
+### Run tests
+
+```bash
+yarn test           # requires WASM to be built first (make build-wasm)
+```
+
+### Lint & type-check
+
+```bash
+npm run lint        # ESLint
+npx tsc --noEmit    # TypeScript type check
+```
+
+### Deploy to GitHub Pages
+
+```bash
+make build
+npm run deploy      # pushes dist/ to the gh-pages branch
+```
+
+Then enable GitHub Pages in **Settings → Pages → Branch: `gh-pages`**.
 
 ---
 
@@ -55,11 +124,26 @@ The WASM engine is bundled inside the package — no separate build step require
 
 ```typescript
 import {
-    Calculator, Shot, Weapon, Ammo, DragModel, DragTables,
-    Atmo, Wind, UNew, Distance, Velocity, Angular,
+    Calculator,
+    Shot,
+    Weapon,
+    Ammo,
+    DragModel,
+    DragTables,
+    Atmo,
+    Wind,
+    UNew,
+    Distance,
+    Velocity,
+    Angular,
 } from "js-ballistics";
 
-const dm = new DragModel({ bc: 0.223, dragTable: DragTables.G7, weight: 168, diameter: 0.308 });
+const dm = new DragModel({
+    bc: 0.223,
+    dragTable: DragTables.G7,
+    weight: 168,
+    diameter: 0.308,
+});
 const ammo = new Ammo({ dm, mv: UNew.FPS(2750) });
 const weapon = new Weapon({ sightHeight: UNew.Inch(2) });
 const shot = new Shot({ weapon, ammo });
@@ -73,11 +157,11 @@ const result = await calc.fire({
     trajectoryStep: UNew.Yard(100),
 });
 
-result.trajectory.forEach(p => {
+result.trajectory.forEach((p) => {
     console.log(
         `${p.distance.In(Distance.Yard).toFixed(0)} yd` +
-        `  drop: ${p.height.In(Distance.Inch).toFixed(1)} in` +
-        `  vel: ${p.velocity.In(Velocity.FPS).toFixed(0)} fps`
+            `  drop: ${p.height.In(Distance.Inch).toFixed(1)} in` +
+            `  vel: ${p.velocity.In(Velocity.FPS).toFixed(0)} fps`
     );
 });
 ```
@@ -86,17 +170,17 @@ result.trajectory.forEach(p => {
 
 ## Core Concepts
 
-| Class | Purpose |
-|---|---|
-| `DragModel` | Ballistic coefficient + drag table (G1, G7, …) |
-| `Ammo` | Bullet + muzzle velocity + powder temperature |
-| `Weapon` | Sight height, twist rate, zero elevation |
-| `Atmo` | Atmospheric conditions (altitude, temp, pressure, humidity) |
-| `Wind` | Wind layer (velocity, direction, until-distance) |
-| `Shot` | Combines all inputs; holds look/relative/cant angles and Coriolis |
-| `Calculator` | Engine wrapper; async `fire()`, `setWeaponZero()`, `barrelElevationForTarget()` |
-| `HitResult` | Trajectory array + error + flag helpers |
-| `TrajectoryData` | Per-point data: distance, height, velocity, windage, energy, OGW, … |
+| Class            | Purpose                                                                         |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `DragModel`      | Ballistic coefficient + drag table (G1, G7, …)                                  |
+| `Ammo`           | Bullet + muzzle velocity + powder temperature                                   |
+| `Weapon`         | Sight height, twist rate, zero elevation                                        |
+| `Atmo`           | Atmospheric conditions (altitude, temp, pressure, humidity)                     |
+| `Wind`           | Wind layer (velocity, direction, until-distance)                                |
+| `Shot`           | Combines all inputs; holds look/relative/cant angles and Coriolis               |
+| `Calculator`     | Engine wrapper; async `fire()`, `setWeaponZero()`, `barrelElevationForTarget()` |
+| `HitResult`      | Trajectory array + error + flag helpers                                         |
+| `TrajectoryData` | Per-point data: distance, height, velocity, windage, energy, OGW, …             |
 
 ---
 
@@ -105,7 +189,15 @@ result.trajectory.forEach(p => {
 ### Basic Trajectory
 
 ```typescript
-import { Calculator, Shot, Weapon, Ammo, DragModel, DragTables, UNew } from "js-ballistics";
+import {
+    Calculator,
+    Shot,
+    Weapon,
+    Ammo,
+    DragModel,
+    DragTables,
+    UNew,
+} from "js-ballistics";
 
 const shot = new Shot({
     weapon: new Weapon({ sightHeight: UNew.Inch(1.5) }),
@@ -124,7 +216,7 @@ const hit = await calc.fire({
     trajectoryStep: UNew.Meter(100),
 });
 
-hit.trajectory.forEach(p => console.log(p.formatted().join("  ")));
+hit.trajectory.forEach((p) => console.log(p.formatted().join("  ")));
 ```
 
 ---
@@ -149,8 +241,12 @@ import { Wind, UNew } from "js-ballistics";
 
 // 5 m/s from the right up to 300 m, then 3 m/s head-on beyond
 const winds = [
-    new Wind({ velocity: UNew.MPS(5),  directionFrom: UNew.Degree(90),  untilDistance: UNew.Meter(300) }),
-    new Wind({ velocity: UNew.MPS(3),  directionFrom: UNew.Degree(0) }),
+    new Wind({
+        velocity: UNew.MPS(5),
+        directionFrom: UNew.Degree(90),
+        untilDistance: UNew.Meter(300),
+    }),
+    new Wind({ velocity: UNew.MPS(3), directionFrom: UNew.Degree(0) }),
 ];
 
 const shot = new Shot({ weapon, ammo, winds });
@@ -168,10 +264,10 @@ const standard = Atmo.standard();
 
 // Custom conditions
 const hot_dry = new Atmo({
-    altitude:    UNew.Meter(500),
+    altitude: UNew.Meter(500),
     temperature: UNew.Celsius(35),
-    pressure:    UNew.hPa(1000),
-    humidity:    0.2,
+    pressure: UNew.hPa(1000),
+    humidity: 0.2,
 });
 
 // Vacuum (no drag — useful for testing)
@@ -192,7 +288,7 @@ import { DragModelMultiBC, BCPoint, DragTables, UNew } from "js-ballistics";
 const dm = DragModelMultiBC({
     bcPoints: [
         new BCPoint({ BC: 0.275, V: UNew.MPS(900) }),
-        new BCPoint({ BC: 0.260, V: UNew.MPS(700) }),
+        new BCPoint({ BC: 0.26, V: UNew.MPS(700) }),
         new BCPoint({ BC: 0.245, V: UNew.MPS(500) }),
     ],
     dragTable: DragTables.G7,
@@ -210,18 +306,18 @@ const shot = new Shot({
     weapon,
     ammo,
     coriolis: {
-        latitudeDeg: 48.5,   // Kyiv latitude
-        azimuthDeg:  90.0,   // shooting East
+        latitudeDeg: 48.5, // Kyiv latitude
+        azimuthDeg: 90.0, // shooting East
     },
 });
 
 // Or set after construction:
 shot.latitudeDeg = 48.5;
-shot.azimuthDeg  = 90.0;
+shot.azimuthDeg = 90.0;
 ```
 
-Omit `azimuthDeg` for the flat-fire approximation (horizontal drift only).
-Omit `latitudeDeg` entirely to disable Coriolis.
+Omit `azimuthDeg` for the flat-fire approximation (horizontal drift only). Omit
+`latitudeDeg` entirely to disable Coriolis.
 
 ---
 
@@ -235,20 +331,25 @@ import { TrajFlag } from "js-ballistics";
 const hit = await calc.fire({
     shot,
     trajectoryRange: UNew.Yard(1000),
-    trajectoryStep:  UNew.Yard(10),
-    filterFlags:     TrajFlag.ALL,
+    trajectoryStep: UNew.Yard(10),
+    filterFlags: TrajFlag.ALL,
 });
 
 const zeroDown = hit.flag(TrajFlag.ZERO_DOWN);
-const apex     = hit.flag(TrajFlag.APEX);
-const mach1    = hit.flag(TrajFlag.MACH);
+const apex = hit.flag(TrajFlag.APEX);
+const mach1 = hit.flag(TrajFlag.MACH);
 
-console.log(`Zero crossing: ${zeroDown?.distance.In(Distance.Yard).toFixed(1)} yd`);
+console.log(
+    `Zero crossing: ${zeroDown?.distance.In(Distance.Yard).toFixed(1)} yd`
+);
 console.log(`Apex at:       ${apex?.distance.In(Distance.Yard).toFixed(1)} yd`);
-console.log(`Mach 1 at:     ${mach1?.distance.In(Distance.Yard).toFixed(1)} yd`);
+console.log(
+    `Mach 1 at:     ${mach1?.distance.In(Distance.Yard).toFixed(1)} yd`
+);
 ```
 
-Available flags: `NONE`, `ZERO_UP`, `ZERO_DOWN`, `ZERO`, `MACH`, `RANGE`, `APEX`, `ALL`, `MRT`.
+Available flags: `NONE`, `ZERO_UP`, `ZERO_DOWN`, `ZERO`, `MACH`, `RANGE`,
+`APEX`, `ALL`, `MRT`.
 
 ---
 
@@ -258,12 +359,18 @@ Available flags: `NONE`, `ZERO_UP`, `ZERO_DOWN`, `ZERO`, `MACH`, `RANGE`, `APEX`
 // How much ranging error is tolerable for a 1.5 m tall target at 500 m?
 const ds = await hit.dangerSpace(UNew.Meter(500), UNew.Meter(1.5));
 
-console.log(`Danger space begin: ${ds.begin.distance.In(Distance.Meter).toFixed(1)} m`);
-console.log(`Danger space end:   ${ds.end.distance.In(Distance.Meter).toFixed(1)} m`);
-console.log(`Depth:              ${(
-    ds.end.slantDistance.In(Distance.Meter) -
-    ds.begin.slantDistance.In(Distance.Meter)
-).toFixed(1)} m`);
+console.log(
+    `Danger space begin: ${ds.begin.distance.In(Distance.Meter).toFixed(1)} m`
+);
+console.log(
+    `Danger space end:   ${ds.end.distance.In(Distance.Meter).toFixed(1)} m`
+);
+console.log(
+    `Depth:              ${(
+        ds.end.slantDistance.In(Distance.Meter) -
+        ds.begin.slantDistance.In(Distance.Meter)
+    ).toFixed(1)} m`
+);
 ```
 
 ---
@@ -278,7 +385,11 @@ ammo.calcPowderSens(UNew.FPS(2723), UNew.Celsius(0));
 ammo.usePowderSensitivity = true;
 
 // Velocity is now automatically adjusted for the atmosphere's powder temperature
-const shot = new Shot({ weapon, ammo, atmo: new Atmo({ temperature: UNew.Celsius(-10) }) });
+const shot = new Shot({
+    weapon,
+    ammo,
+    atmo: new Atmo({ temperature: UNew.Celsius(-10) }),
+});
 ```
 
 ---
@@ -290,7 +401,7 @@ Choose between RK4 (more accurate, default) and Euler (faster):
 ```typescript
 import { Calculator, IntegrationMethod } from "js-ballistics";
 
-const calcRK4   = new Calculator({ method: IntegrationMethod.RK4 });
+const calcRK4 = new Calculator({ method: IntegrationMethod.RK4 });
 const calcEuler = new Calculator({ method: IntegrationMethod.EULER });
 ```
 
@@ -302,10 +413,10 @@ const calcEuler = new Calculator({ method: IntegrationMethod.EULER });
 const calc = new Calculator({
     method: IntegrationMethod.RK4,
     config: {
-        minimumVelocity: 100,     // fps — stop when velocity drops below this
-        minimumAltitude: -1000,   // ft  — stop when altitude drops below this
-        maximumDrop:     -5000,   // ft  — stop when drop exceeds this
-        stepMultiplier:  0.5,     // halve integration step for higher precision
+        minimumVelocity: 100, // fps — stop when velocity drops below this
+        minimumAltitude: -1000, // ft  — stop when altitude drops below this
+        maximumDrop: -5000, // ft  — stop when drop exceeds this
+        stepMultiplier: 0.5, // halve integration step for higher precision
     },
 });
 ```
@@ -318,12 +429,18 @@ const calc = new Calculator({
 
 ```html
 <script type="module">
-import {
-    Calculator, Shot, Weapon, Ammo, DragModel, DragTables, UNew,
-} from "https://cdn.jsdelivr.net/npm/js-ballistics/dist/index.js";
+    import {
+        Calculator,
+        Shot,
+        Weapon,
+        Ammo,
+        DragModel,
+        DragTables,
+        UNew,
+    } from "https://cdn.jsdelivr.net/npm/js-ballistics/dist/index.js";
 
-const calc = new Calculator();
-// ... use as in Node.js examples above
+    const calc = new Calculator();
+    // ... use as in Node.js examples above
 </script>
 ```
 
@@ -331,16 +448,18 @@ const calc = new Calculator();
 
 ```html
 <script type="module">
-import * as Ballistics from "https://unpkg.com/js-ballistics/dist/index.js";
-const { Calculator, UNew, DragTables } = Ballistics;
+    import * as Ballistics from "https://unpkg.com/js-ballistics/dist/index.js";
+    const { Calculator, UNew, DragTables } = Ballistics;
 </script>
 ```
 
 ### Interactive HTML Example
 
+**[Live demo →](https://o-murphy.github.io/js-ballistics/)**
+
 A full browser demo with trajectory chart is included in the package at
-[`dist/index.html`](src/index.html). Open it directly or serve with any
-static file server after running `yarn build`.
+[`dist/index.html`](src/index.html). Open it directly or serve with any static
+file server after running `yarn build`.
 
 ```bash
 yarn build
@@ -409,8 +528,8 @@ value.meter                // shorthand for .In(Distance.Meter)
 
 ## Risk Notice
 
-The library performs a limited simulation of a complex physical process and
-uses many approximations. Calculation results **must not** be considered as
+The library performs a limited simulation of a complex physical process and uses
+many approximations. Calculation results **must not** be considered as
 completely or reliably reflecting actual projectile behavior.
 
 Results may be used for educational purposes only. They **must not** be
