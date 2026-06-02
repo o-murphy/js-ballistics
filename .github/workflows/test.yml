@@ -1,0 +1,175 @@
+name: Jest
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - 'src/**'
+      - 'wasm/**'
+      - '__tests__/**'
+      - '__stubs__/**'
+      - 'lib/bclibc/**'
+      - 'package.json'
+      - 'tsconfig*.json'
+      - 'jest.config.*'
+      - 'Makefile'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+
+env:
+  EM_VERSION: '5.0.7'
+  EM_CACHE_FOLDER: 'emsdk-cache'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Init bclibc submodule
+        run: git submodule update --init lib/bclibc
+
+      - name: Cache emsdk
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.EM_CACHE_FOLDER }}
+          key: ${{ env.EM_VERSION }}-${{ runner.os }}
+
+      - name: Setup Emscripten
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: ${{ env.EM_VERSION }}
+          actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
+
+      - name: Create emsdk stub for Makefile compatibility
+        run: mkdir -p lib/emsdk && echo "" > lib/emsdk/emsdk_env.sh
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Build WASM
+        run: make build-wasm
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Build JS bundle
+        run: make build-ts
+
+      - name: Verify WASM is bundled in dist (no unresolved @wasm imports)
+        run: |
+          if grep -q '"@wasm/' dist/index.js 2>/dev/null; then
+            echo "ERROR: dist/index.js contains unresolved @wasm import — WASM was not bundled"
+            exit 1
+          fi
+          if grep -q '"@wasm/' dist/index.cjs 2>/dev/null; then
+            echo "ERROR: dist/index.cjs contains unresolved @wasm import — WASM was not bundled"
+            exit 1
+          fi
+          echo "Bundle check passed: WASM is inlined in dist/"
+
+      - run: yarn test
+
+      - name: Pack npm tarball
+        run: npm pack
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-tarball
+          path: js-ballistics-*.tgz
+
+  smoke-test:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: npm-tarball
+          path: .
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Create smoke-test project
+        run: |
+          mkdir smoke && cd smoke
+          npm init -y
+          npm install $(ls ../js-ballistics-*.tgz)
+
+      - name: ESM smoke test
+        working-directory: smoke
+        run: |
+          cat > test.mjs << 'EOF'
+          import {
+            WasmManager, Calculator, DragModel, DragTables,
+            Ammo, Weapon, Shot, UNew, Distance, Velocity,
+          } from 'js-ballistics';
+
+          await WasmManager.init();
+
+          const dm = new DragModel({ bc: 0.223, dragTable: DragTables.G7, weight: 168, diameter: 0.308 });
+          const ammo = new Ammo({ dm, mv: UNew.FPS(2750) });
+          const weapon = new Weapon({ sightHeight: UNew.Inch(2) });
+          const shot = new Shot({ weapon, ammo });
+          const calc = new Calculator();
+
+          await calc.setWeaponZero(shot, UNew.Yard(100));
+          const hit = await calc.fire({ shot, trajectoryRange: UNew.Yard(500), trajectoryStep: UNew.Yard(100) });
+
+          // Verify trajectory has points
+          if (!hit.trajectory.length) throw new Error('Empty trajectory');
+
+          // Verify velocity is a finite number in a realistic range (catches NaN/Infinity/garbage)
+          const last = hit.trajectory.at(-1);
+          const v = last.velocity.In(Velocity.FPS);
+          if (!Number.isFinite(v) || v < 1000 || v > 3000)
+            throw new Error('Unexpected velocity: ' + v);
+
+          // Verify dangerSpace works end-to-end (exercises WASM interpolation)
+          const ds = await hit.dangerSpace(UNew.Yard(300), UNew.Meter(1.5));
+          const begin = ds.begin.distance.In(Distance.Yard);
+          const end = ds.end.distance.In(Distance.Yard);
+          if (!Number.isFinite(begin) || !Number.isFinite(end) || begin >= end)
+            throw new Error('dangerSpace result invalid: begin=' + begin + ' end=' + end);
+
+          console.log('ESM OK — v@500yd: ' + v.toFixed(0) + ' fps, dangerSpace: ' + begin.toFixed(1) + '–' + end.toFixed(1) + ' yd');
+          EOF
+          node test.mjs
+
+      - name: CJS smoke test
+        working-directory: smoke
+        run: |
+          cat > test.cjs << 'EOF'
+          (async () => {
+            const { WasmManager, Calculator, DragModel, DragTables, Ammo, Weapon, Shot, UNew, Velocity } = require('js-ballistics');
+            await WasmManager.init();
+
+            const dm = new DragModel({ bc: 0.223, dragTable: DragTables.G7, weight: 168, diameter: 0.308 });
+            const ammo = new Ammo({ dm, mv: UNew.FPS(2750) });
+            const weapon = new Weapon({ sightHeight: UNew.Inch(2) });
+            const shot = new Shot({ weapon, ammo });
+            const calc = new Calculator();
+
+            await calc.setWeaponZero(shot, UNew.Yard(100));
+            const hit = await calc.fire({ shot, trajectoryRange: UNew.Yard(300), trajectoryStep: UNew.Yard(100) });
+
+            if (!hit.trajectory.length) throw new Error('Empty trajectory');
+            const v = hit.trajectory.at(-1).velocity.In(Velocity.FPS);
+            if (!Number.isFinite(v) || v < 1000 || v > 3000)
+              throw new Error('Unexpected velocity: ' + v);
+
+            console.log('CJS OK — v@300yd: ' + v.toFixed(0) + ' fps');
+          })().catch(e => { console.error(e); process.exit(1); });
+          EOF
+          node test.cjs

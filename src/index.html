@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ballistics Calculator (WASM)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            height: 400px;
+        }
+
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel h2 {
+            color: #2a5298;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-calculate {
+            background: #2a5298;
+            color: white;
+        }
+
+        .btn-calculate:hover {
+            background: #1e3c72;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(42, 82, 152, 0.3);
+        }
+
+        .btn-clear {
+            background: #e0e0e0;
+            color: #555;
+        }
+
+        .btn-clear:hover {
+            background: #d0d0d0;
+        }
+
+        .results {
+            min-height: 500px;
+        }
+
+        .output {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            color: #2a5298;
+            padding: 40px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 Ballistics Calculator (WASM)</h1>
+
+        <div class="main-grid">
+            <!-- Input Panel -->
+            <div class="panel">
+                <h2>Input Parameters</h2>
+
+                <div class="form-group">
+                    <label>Drag Table</label>
+                    <select id="dragTable">
+                        <option value="G1">G1 (Flat base)</option>
+                        <option value="G7" selected>G7 (Boat tail)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ballistic Coefficient (BC)</label>
+                    <input type="number" id="bc" value="0.223" step="0.001">
+                </div>
+
+                <div class="form-group">
+                    <label>Bullet Weight (grains)</label>
+                    <input type="number" id="weight" value="168" step="1">
+                </div>
+
+                <div class="form-group">
+                    <label>Bullet Diameter (inches)</label>
+                    <input type="number" id="diameter" value="0.308" step="0.001">
+                </div>
+
+                <div class="form-group">
+                    <label>Muzzle Velocity (fps)</label>
+                    <input type="number" id="velocity" value="2750" step="10">
+                </div>
+
+                <div class="form-group">
+                    <label>Sight Height (inches)</label>
+                    <input type="number" id="sightHeight" value="2.0" step="0.1">
+                </div>
+
+                <div class="form-group">
+                    <label>Zero Distance (yards)</label>
+                    <input type="number" id="zeroDistance" value="100" step="25">
+                </div>
+
+                <div class="form-group">
+                    <label>Max Range (yards)</label>
+                    <input type="number" id="maxRange" value="1000" step="100">
+                </div>
+
+                <div class="form-group">
+                    <label>Range Step (yards)</label>
+                    <input type="number" id="rangeStep" value="100" step="25">
+                </div>
+
+                <div class="form-group">
+                    <label>Wind Speed (mph)</label>
+                    <input type="number" id="windSpeed" value="5" step="1">
+                </div>
+
+                <div class="form-group">
+                    <label>Wind Direction</label>
+                    <select id="windDir">
+                        <option value="0">No wind</option>
+                        <option value="90">3 o'clock (right)</option>
+                        <option value="-90" selected>9 o'clock (left)</option>
+                        <option value="45">1:30 o'clock</option>
+                        <option value="-45">10:30 o'clock</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-calculate" id="calculate">Calculate</button>
+                    <button class="btn-clear" id="clear">Clear</button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-grid">
+                <div class="chart-container">
+                    <canvas id="chart"></canvas>
+                </div>
+
+                <div class="panel results">
+                    <h2>Results</h2>
+                    <div id="output" class="output">Enter parameters and click Calculate...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script type="module">
+        import { Calculator, Ammo, Atmo, DragModel, DragTables, UNew, Unit, Weapon, Wind, Shot } from './index.js';
+
+        const output = document.getElementById('output');
+        let trajectoryChart = null;
+
+        function log(msg) {
+            output.textContent += msg + '\n';
+        }
+
+        function clear() {
+            output.textContent = '';
+        }
+
+        function updateChart(trajectoryData) {
+            const ctx = document.getElementById('chart').getContext('2d');
+
+            // Prepare data
+            const ranges = trajectoryData.map(d => d.distance.In(Unit.Yard));
+            const drops = trajectoryData.map(d => d.height.In(Unit.Inch));
+            const windages = trajectoryData.map(d => d.windage.In(Unit.Inch));
+
+            // Destroy existing chart
+            if (trajectoryChart) {
+                trajectoryChart.destroy();
+            }
+
+            // Create new chart
+            trajectoryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ranges,
+                    datasets: [
+                        {
+                            label: 'Drop (inches)',
+                            data: drops,
+                            borderColor: '#2a5298',
+                            backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Windage (inches)',
+                            data: windages,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Trajectory Chart',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Range (yards)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Inches',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('calculate').addEventListener('click', async () => {
+            clear();
+            output.innerHTML = '<div class="loading">⏳ Calculating...</div>';
+
+            try {
+                // Get input values
+                const dragTable = document.getElementById('dragTable').value;
+                const bc = parseFloat(document.getElementById('bc').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const diameter = parseFloat(document.getElementById('diameter').value);
+                const velocity = parseFloat(document.getElementById('velocity').value);
+                const sightHeight = parseFloat(document.getElementById('sightHeight').value);
+                const zeroDistance = parseFloat(document.getElementById('zeroDistance').value);
+                const maxRange = parseFloat(document.getElementById('maxRange').value);
+                const rangeStep = parseFloat(document.getElementById('rangeStep').value);
+                const windSpeed = parseFloat(document.getElementById('windSpeed').value);
+                const windDir = parseFloat(document.getElementById('windDir').value);
+
+                clear();
+
+                // Display input summary
+                log('═══════════════════════════════════════════════════');
+                log('                  INPUT PARAMETERS                 ');
+                log('═══════════════════════════════════════════════════');
+                log(`Drag Model:        ${dragTable}`);
+                log(`BC:                ${bc}`);
+                log(`Bullet Weight:     ${weight} gr`);
+                log(`Diameter:          ${diameter} in`);
+                log(`Muzzle Velocity:   ${velocity} fps`);
+                log(`Sight Height:      ${sightHeight} in`);
+                log(`Zero Distance:     ${zeroDistance} yd`);
+                log(`Max Range:         ${maxRange} yd (step: ${rangeStep} yd)`);
+                log(`Wind:              ${windSpeed} mph @ ${windDir}°`);
+                log('');
+
+                // Step 1: Calculate zero angle
+                log('Step 1: Calculating zero angle...');
+                const dm = new DragModel({
+                    bc: bc,
+                    dragTable: dragTable === 'G7' ? DragTables.G7 : DragTables.G1,
+                    weight: weight,
+                    diameter: diameter,
+                    length: 1.0,
+                });
+
+                const ammo = new Ammo({ dm: dm, mv: velocity });
+                const weapon = new Weapon({ sightHeight: UNew.Inch(sightHeight) });
+                const shot = new Shot({ weapon, ammo, atmo: Atmo.icao() });
+
+                const calc = new Calculator();
+                const zeroAngle = await calc.barrelElevationForTarget(shot, UNew.Yard(zeroDistance));
+
+                log(`Zero angle: ${zeroAngle.In(Unit.Radian).toFixed(6)} rad (${zeroAngle.In(Unit.MOA).toFixed(2)} MOA)`);
+                log('');
+
+                // Step 2: Calculate trajectory
+                log('Step 2: Calculating trajectory...');
+
+                const weaponZeroed = new Weapon({
+                    sightHeight: UNew.Inch(sightHeight),
+                    zeroElevation: zeroAngle
+                });
+
+                const winds = windSpeed > 0 ? [new Wind({
+                    velocity: UNew.MPH(windSpeed),
+                    directionFrom: UNew.Degree(windDir),
+                })] : [];
+
+                const shotZeroed = new Shot({
+                    weapon: weaponZeroed,
+                    ammo,
+                    atmo: Atmo.icao(),
+                    winds: winds,
+                });
+
+                const hit = await calc.fire({
+                    shot: shotZeroed,
+                    trajectoryRange: UNew.Yard(maxRange),
+                    trajectoryStep: UNew.Yard(rangeStep),
+                });
+
+                log('');
+                log('═══════════════════════════════════════════════════');
+                log('                 TRAJECTORY TABLE                  ');
+                log('═══════════════════════════════════════════════════');
+                log('Range   Velocity   Drop    Windage   Energy    Time');
+                log(' (yd)     (fps)    (in)     (in)    (ft-lb)    (s)');
+                log('───────────────────────────────────────────────────');
+
+                hit.trajectory.forEach((d, i) => {
+                    const range = d.distance.In(Unit.Yard).toFixed(0).padStart(5);
+                    const vel = d.velocity.In(Unit.FPS).toFixed(0).padStart(8);
+                    const drop = d.height.In(Unit.Inch).toFixed(1).padStart(7);
+                    const wind = d.windage.In(Unit.Inch).toFixed(1).padStart(8);
+                    const energy = d.energy.In(Unit.FootPound).toFixed(0).padStart(8);
+                    const time = d.time.toFixed(3).padStart(7);
+
+                    log(`${range}   ${vel}   ${drop}   ${wind}   ${energy}   ${time}`);
+                });
+
+                log('═══════════════════════════════════════════════════');
+                log('');
+                log('✅ Calculation complete!');
+
+                // Update chart
+                updateChart(hit.trajectory);
+
+            } catch (error) {
+                clear();
+                log('❌ ERROR');
+                log('');
+                log(error.message);
+                log('');
+                log('Stack trace:');
+                log(error.stack);
+                console.error(error);
+            }
+        });
+
+        document.getElementById('clear').addEventListener('click', () => {
+            clear();
+            log('Enter parameters and click Calculate...');
+        });
+
+        // Initialize
+        log('Enter parameters and click Calculate...');
+    </script>
+</body>
+
+</html>

@@ -1,25 +1,35 @@
 {
-    "cSpell.words": [
-        "atmo"
-    ],
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
     "editor.formatOnSave": true,
-    "[javascript]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
+    "jest.jestCommandLine": "yarn jest",
+    "jest.runMode": "watch",
+    "jest.nodeEnv": {
+        "NODE_OPTIONS": "--experimental-vm-modules --no-warnings"
     },
-    "[typescript]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
+    // TypeScript/JavaScript specific
+    "js/ts.tsdk.path": "node_modules/typescript/lib",
+    "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+    "js/ts.inlayHints.parameterNames.enabled": "all",
+    "js/ts.inlayHints.variableTypes.enabled": true,
+    "js/ts.inlayHints.propertyDeclarationTypes.enabled": true,
+    "js/ts.inlayHints.functionLikeReturnTypes.enabled": true,
+    "js/ts.preferences.includePackageJsonAutoImports": "auto",
+    "js/ts.suggest.autoImports": true,
+    "js/ts.updateImportsOnFileMove.enabled": "always",
+    "js/ts.preferences.importModuleSpecifier": "relative",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "editor.suggest.showWords": true,
+    "editor.suggest.showKeywords": true,
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
     },
-    "[javascriptreact]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
-    },
-    "[typescriptreact]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true
-    }
+    "editor.parameterHints.enabled": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "cmake.sourceDirectory": "${workspaceFolder}/lib/bclibc"
 }
