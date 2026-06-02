@@ -11,7 +11,7 @@ and this project adheres to
 ### Changed
 - Bump `emscripten-core/setup-emsdk` to `v16`
 
-## [3.0.0-beta.1] - 2026-06-02
+## [3.0.0-beta.2] - 2026-06-02
 
 ### Added
 
