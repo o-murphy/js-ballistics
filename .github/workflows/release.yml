@@ -118,6 +118,7 @@ jobs:
     environment: release          # requires manual approval in repo Settings → Environments
     permissions:
       contents: write
+      id-token: write             # required for OIDC trusted publishing to npm
 
     steps:
       - uses: actions/checkout@v6
@@ -139,6 +140,11 @@ jobs:
           path: dist-release
 
       - name: Publish to npm
-        run: npm publish dist-release/*.tgz
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+        run: |
+          TARBALL=$(ls dist-release/*.tgz)
+          if [ "${{ needs.draft.outputs.prerelease }}" = "true" ]; then
+            DIST_TAG=$(echo "${{ needs.draft.outputs.version }}" | grep -oE '(alpha|beta|rc|pre)' | head -1)
+            npm publish "$TARBALL" --provenance --tag "${DIST_TAG:-prerelease}"
+          else
+            npm publish "$TARBALL" --provenance
+          fi
