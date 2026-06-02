@@ -1,0 +1,144 @@
+name: Release on Tag
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v2.2.0)'
+        required: true
+
+env:
+  EM_VERSION: '5.0.7'
+  EM_CACHE_FOLDER: 'emsdk-cache'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag:        ${{ steps.meta.outputs.tag }}
+      version:    ${{ steps.meta.outputs.version }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Init bclibc submodule
+        run: git submodule update --init lib/bclibc
+
+      - name: Cache emsdk
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.EM_CACHE_FOLDER }}
+          key: ${{ env.EM_VERSION }}-${{ runner.os }}
+
+      - name: Setup Emscripten
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: ${{ env.EM_VERSION }}
+          actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
+
+      - name: Create emsdk stub for Makefile compatibility
+        run: mkdir -p lib/emsdk && echo "" > lib/emsdk/emsdk_env.sh
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Build (WASM + JS bundle)
+        run: yarn build
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Resolve tag and version
+        id: meta
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          if [[ "$VERSION" =~ (alpha|beta|pre|rc) ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+          echo "tag=$TAG"               >> $GITHUB_OUTPUT
+          echo "version=$VERSION"       >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          BODY=$(awk "/^## \[${VERSION}\]/{found=1; next} /^## \[/{found=0} found" CHANGELOG.md | sed '/^[[:space:]]*$/d' | head -50)
+          if [ -z "$BODY" ]; then
+            BODY="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Pack npm tarball
+        id: pack
+        run: |
+          FILENAME="js-ballistics-${{ steps.meta.outputs.version }}.tgz"
+          yarn pack --filename "$FILENAME"
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+
+      - name: Upload tarball as workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-package
+          path: ${{ steps.pack.outputs.filename }}
+          retention-days: 7
+
+      - name: Create draft GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name:   ${{ steps.meta.outputs.tag }}
+          name:       ${{ steps.meta.outputs.tag }}
+          body:       ${{ steps.changelog.outputs.body }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          draft:      true
+          files:      ${{ steps.pack.outputs.filename }}
+
+  publish:
+    needs: draft
+    runs-on: ubuntu-latest
+    environment: release          # requires manual approval in repo Settings → Environments
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Publish GitHub Release (undraft)
+        run: gh release edit "${{ needs.draft.outputs.tag }}" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Download tarball
+        uses: actions/download-artifact@v8
+        with:
+          name: npm-package
+          path: dist-release
+
+      - name: Publish to npm
+        run: npm publish dist-release/*.tgz
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
