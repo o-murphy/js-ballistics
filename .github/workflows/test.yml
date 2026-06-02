@@ -3,23 +3,23 @@ name: Jest
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
     paths:
-      - 'src/**'
-      - 'wasm/**'
-      - '__tests__/**'
-      - '__stubs__/**'
-      - 'lib/bclibc/**'
-      - 'package.json'
-      - 'tsconfig*.json'
-      - 'jest.config.*'
-      - 'Makefile'
-      - '.github/workflows/test.yml'
+      - "src/**"
+      - "wasm/**"
+      - "__tests__/**"
+      - "__stubs__/**"
+      - "lib/bclibc/**"
+      - "package.json"
+      - "tsconfig*.json"
+      - "jest.config.*"
+      - "Makefile"
+      - ".github/workflows/test.yml"
   workflow_dispatch:
 
 env:
-  EM_VERSION: '5.0.7'
-  EM_CACHE_FOLDER: 'emsdk-cache'
+  EM_VERSION: "5.0.7"
+  EM_CACHE_FOLDER: "emsdk-cache"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -51,8 +51,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
-          cache: 'yarn'
+          node-version: 24
+          cache: "yarn"
 
       - run: yarn install --frozen-lockfile
 
@@ -99,7 +99,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Create smoke-test project
         run: |

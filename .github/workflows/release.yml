@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g. v2.2.0)'
+        description: "Tag to release (e.g. v2.2.0)"
         required: true
 
 env:
-  EM_VERSION: '5.0.7'
-  EM_CACHE_FOLDER: 'emsdk-cache'
+  EM_VERSION: "5.0.7"
+  EM_CACHE_FOLDER: "emsdk-cache"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,8 +24,8 @@ jobs:
     permissions:
       contents: write
     outputs:
-      tag:        ${{ steps.meta.outputs.tag }}
-      version:    ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
 
     steps:
@@ -51,8 +51,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
-          cache: 'yarn'
+          node-version: 24
+          cache: "yarn"
 
       - run: yarn install --frozen-lockfile
 
@@ -105,19 +105,20 @@ jobs:
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name:   ${{ steps.meta.outputs.tag }}
-          name:       ${{ steps.meta.outputs.tag }}
-          body:       ${{ steps.changelog.outputs.body }}
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          body: ${{ steps.changelog.outputs.body }}
           prerelease: ${{ steps.meta.outputs.prerelease }}
-          draft:      true
-          files:      ${{ steps.pack.outputs.filename }}
+          draft: true
+          files: ${{ steps.pack.outputs.filename }}
 
   publish:
     needs: draft
     runs-on: ubuntu-latest
-    environment: release          # requires manual approval in repo Settings → Environments
+    environment: release # requires manual approval in repo Settings → Environments
     permissions:
       contents: write
+      id-token: write # required for OIDC trusted publishing to npm
 
     steps:
       - uses: actions/checkout@v6
@@ -129,7 +130,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org/
 
       - name: Download tarball
@@ -139,6 +140,11 @@ jobs:
           path: dist-release
 
       - name: Publish to npm
-        run: npm publish dist-release/*.tgz
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+        run: |
+          TARBALL=$(ls dist-release/*.tgz)
+          if [ "${{ needs.draft.outputs.prerelease }}" = "true" ]; then
+            DIST_TAG=$(echo "${{ needs.draft.outputs.version }}" | grep -oE '(alpha|beta|rc|pre)' | head -1)
+            npm publish "./$TARBALL" --provenance --tag "${DIST_TAG:-prerelease}"
+          else
+            npm publish "./$TARBALL" --provenance
+          fi
