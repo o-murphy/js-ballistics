@@ -1,4 +1,5 @@
-import { expect, describe, test } from "@jest/globals";
+import { expect, describe, test, beforeAll } from "@jest/globals";
+import { WASM_AVAILABLE } from "./wasmAvailable";
 import {
     UNew,
     DragModel,
@@ -18,7 +19,24 @@ const methods = [
     { name: "EULER", method: IntegrationMethod.EULER },
 ];
 
-describe.each(methods)("TestMultiBC $name", (obj) => {
+describe("BCPoint validation", () => {
+    test("bc_zero_throws", () => {
+        /** BC must be positive */
+        expect(() => new BCPoint({ BC: 0.0, Mach: 1.0 })).toThrow();
+    });
+
+    test("both_mach_and_v_throws", () => {
+        /** Cannot specify both Mach and V */
+        expect(() => new BCPoint({ BC: 0.1, Mach: 1.0, V: UNew.MPS(300) })).toThrow();
+    });
+
+    test("neither_mach_nor_v_throws", () => {
+        /** Must specify either Mach or V */
+        expect(() => new BCPoint({ BC: 0.1 })).toThrow();
+    });
+});
+
+(WASM_AVAILABLE ? describe : describe.skip).each(methods)("TestMultiBC $name", (obj) => {
     const { method } = obj;
     let range = 1000;
     let step = 100;

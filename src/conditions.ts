@@ -1,6 +1,6 @@
 // Classes to define zeroing or current environment conditions
 
-import { _Atmosphere, _Coriolis, _Wind } from "./_wasm";
+import { _Wind } from "./_wasm";
 import {
     cLapseRateImperial,
     cStandardTemperatureF,
@@ -260,16 +260,6 @@ class Atmo {
         return ((p * M_a) / (Z * R * T_K)) * (1 - x_v * (1 - M_v / M_a));
     }
 
-    toWasmAtmo(): _Atmosphere {
-        return {
-            t0: this._t0,
-            a0: this._a0,
-            p0: this._p0,
-            mach: this._mach,
-            density_ratio: this.densityRatio,
-            cLowestTempC: Atmo.cLowestTempC,
-        };
-    }
 }
 
 class Vacuum extends Atmo {
@@ -496,23 +486,4 @@ class Coriolis {
         this.flat_fire_only = false;
     }
 
-    /**
-     * Converts to WASM-compatible Coriolis format.
-     *
-     * @returns Object with all Coriolis parameters, using 0.0 for undefined values
-     */
-    toWasmCoriolis(): _Coriolis {
-        return {
-            sin_lat: this.sin_lat,
-            cos_lat: this.cos_lat,
-            sin_az: this.sin_az ?? 0.0,
-            cos_az: this.cos_az ?? 0.0,
-            range_east: this.range_east ?? 0.0,
-            range_north: this.range_north ?? 0.0,
-            cross_east: this.cross_east ?? 0.0,
-            cross_north: this.cross_north ?? 0.0,
-            flat_fire_only: this.flat_fire_only,
-            muzzle_velocity_fps: this.muzzle_velocity_fps,
-        };
-    }
 }

@@ -12,6 +12,7 @@ import {
     OutOfRangeError,
     InterceptionError,
 } from "../src/exceptions";
+import { testWasm } from "./wasmAvailable";
 
 describe("Exception Type Conversion", () => {
     test("globalThis should have exception classes registered", () => {
@@ -21,7 +22,7 @@ describe("Exception Type Conversion", () => {
         expect((globalThis as any).InterceptionError).toBe(InterceptionError);
     });
 
-    test("C++ SolverRuntimeError should become JS SolverRuntimeError", async () => {
+    testWasm("C++ SolverRuntimeError should become JS SolverRuntimeError", async () => {
         const bclibc = await WasmManager.init();
 
         try {

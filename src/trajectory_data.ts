@@ -11,6 +11,7 @@ import {
     Weight,
     Dimension,
     UNew,
+    unitTypeCoerce,
 } from "./unit";
 import { Shot } from "./shot";
 import {
@@ -382,33 +383,33 @@ class HitResult {
                 case 0:
                     return td.time;
                 case 1:
-                    return td.distance.rawValue;
+                    return td.distance.foot;
                 case 2:
-                    return td.velocity.rawValue;
+                    return td.velocity.fps;
                 case 3:
                     return td.mach;
                 case 4:
-                    return td.height.rawValue;
+                    return td.height.foot;
                 case 5:
-                    return td.slantHeight.rawValue;
+                    return td.slantHeight.foot;
                 case 6:
-                    return td.dropAngle.rawValue;
+                    return td.dropAngle.rad;
                 case 7:
-                    return td.windage.rawValue;
+                    return td.windage.foot;
                 case 8:
-                    return td.windageAngle.rawValue;
+                    return td.windageAngle.rad;
                 case 9:
-                    return td.slantDistance.rawValue;
+                    return td.slantDistance.foot;
                 case 10:
-                    return td.angle.rawValue;
+                    return td.angle.rad;
                 case 11:
                     return td.densityRatio;
                 case 12:
                     return td.drag;
                 case 13:
-                    return td.energy.rawValue;
+                    return td.energy.footPound;
                 case 14:
-                    return td.ogw.rawValue;
+                    return td.ogw.pound;
                 default:
                     throw new Error(`Invalid interpolation key: ${keyIndex}`);
             }
@@ -516,6 +517,63 @@ class HitResult {
         return TrajectoryData.fromWasmTrajectoryData(interpolated);
     }
 
+    /**
+     * Calculate the danger space for a target centered at the given range.
+     *
+     * Determines how much ranging error can be tolerated: finds the interval
+     * [begin, end] along the sight line within which the trajectory stays
+     * within ±targetHeight/2 of the target's slant height.
+     *
+     * @param atRange      - Sight-line distance to the target center
+     * @param targetHeight - Critical height of the target (h); danger space uses h/2
+     * @returns DangerSpace with begin/end trajectory points and the target row
+     * @throws Error if trajectory doesn't reach the requested range
+     *
+     * @example
+     * ```typescript
+     * const ds = await hitResult.dangerSpace(UNew.Yard(500), UNew.Meter(1.5));
+     * console.log(ds.begin.distance.yard, ds.end.distance.yard);
+     * ```
+     */
+    async dangerSpace(
+        atRange: number | Distance,
+        targetHeight: number | Distance
+    ): Promise<DangerSpace> {
+        const bclibc = await WasmManager.init();
+        const interpKey = bclibc._TrajectoryDataInterpKey;
+
+        const _atRange = unitTypeCoerce(atRange, Distance, preferredUnits.distance);
+        const _targetHeight = unitTypeCoerce(targetHeight, Distance, preferredUnits.drop);
+        const halfHeight = _targetHeight.foot / 2.0;
+
+        // Point at the requested slant distance
+        const targetRow = await this.getAt(interpKey.SLANT_DISTANCE, _atRange.foot);
+
+        // Is the bullet still climbing at this point?
+        const isClimbing = targetRow.angle.rad - this.shot.lookAngle.rad > 0;
+        const sign = isClimbing ? -1 : 1;
+
+        const slantHeightBegin = targetRow.slantHeight.foot + sign * halfHeight;
+        const slantHeightEnd = targetRow.slantHeight.foot - sign * halfHeight;
+
+        let beginRow: TrajectoryData;
+        let endRow: TrajectoryData;
+
+        try {
+            beginRow = await this.getAt(interpKey.SLANT_HEIGHT, slantHeightBegin, 1e-9, targetRow.time);
+        } catch {
+            beginRow = this.trajectory[0];
+        }
+
+        try {
+            endRow = await this.getAt(interpKey.SLANT_HEIGHT, slantHeightEnd, 1e-9, targetRow.time);
+        } catch {
+            endRow = this.trajectory[this.trajectory.length - 1];
+        }
+
+        return new DangerSpace(targetRow, _targetHeight, beginRow, endRow, this.shot.lookAngle);
+    }
+
     static fromWasmHitOutput(
         shot: Shot,
         hit: HitOutput,
@@ -547,4 +605,27 @@ class HitResult {
     }
 }
 
-export { TrajectoryData, trajFlagName, trajFlagNames, HitResult };
+/**
+ * Result of a danger space calculation.
+ *
+ * Describes the range interval within which the trajectory stays within
+ * ±targetHeight/2 of the target's slant height.
+ */
+class DangerSpace {
+    /**
+     * @param atRange   - Trajectory point at the requested target range (slant distance)
+     * @param targetHeight - Target height used for the calculation
+     * @param begin     - First trajectory point still within targetHeight/2 of the target
+     * @param end       - Last trajectory point still within targetHeight/2 of the target
+     * @param lookAngle - Look angle of the shot
+     */
+    constructor(
+        readonly atRange: TrajectoryData,
+        readonly targetHeight: Distance,
+        readonly begin: TrajectoryData,
+        readonly end: TrajectoryData,
+        readonly lookAngle: Angular
+    ) {}
+}
+
+export { TrajectoryData, trajFlagName, trajFlagNames, HitResult, DangerSpace };

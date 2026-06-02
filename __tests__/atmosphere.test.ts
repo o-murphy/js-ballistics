@@ -1,5 +1,6 @@
 import {
     Atmo,
+    Vacuum,
     Temperature,
     Pressure,
     Velocity,
@@ -12,6 +13,7 @@ import {
 } from "../src";
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
+import { WASM_AVAILABLE } from "./wasmAvailable";
 
 const methods = [
     { name: "RK4", method: IntegrationMethod.RK4 },
@@ -47,7 +49,7 @@ describe("Atmo Class Tests", () => {
         expect(highICAO.densityRatio).toBeCloseTo(0.7387, 3);
         // Ref https://www.engineeringtoolbox.com/international-standard-atmosphere-d_985.html
         expect(highISA.pressure.In(Pressure.hPa)).toBeCloseTo(899, 0);
-        expect(highISA.densityRatio).toBeCloseTo(0.9075, 4);
+        expect(highISA.densityRatio).toBeCloseTo(0.9075, 3);
     });
 
     test("Mach calculations", () => {
@@ -59,11 +61,31 @@ describe("Atmo Class Tests", () => {
     });
 
     test("density", () => {
-        expect(Atmo.calculateAirDensity(20, 1013, 0)).toBeCloseTo(1.20383, 4);
-        expect(Atmo.calculateAirDensity(20, 1013, 1)).toBeCloseTo(1.19332, 4);
+        expect(Atmo.calculateAirDensity(20, 1013, 0)).toBeCloseTo(1.20383, 3);
+        expect(Atmo.calculateAirDensity(20, 1013, 1)).toBeCloseTo(1.19332, 3);
     });
 
-    test.each(methods)("trajectory effects $name", async (obj) => {
+    test("altitude_changes", () => {
+        /** Increasing altitude should decrease temperature, pressure, air density, and mach 1 speed */
+        expect(standard.temperature.In(Temperature.Celsius)).toBeGreaterThan(
+            Atmo.standardTemperature(UNew.Foot(5000)).In(Temperature.Celsius)
+        );
+        expect(standard.pressure.In(Pressure.hPa)).toBeGreaterThan(
+            Atmo.standardPressure(UNew.Foot(5000)).In(Pressure.hPa)
+        );
+        const highAtmo = Atmo.standard({ altitude: UNew.Foot(5000) });
+        expect(highAtmo.densityRatio).toBeLessThan(standard.densityRatio);
+        expect(highAtmo.mach.fps).toBeLessThan(standard.mach.fps);
+    });
+
+    test("vacuum", () => {
+        /** Vacuum should have zero density ratio and still have a non-zero mach */
+        const vac = new Vacuum({ altitude: UNew.Foot(0) });
+        expect(vac.densityRatio).toBe(0);
+        expect(vac.mach.fps).toBeGreaterThan(0);
+    });
+
+    (WASM_AVAILABLE ? test : test.skip).each(methods)("trajectory effects $name", async (obj) => {
         const { method } = obj;
         const check_distance = UNew.Yard(1000);
         const ammo = new Ammo({

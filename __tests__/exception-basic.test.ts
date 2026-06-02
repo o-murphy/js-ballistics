@@ -5,8 +5,9 @@
  */
 
 import { WasmManager } from "../src/_wasm";
+import { describeWasm } from "./wasmAvailable";
 
-describe("Basic Exception Handling", () => {
+describeWasm("Basic Exception Handling", () => {
     test("C++ runtime_error should be caught as JavaScript Error", async () => {
         const bclibc = await WasmManager.init();
 
@@ -50,7 +51,7 @@ describe("Basic Exception Handling", () => {
     });
 });
 
-describe("Custom C++ Exception Handling", () => {
+describeWasm("Custom C++ Exception Handling", () => {
     test("Custom C++ exception should be caught as JavaScript Error", async () => {
         const bclibc = await WasmManager.init();
 

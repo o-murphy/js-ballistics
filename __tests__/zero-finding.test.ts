@@ -1,4 +1,5 @@
 import { expect } from "@jest/globals";
+import { WASM_AVAILABLE } from "./wasmAvailable";
 import {
     Ammo,
     DragModel,
@@ -39,14 +40,14 @@ const testCases = methods.flatMap((obj) =>
 describe("Unit test for zero finding in ballistic calculator", () => {
     // Using test.each with named properties for clearer type inference
     // The test name now uses Jest's $propertyName syntax for interpolation
-    test.each(testCases)(
+    (WASM_AVAILABLE ? test : test.skip).each(testCases)(
         "test_set_weapon_zero with $engineObj.name and distance $distance",
         async ({ obj, distance }) => {
             // Destructure the properties from the single test case object
             const { method } = obj;
             const zeroMinVelocityCalc = new Calculator({
                 method,
-                config: { cMinimumVelocity: 0 },
+                config: { minimumVelocity: 0 },
             });
 
             const shot = createShot(); // Create a new shot for each test run

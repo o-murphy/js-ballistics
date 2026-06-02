@@ -123,8 +123,7 @@ class DragModel {
         this.diameter = unitTypeCoerce(diameter ?? 0, Distance, preferredUnits.diameter);
         this.length = unitTypeCoerce(length ?? 0, Distance, preferredUnits.length);
         // Calculate and set the sectional density and form factor
-        if (weight && diameter) {
-            // FIXME: Check if both > 0
+        if (this.weight.rawValue > 0 && this.diameter.rawValue > 0) {
             this.sectionalDensity = this._getSectionalDensity();
             this.formFactor = this._getFormFactor(this.bc);
         }

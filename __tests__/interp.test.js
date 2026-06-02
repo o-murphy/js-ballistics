@@ -1,8 +1,12 @@
 // tests/wasm/interp.test.js
 
+import { existsSync } from "fs";
+import { resolve } from "path";
 import { WasmManager } from "../src";
 
-describe("BCLIBC Interpolation Tests (WASM)", () => {
+const WASM_AVAILABLE = existsSync(resolve(process.cwd(), "build/bclibc.js"));
+
+(WASM_AVAILABLE ? describe : describe.skip)("BCLIBC Interpolation Tests (WASM)", () => {
     let BCLIBC;
 
     beforeAll(async () => {

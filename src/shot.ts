@@ -1,5 +1,5 @@
 import { _ShotPropsInput, Config, IntegrationMethod } from "./_wasm";
-import { Atmo, Coriolis, Wind } from "./conditions";
+import { Atmo, Wind } from "./conditions";
 import { Ammo, Weapon } from "./munition";
 import { Angular, preferredUnits, UNew, unitTypeCoerce } from "./unit";
 
@@ -276,18 +276,16 @@ class Shot {
             // Weapon properties
             ...this.weapon.toWasmWeaponInput(),
 
-            // Environmental conditions
-            alt0_ft: this.atmo.altitude.foot,
-            atmo: this.atmo.toWasmAtmo(),
-            // winds: this.winds.map(wind => wind.toWasmWind()),
+            // Raw atmosphere — C++ builds BCLIBC_Atmosphere via from_conditions()
+            altitude_ft: this.atmo.altitude.foot,
+            temp_c: this.atmo._t0,
+            pressure_hpa: this.atmo._p0,   // 0 for Vacuum
+            humidity: this.atmo.humidity,
             winds: this.winds.map((wind) => wind.toWasmWind()),
 
-            // Coriolis
-            coriolis: new Coriolis({
-                latitudeDeg: this.latitudeDeg,
-                azimuthDeg: this.azimuthDeg,
-                muzzleVelocityFps: muzzle_velocity_fps,
-            }).toWasmCoriolis(),
+            // Raw Coriolis inputs — C++ builds BCLIBC_Coriolis via from_lat_az()
+            latitude_deg: this.latitudeDeg ?? Number.NaN,
+            azimuth_deg: this.azimuthDeg ?? Number.NaN,
 
             // Calculation options
             method: method,

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
+import { WASM_AVAILABLE } from "./wasmAvailable";
 import { Calculator } from "../src/interface";
 import {
     Ammo,
@@ -14,7 +15,6 @@ import {
     TrajectoryData,
 } from "../src";
 import { Shot } from "../src/shot";
-import { _TrajectoryRequest } from "../build/bclibc";
 import { IntegrationMethod, TrajFlag } from "../src/_wasm";
 
 type TestItem = [
@@ -120,7 +120,7 @@ const methods = [
     { name: "EULER", method: IntegrationMethod.EULER },
 ];
 
-describe.each(methods)("trajectory $name", (obj) => {
+(WASM_AVAILABLE ? describe : describe.skip).each(methods)("trajectory $name", (obj) => {
     const { method } = obj;
 
     describe("zero", () => {
@@ -142,7 +142,7 @@ describe.each(methods)("trajectory $name", (obj) => {
                 UNew.Yard(100)
             );
 
-            expect(zero_angle.In(Unit.Radian)).toBeCloseTo(0.001651, 1e-6);
+            expect(Math.abs(zero_angle.In(Unit.Radian) - 0.0016514)).toBeLessThan(1e-4);
         });
 
         test("G7", async () => {
@@ -154,16 +154,16 @@ describe.each(methods)("trajectory $name", (obj) => {
                 length: 0.9,
             });
             const ammo = new Ammo({ dm: dm, mv: UNew.FPS(2750) });
-            const weapon = new Weapon({ twist: UNew.Inch(2) });
+            const weapon = new Weapon({ sightHeight: UNew.Inch(2) });
             const atmo = Atmo.icao();
             const calc = new Calculator({ method });
 
             const zero_angle: Angular = await calc.barrelElevationForTarget(
                 new Shot({ weapon, ammo, atmo }),
-                UNew.Yard(100).In(Unit.Foot)
+                UNew.Yard(100)
             );
 
-            expect(zero_angle.In(Unit.Radian)).toBeCloseTo(0.0012286, 1e-6);
+            expect(Math.abs(zero_angle.In(Unit.Radian) - 0.0012286)).toBeLessThan(1e-4);
         });
     });
 

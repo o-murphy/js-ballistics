@@ -42,11 +42,16 @@ public:
     double barrel_azimuth_rad;
     double sight_height_ft;
     double cant_angle_rad;
-    double alt0_ft;
     double muzzle_velocity_fps;
     DragTableIface drag_table;
-    BCLIBC_Atmosphere atmo;
-    BCLIBC_Coriolis coriolis;
+    // raw atmosphere — BCLIBC_Atmosphere is built inside C++ via from_conditions()
+    double temp_c;
+    double pressure_hpa;   ///< 0 → vacuum (zero drag)
+    double altitude_ft;
+    double humidity;
+    // Coriolis inputs (degrees; NaN disables)
+    double latitude_deg;   ///< NaN → no Coriolis effect
+    double azimuth_deg;    ///< NaN → flat-fire drift only
     WindsIfaceList winds;
     // options
     IntegrationMethod method;
@@ -78,81 +83,6 @@ public:
     BCLIBC_TerminationReason reason = BCLIBC_TerminationReason();
 };
 
-inline static BCLIBC_WindSock windSockFromVal(const WindsIfaceList &winds)
-{
-    BCLIBC_WindSock sock;
-
-    if (winds.isUndefined() || winds.isNull() || !winds.isArray())
-    {
-        return sock;
-    }
-
-    try
-    {
-        unsigned length = winds["length"].as<unsigned>();
-        for (unsigned i = 0; i < length; i++)
-        {
-            sock.push(winds[i].as<BCLIBC_Wind>());
-        }
-    }
-    catch (...)
-    {
-        std::invalid_argument("Array of Winds has invalid format");
-    }
-    sock.update_cache();
-    return sock;
-}
-
-inline static BCLIBC_MachList machListFromVal(const DragTableIface &drag_table)
-{
-    BCLIBC_MachList list;
-
-    if (!drag_table.isUndefined() && !drag_table.isNull())
-    {
-        unsigned length = drag_table["length"].as<unsigned>();
-        for (unsigned i = 0; i < length; i++)
-        {
-            auto point = drag_table[i];
-            list.push_back(point["Mach"].as<double>());
-        }
-    }
-
-    return list;
-}
-
-// ============================================================================
-// Helper: PCHIP Curve Generation
-// ============================================================================
-
-/**
- * @brief Creates a BCLIBC_Curve from JavaScript array of {Mach, CD} objects
- * using PCHIP (Piecewise Cubic Hermite Interpolating Polynomial) algorithm.
- */
-inline static BCLIBC_Curve curveFromVal(const DragTableIface &drag_table)
-{
-    if (drag_table.isUndefined() || drag_table.isNull())
-    {
-        throw std::invalid_argument("Curve data is undefined or null");
-    }
-
-    unsigned n = drag_table["length"].as<unsigned>();
-    if (n < 2)
-    {
-        throw std::invalid_argument("BCLIBC_Curve requires at least 2 data points");
-    }
-
-    std::vector<double> x(n);
-    std::vector<double> y(n);
-
-    for (unsigned i = 0; i < n; ++i)
-    {
-        auto item = drag_table[i];
-        x[i] = item["Mach"].as<double>();
-        y[i] = item["CD"].as<double>();
-    }
-
-    return bclibc::build_pchip_curve_from_arrays(x, y);
-}
 
 double interpolate2pt(
     double x, double x0, double y0, double x1, double y1)
@@ -202,28 +132,60 @@ BCLIBC_IntegrateCallable selectIntegrationMethod(const IntegrationMethod &method
 
 BCLIBC_ShotProps shotPropsFromVal(const ShotPropsInput &props)
 {
-    return BCLIBC_ShotProps(
-        props.bc,
-        props.look_angle_rad,
-        props.twist_inch,
-        props.length_inch,
-        props.diameter_inch,
-        props.weight_grain,
-        props.barrel_elevation_rad,
-        props.barrel_azimuth_rad,
-        props.sight_height_ft,
-        std::cos(props.cant_angle_rad),
-        std::sin(props.cant_angle_rad),
-        props.alt0_ft,
-        selectCalcStep(props.method) * props.config.cStepMultiplier,
-        props.muzzle_velocity_fps,
-        0.0,
-        curveFromVal(props.drag_table),
-        machListFromVal(props.drag_table),
-        props.atmo,
-        props.coriolis,
-        windSockFromVal(props.winds),
-        BCLIBC_TRAJ_FLAG_NONE);
+    // Unpack drag table from JS val into temporary vectors.
+    // Both vectors must stay alive until to_shot_props() returns (non-owning pointers).
+    unsigned n = 0;
+    std::vector<double> mach_v, cd_v;
+    if (!props.drag_table.isUndefined() && !props.drag_table.isNull() && props.drag_table.isArray())
+    {
+        n = props.drag_table["length"].as<unsigned>();
+        mach_v.resize(n);
+        cd_v.resize(n);
+        for (unsigned i = 0; i < n; ++i)
+        {
+            auto item = props.drag_table[i];
+            mach_v[i] = item["Mach"].as<double>();
+            cd_v[i]   = item["CD"].as<double>();
+        }
+    }
+
+    // Unpack winds from JS val into temporary vector.
+    std::vector<BCLIBC_Wind> winds_v;
+    if (!props.winds.isUndefined() && !props.winds.isNull() && props.winds.isArray())
+    {
+        unsigned wn = props.winds["length"].as<unsigned>();
+        winds_v.reserve(wn);
+        for (unsigned i = 0; i < wn; ++i)
+            winds_v.push_back(props.winds[i].as<BCLIBC_Wind>());
+    }
+
+    BCLIBC_Shot shot;
+    shot.bc                   = props.bc;
+    shot.weight_grain         = props.weight_grain;
+    shot.diameter_inch        = props.diameter_inch;
+    shot.length_inch          = props.length_inch;
+    shot.muzzle_velocity_fps  = props.muzzle_velocity_fps;
+    shot.stability_coefficient = 0.0;
+    shot.mach_data            = mach_v.empty() ? nullptr : mach_v.data();
+    shot.cd_data              = cd_v.empty()   ? nullptr : cd_v.data();
+    shot.drag_table_size      = static_cast<int>(n);
+    shot.sight_height_ft      = props.sight_height_ft;
+    shot.twist_inch           = props.twist_inch;
+    shot.temp_c               = props.temp_c;
+    shot.pressure_hpa         = props.pressure_hpa;
+    shot.altitude_ft          = props.altitude_ft;
+    shot.humidity             = props.humidity;
+    shot.winds                = winds_v.empty() ? nullptr : winds_v.data();
+    shot.wind_count           = static_cast<int>(winds_v.size());
+    shot.look_angle_rad       = props.look_angle_rad;
+    shot.barrel_elevation_rad = props.barrel_elevation_rad;
+    shot.barrel_azimuth_rad   = props.barrel_azimuth_rad;
+    shot.cant_angle_rad       = props.cant_angle_rad;
+    shot.latitude_deg         = props.latitude_deg;
+    shot.azimuth_deg          = props.azimuth_deg;
+    shot.calc_step            = selectCalcStep(props.method) * props.config.cStepMultiplier;
+
+    return shot.to_shot_props();
 }
 
 // ============================================================================
@@ -455,16 +417,6 @@ inline static Interception integrateRawAt(const ShotPropsInput &shotProps, const
         return result; });
 }
 
-inline static bool get_flat_fire_only(const BCLIBC_Coriolis &obj)
-{
-    return obj.flat_fire_only != 0;
-}
-
-inline static void set_flat_fire_only(BCLIBC_Coriolis &obj, bool val)
-{
-    obj.flat_fire_only = val ? 1 : 0;
-}
-
 inline static val get_position(const BCLIBC_BaseTrajData &d)
 {
     val v = val::object();
@@ -648,31 +600,11 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .field("gravityConstant", &BCLIBC_Config::cGravityConstant)
         .field("minimumAltitude", &BCLIBC_Config::cMinimumAltitude);
 
-    value_object<BCLIBC_Atmosphere>("_Atmosphere")
-        .field("t0", &BCLIBC_Atmosphere::_t0)
-        .field("a0", &BCLIBC_Atmosphere::_a0)
-        .field("p0", &BCLIBC_Atmosphere::_p0)
-        .field("mach", &BCLIBC_Atmosphere::_mach)
-        .field("density_ratio", &BCLIBC_Atmosphere::density_ratio)
-        .field("cLowestTempC", &BCLIBC_Atmosphere::cLowestTempC);
-
     value_object<BCLIBC_Wind>("_Wind")
         .field("velocity_fps", &BCLIBC_Wind::velocity)
         .field("direction_from_rad", &BCLIBC_Wind::direction_from)
         .field("until_distance_ft", &BCLIBC_Wind::until_distance)
         .field("MAX_DISTANCE_FEET", &BCLIBC_Wind::MAX_DISTANCE_FEET);
-
-    value_object<BCLIBC_Coriolis>("_Coriolis")
-        .field("sin_lat", &BCLIBC_Coriolis::sin_lat)
-        .field("cos_lat", &BCLIBC_Coriolis::cos_lat)
-        .field("sin_az", &BCLIBC_Coriolis::sin_az)
-        .field("cos_az", &BCLIBC_Coriolis::cos_az)
-        .field("range_east", &BCLIBC_Coriolis::range_east)
-        .field("range_north", &BCLIBC_Coriolis::range_north)
-        .field("cross_east", &BCLIBC_Coriolis::cross_east)
-        .field("cross_north", &BCLIBC_Coriolis::cross_north)
-        .field("flat_fire_only", &get_flat_fire_only, &set_flat_fire_only)
-        .field("muzzle_velocity_fps", &BCLIBC_Coriolis::muzzle_velocity_fps);
 
     value_object<DragTablePoint>("_DragTablePoint")
         .field("Mach", &DragTablePoint::Mach)
@@ -689,11 +621,14 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .field("barrel_azimuth_rad", &ShotPropsInput::barrel_azimuth_rad)
         .field("sight_height_ft", &ShotPropsInput::sight_height_ft)
         .field("cant_angle_rad", &ShotPropsInput::cant_angle_rad)
-        .field("alt0_ft", &ShotPropsInput::alt0_ft)
         .field("muzzle_velocity_fps", &ShotPropsInput::muzzle_velocity_fps)
         .field("drag_table", &ShotPropsInput::drag_table)
-        .field("atmo", &ShotPropsInput::atmo)
-        .field("coriolis", &ShotPropsInput::coriolis)
+        .field("temp_c", &ShotPropsInput::temp_c)
+        .field("pressure_hpa", &ShotPropsInput::pressure_hpa)
+        .field("altitude_ft", &ShotPropsInput::altitude_ft)
+        .field("humidity", &ShotPropsInput::humidity)
+        .field("latitude_deg", &ShotPropsInput::latitude_deg)
+        .field("azimuth_deg", &ShotPropsInput::azimuth_deg)
         .field("winds", &ShotPropsInput::winds)
         .field("method", &ShotPropsInput::method)
         .field("config", &ShotPropsInput::config);
