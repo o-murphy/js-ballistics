@@ -206,14 +206,22 @@ const methods = [
             atmo: Atmo.icao(),
             winds: [crosswind],
         });
-        const baseHit = await calc.fire({ shot: baseShot, trajectoryRange: range, trajectoryStep: step });
+        const baseHit = await calc.fire({
+            shot: baseShot,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const vacuumShot = new Shot({
             weapon: new Weapon({ twist: 0 }),
             ammo,
             atmo: new Vacuum(),
             winds: [crosswind],
         });
-        const vacHit = await calc.fire({ shot: vacuumShot, trajectoryRange: range, trajectoryStep: step });
+        const vacHit = await calc.fire({
+            shot: vacuumShot,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
 
         const tLag = baseHit.trajectory[5].time - vacHit.trajectory[5].time;
         expect(baseHit.trajectory[5].windage.foot).toBeCloseTo(tLag * vW.fps);
@@ -228,7 +236,11 @@ const methods = [
             atmo: atmosphere,
             winds: [new Wind({ velocity: UNew.MPS(4), directionFrom: UNew.OClock(9) })],
         });
-        const tRight = await calc.fire({ shot: shotRightWind, trajectoryRange: range, trajectoryStep: step });
+        const tRight = await calc.fire({
+            shot: shotRightWind,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
 
         // List multiple winds out of order — should be sorted by untilDistance
         const shotMulti = new Shot({
@@ -236,11 +248,23 @@ const methods = [
             ammo,
             atmo: atmosphere,
             winds: [
-                new Wind({ velocity: UNew.MPS(4), directionFrom: UNew.OClock(3), untilDistance: UNew.Yard(700) }),
-                new Wind({ velocity: UNew.MPS(4), directionFrom: UNew.OClock(9), untilDistance: UNew.Yard(550) }),
+                new Wind({
+                    velocity: UNew.MPS(4),
+                    directionFrom: UNew.OClock(3),
+                    untilDistance: UNew.Yard(700),
+                }),
+                new Wind({
+                    velocity: UNew.MPS(4),
+                    directionFrom: UNew.OClock(9),
+                    untilDistance: UNew.Yard(550),
+                }),
             ],
         });
-        const tMulti = await calc.fire({ shot: shotMulti, trajectoryRange: range, trajectoryStep: step });
+        const tMulti = await calc.fire({
+            shot: shotMulti,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
 
         // Multiple winds, last wind has no range limit
         const shotMultiMore = new Shot({
@@ -248,11 +272,19 @@ const methods = [
             ammo,
             atmo: atmosphere,
             winds: [
-                new Wind({ velocity: UNew.MPS(4), directionFrom: UNew.OClock(9), untilDistance: UNew.Yard(550) }),
+                new Wind({
+                    velocity: UNew.MPS(4),
+                    directionFrom: UNew.OClock(9),
+                    untilDistance: UNew.Yard(550),
+                }),
                 new Wind({ velocity: UNew.MPS(4), directionFrom: UNew.OClock(3) }),
             ],
         });
-        const tMultiMore = await calc.fire({ shot: shotMultiMore, trajectoryRange: range, trajectoryStep: step });
+        const tMultiMore = await calc.fire({
+            shot: shotMultiMore,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
 
         // Winds are the same to 500 yards
         expect(tMulti.trajectory[5].windage.rawValue).toBeCloseTo(
@@ -279,10 +311,26 @@ const methods = [
 
     test("winds_sort", async () => {
         const winds = [
-            new Wind({ velocity: UNew.MPS(0), directionFrom: UNew.Degree(90), untilDistance: UNew.Meter(100) }),
-            new Wind({ velocity: UNew.MPS(1), directionFrom: UNew.Degree(60), untilDistance: UNew.Meter(300) }),
-            new Wind({ velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(200) }),
-            new Wind({ velocity: UNew.MPS(2), directionFrom: UNew.Degree(30), untilDistance: UNew.Meter(50) }),
+            new Wind({
+                velocity: UNew.MPS(0),
+                directionFrom: UNew.Degree(90),
+                untilDistance: UNew.Meter(100),
+            }),
+            new Wind({
+                velocity: UNew.MPS(1),
+                directionFrom: UNew.Degree(60),
+                untilDistance: UNew.Meter(300),
+            }),
+            new Wind({
+                velocity: UNew.MPS(2),
+                directionFrom: UNew.Degree(30),
+                untilDistance: UNew.Meter(200),
+            }),
+            new Wind({
+                velocity: UNew.MPS(2),
+                directionFrom: UNew.Degree(30),
+                untilDistance: UNew.Meter(50),
+            }),
         ];
         const shot = new Shot({
             weapon: undefined as unknown as Weapon,
@@ -312,11 +360,19 @@ const methods = [
     test("twist", async () => {
         /** Right-hand twist → positive drift; left-hand twist → negative drift; faster twist → more drift */
         const shotRight = new Shot({ weapon: new Weapon({ twist: 12 }), ammo, atmo: atmosphere });
-        const hitRight = await calc.fire({ shot: shotRight, trajectoryRange: range, trajectoryStep: step });
+        const hitRight = await calc.fire({
+            shot: shotRight,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         expect(hitRight.trajectory[5].windage.rawValue).toBeGreaterThan(0);
 
         const shotLeft = new Shot({ weapon: new Weapon({ twist: -8 }), ammo, atmo: atmosphere });
-        const hitLeft = await calc.fire({ shot: shotLeft, trajectoryRange: range, trajectoryStep: step });
+        const hitLeft = await calc.fire({
+            shot: shotLeft,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         expect(hitLeft.trajectory[5].windage.rawValue).toBeLessThan(0);
 
         // Slower twist (left=-8) produces more magnitude than faster (right=12)
@@ -412,7 +468,11 @@ const methods = [
             ammo,
             atmo: new Atmo({ temperature: UNew.Celsius(-5) }),
         });
-        const hitNoSens = await calc.fire({ shot: shotNoSens, trajectoryRange: range, trajectoryStep: step });
+        const hitNoSens = await calc.fire({
+            shot: shotNoSens,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         expect(hitNoSens.trajectory[0].velocity.rawValue).toBeCloseTo(
             baselineTrajectory[0].velocity.rawValue
         );
@@ -540,7 +600,11 @@ const methods = [
         );
 
         shot.azimuthDeg = 45.0; // Northeast — increasingly positive vertical
-        const northeastHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
+        const northeastHit = await calc.fire({
+            shot,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         expect(northeastHit.trajectory[last].height.rawValue).toBeGreaterThan(
             northHit.trajectory[last].height.rawValue
         );

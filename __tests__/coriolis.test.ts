@@ -1,13 +1,6 @@
 import { expect, describe, test, beforeAll } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
-import {
-    Ammo,
-    DragModel,
-    DragTables,
-    UNew,
-    Weapon,
-    IntegrationMethod,
-} from "../src";
+import { Ammo, DragModel, DragTables, UNew, Weapon, IntegrationMethod } from "../src";
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
 
@@ -80,12 +73,20 @@ const makeBaseShot = () => {
         // North of equator — flat-fire Coriolis deflects to the right
         const shotNorth = makeBaseShot();
         shotNorth.latitudeDeg = 80.0;
-        const resultNorth = await calc.fire({ shot: shotNorth, trajectoryRange: range, trajectoryStep: step });
+        const resultNorth = await calc.fire({
+            shot: shotNorth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
 
         const shotSouth = makeBaseShot();
         shotSouth.latitudeDeg = -40.0;
-        const resultSouth = await calc.fire({ shot: shotSouth, trajectoryRange: range, trajectoryStep: step });
+        const resultSouth = await calc.fire({
+            shot: shotSouth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastSouth = resultSouth.trajectory[resultSouth.trajectory.length - 1];
 
         // North deflection magnitude exceeds south deflection (80° vs 40°)
@@ -96,8 +97,12 @@ const makeBaseShot = () => {
 
     test("test_coriolis_invalid_latitude_throws", () => {
         const shot = makeBaseShot();
-        expect(() => { shot.latitudeDeg = 91.0; }).toThrow();
-        expect(() => { shot.latitudeDeg = -91.0; }).toThrow();
+        expect(() => {
+            shot.latitudeDeg = 91.0;
+        }).toThrow();
+        expect(() => {
+            shot.latitudeDeg = -91.0;
+        }).toThrow();
     });
 
     // -------------------------------------------------------------------------
@@ -117,7 +122,11 @@ const makeBaseShot = () => {
     test("test_full_coriolis_east_equator_max_vertical_effect", async () => {
         // Shooting east at equator gives maximum upward vertical Coriolis effect
         const shotBase = makeBaseShot();
-        const base = await calc.fire({ shot: shotBase, trajectoryRange: range, trajectoryStep: step });
+        const base = await calc.fire({
+            shot: shotBase,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastBase = base.trajectory[base.trajectory.length - 1];
 
         const shot = makeBaseShot();
@@ -133,13 +142,21 @@ const makeBaseShot = () => {
         const shotEq = makeBaseShot();
         shotEq.azimuthDeg = 90.0;
         shotEq.latitudeDeg = 0.0;
-        const resultEq = await calc.fire({ shot: shotEq, trajectoryRange: range, trajectoryStep: step });
+        const resultEq = await calc.fire({
+            shot: shotEq,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastEq = resultEq.trajectory[resultEq.trajectory.length - 1];
 
         const shotSouth = makeBaseShot();
         shotSouth.azimuthDeg = 90.0;
         shotSouth.latitudeDeg = -40.0;
-        const resultSouth = await calc.fire({ shot: shotSouth, trajectoryRange: range, trajectoryStep: step });
+        const resultSouth = await calc.fire({
+            shot: shotSouth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastSouth = resultSouth.trajectory[resultSouth.trajectory.length - 1];
 
         expect(lastSouth.windage.rawValue).toBeLessThan(lastEq.windage.rawValue);
@@ -150,13 +167,21 @@ const makeBaseShot = () => {
         const shotSouth = makeBaseShot();
         shotSouth.azimuthDeg = 90.0;
         shotSouth.latitudeDeg = -40.0;
-        const resultSouth = await calc.fire({ shot: shotSouth, trajectoryRange: range, trajectoryStep: step });
+        const resultSouth = await calc.fire({
+            shot: shotSouth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastSouth = resultSouth.trajectory[resultSouth.trajectory.length - 1];
 
         const shotNorth = makeBaseShot();
         shotNorth.azimuthDeg = 90.0;
         shotNorth.latitudeDeg = 80.0;
-        const resultNorth = await calc.fire({ shot: shotNorth, trajectoryRange: range, trajectoryStep: step });
+        const resultNorth = await calc.fire({
+            shot: shotNorth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
 
         expect(lastNorth.windage.rawValue).toBeGreaterThan(-lastSouth.windage.rawValue);
@@ -170,7 +195,11 @@ const makeBaseShot = () => {
     test("test_full_coriolis_north_no_vertical_effect", async () => {
         // Shooting north at equator: no vertical Coriolis
         const shotBase = makeBaseShot();
-        const base = await calc.fire({ shot: shotBase, trajectoryRange: range, trajectoryStep: step });
+        const base = await calc.fire({
+            shot: shotBase,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastBase = base.trajectory[base.trajectory.length - 1];
 
         const shot = makeBaseShot();
@@ -186,13 +215,21 @@ const makeBaseShot = () => {
         const shotNorth = makeBaseShot();
         shotNorth.latitudeDeg = 0.0;
         shotNorth.azimuthDeg = 0.0;
-        const resultNorth = await calc.fire({ shot: shotNorth, trajectoryRange: range, trajectoryStep: step });
+        const resultNorth = await calc.fire({
+            shot: shotNorth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
 
         const shotNE = makeBaseShot();
         shotNE.latitudeDeg = 0.0;
         shotNE.azimuthDeg = 45.0;
-        const resultNE = await calc.fire({ shot: shotNE, trajectoryRange: range, trajectoryStep: step });
+        const resultNE = await calc.fire({
+            shot: shotNE,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastNE = resultNE.trajectory[resultNE.trajectory.length - 1];
 
         expect(lastNE.height.rawValue).toBeGreaterThan(lastNorth.height.rawValue);
@@ -202,13 +239,21 @@ const makeBaseShot = () => {
         const shotNorth = makeBaseShot();
         shotNorth.latitudeDeg = 0.0;
         shotNorth.azimuthDeg = 0.0;
-        const resultNorth = await calc.fire({ shot: shotNorth, trajectoryRange: range, trajectoryStep: step });
+        const resultNorth = await calc.fire({
+            shot: shotNorth,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
 
         const shotWest = makeBaseShot();
         shotWest.latitudeDeg = 0.0;
         shotWest.azimuthDeg = 270.0;
-        const resultWest = await calc.fire({ shot: shotWest, trajectoryRange: range, trajectoryStep: step });
+        const resultWest = await calc.fire({
+            shot: shotWest,
+            trajectoryRange: range,
+            trajectoryStep: step,
+        });
         const lastWest = resultWest.trajectory[resultWest.trajectory.length - 1];
 
         expect(lastWest.height.rawValue).toBeLessThan(lastNorth.height.rawValue);

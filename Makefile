@@ -38,6 +38,8 @@ build-wasm: clone-submodules
 		-fexceptions \
 		-s DISABLE_EXCEPTION_CATCHING=0"
 	@echo "✅ ESM WASM built in $(WASM_OUT_DIR)"
+	@cp $(WASM_OUT_DIR)/bclibc.d.ts __stubs__/bclibc.d.ts
+	@echo "✅ Stub updated: __stubs__/bclibc.d.ts"
 
 build-ts:
 	@echo "🔨 Building TypeScript..."

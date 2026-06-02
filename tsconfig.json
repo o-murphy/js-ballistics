@@ -25,13 +25,13 @@
     // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
     /* Modules */
     "module": "ESNext" /* Specify what module code is generated. */,
-    // "rootDir": "./src",                                  /* Specify the root folder within your source files. */
+    "rootDir": "./" /* Required by TS6: covers both src/ and __tests__/ when ts-jest compiles tests. */,
     "moduleResolution": "Bundler" /* Specify how TypeScript looks up a file from a given module specifier. */,
-    "baseUrl": "./" /* Specify the base directory to resolve non-relative module names. */,
+    "ignoreDeprecations": "6.0" /* tsup internally adds baseUrl:"." which TS6 deprecates; this silences TS5101. */,
     "paths": {
-      "@wasm/*": ["build/*", "__stubs__/*"],
-      "@src/*": ["src/*"],
-      "@dist/*": ["dist/*"]
+      "@wasm/*": ["./build/*", "./__stubs__/*"],
+      "@src/*": ["./src/*"],
+      "@dist/*": ["./dist/*"]
     } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */

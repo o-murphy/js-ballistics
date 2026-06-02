@@ -458,9 +458,8 @@ describe("BCLIBC Vector Tests", () => {
             // });
             vectors.forEach((v) => {
                 const m = v.mag();
-                if (m !== 0) {
-                    expect(m).toBeCloseTo(1, 5);
-                }
+                // eslint-disable-next-line jest/no-conditional-expect
+                if (m !== 0) expect(m).toBeCloseTo(1, 5);
             });
 
             expect(vectors.length).toBe(count);
