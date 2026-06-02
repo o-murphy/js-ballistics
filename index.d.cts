@@ -28,7 +28,7 @@ declare const cPressureExponent: 5.255876;
 declare const cA0: 1.24871;
 declare const cA1: 0.0988438;
 declare const cA2: 0.00152907;
-declare const cA3: -3.07031e-06;
+declare const cA3: -3.07031e-6;
 declare const cA4: 4.21329e-7;
 declare const cA5: 0.0003342;
 /** Standard temperature at sea level in Celsius (°C) */
@@ -36,7 +36,7 @@ declare const cStandardTemperatureC: 15;
 /** Temperature lapse rate in Kelvin per foot (K/ft) */
 declare const cLapseRateKperFoot: -0.0019812;
 /** Temperature lapse rate in metric units (°C/m) */
-declare const cLapseRateMetric: -6.5e-03;
+declare const cLapseRateMetric: -6.5e-3;
 /** Standard atmospheric pressure at sea level (hPa) */
 declare const cStandardPressureMetric: 1013.25;
 /** Speed of sound coefficient in metric units (m/s per √K) */
@@ -46,7 +46,7 @@ declare const cStandardDensityMetric: 1.225;
 /** Standard temperature at sea level in Fahrenheit (°F) */
 declare const cStandardTemperatureF: 59;
 /** Temperature lapse rate in imperial units (°F/ft) */
-declare const cLapseRateImperial: -3.56616e-03;
+declare const cLapseRateImperial: -3.56616e-3;
 /** Standard atmospheric pressure at sea level (InHg) */
 declare const cStandardPressure: 29.92;
 /** Speed of sound coefficient in imperial units (fps per √°R) */
@@ -78,37 +78,19 @@ interface ClassHandle {
   [Symbol.dispose](): void;
   clone(): this;
 }
-interface _InterpMethodValue<T extends number> {
-  value: T;
-}
-type _InterpMethod = _InterpMethodValue<0>|_InterpMethodValue<1>;
+type _InterpMethod = 0|1;
 
-interface _TerminationReasonValue<T extends number> {
-  value: T;
-}
-type _TerminationReason = _TerminationReasonValue<0>|_TerminationReasonValue<1>|_TerminationReasonValue<2>|_TerminationReasonValue<3>|_TerminationReasonValue<4>|_TerminationReasonValue<5>;
+type _TerminationReason = 0|1|2|3|4|5;
 
-interface _TrajFlagValue<T extends number> {
-  value: T;
-}
-type _TrajFlag = _TrajFlagValue<0>|_TrajFlagValue<1>|_TrajFlagValue<2>|_TrajFlagValue<3>|_TrajFlagValue<4>|_TrajFlagValue<8>|_TrajFlagValue<16>|_TrajFlagValue<31>|_TrajFlagValue<32>;
+type _TrajFlag = 0|1|2|3|4|8|16|31|32;
 
-interface _IntegrationMethodValue<T extends number> {
-  value: T;
-}
-type _IntegrationMethod = _IntegrationMethodValue<0>|_IntegrationMethodValue<1>;
+type _IntegrationMethod = 0|1;
 
-interface _BaseTrajDataInterpKeyValue<T extends number> {
-  value: T;
-}
-type _BaseTrajDataInterpKey = _BaseTrajDataInterpKeyValue<0>|_BaseTrajDataInterpKeyValue<2>|_BaseTrajDataInterpKeyValue<3>|_BaseTrajDataInterpKeyValue<4>|_BaseTrajDataInterpKeyValue<5>|_BaseTrajDataInterpKeyValue<6>|_BaseTrajDataInterpKeyValue<7>|_BaseTrajDataInterpKeyValue<1>;
+type _BaseTrajDataInterpKey = 0|2|3|4|5|6|7|1;
 
-interface _TrajectoryDataInterpKeyValue<T extends number> {
-  value: T;
-}
-type _TrajectoryDataInterpKey = _TrajectoryDataInterpKeyValue<0>|_TrajectoryDataInterpKeyValue<1>|_TrajectoryDataInterpKeyValue<2>|_TrajectoryDataInterpKeyValue<3>|_TrajectoryDataInterpKeyValue<4>|_TrajectoryDataInterpKeyValue<5>|_TrajectoryDataInterpKeyValue<6>|_TrajectoryDataInterpKeyValue<7>|_TrajectoryDataInterpKeyValue<8>|_TrajectoryDataInterpKeyValue<9>|_TrajectoryDataInterpKeyValue<10>|_TrajectoryDataInterpKeyValue<11>|_TrajectoryDataInterpKeyValue<12>|_TrajectoryDataInterpKeyValue<13>|_TrajectoryDataInterpKeyValue<14>|_TrajectoryDataInterpKeyValue<15>;
+type _TrajectoryDataInterpKey = 0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15;
 
-interface _WindList extends ClassHandle {
+interface _WindList extends ClassHandle, Iterable<_Wind> {
   size(): number;
   get(_0: number): _Wind | undefined;
   push_back(_0: _Wind): void;
@@ -116,7 +98,7 @@ interface _WindList extends ClassHandle {
   set(_0: number, _1: _Wind): boolean;
 }
 
-interface _DragTable extends ClassHandle {
+interface _DragTable extends ClassHandle, Iterable<_DragTablePoint> {
   size(): number;
   get(_0: number): _DragTablePoint | undefined;
   push_back(_0: _DragTablePoint): void;
@@ -160,33 +142,11 @@ type _Config = {
   minimumAltitude: number
 };
 
-type _Atmosphere = {
-  t0: number,
-  a0: number,
-  p0: number,
-  mach: number,
-  density_ratio: number,
-  cLowestTempC: number
-};
-
 type _Wind = {
   velocity_fps: number,
   direction_from_rad: number,
   until_distance_ft: number,
   MAX_DISTANCE_FEET: number
-};
-
-type _Coriolis = {
-  sin_lat: number,
-  cos_lat: number,
-  sin_az: number,
-  cos_az: number,
-  range_east: number,
-  range_north: number,
-  cross_east: number,
-  cross_north: number,
-  flat_fire_only: boolean,
-  muzzle_velocity_fps: number
 };
 
 type _DragTablePoint = {
@@ -237,11 +197,14 @@ type _ShotPropsInput = {
   barrel_azimuth_rad: number,
   sight_height_ft: number,
   cant_angle_rad: number,
-  alt0_ft: number,
   muzzle_velocity_fps: number,
   drag_table: any,
-  atmo: _Atmosphere,
-  coriolis: _Coriolis,
+  temp_c: number,
+  pressure_hpa: number,
+  altitude_ft: number,
+  humidity: number,
+  latitude_deg: number,
+  azimuth_deg: number,
   winds: any,
   method: _IntegrationMethod,
   config: _Config
@@ -272,12 +235,12 @@ type _HitOutput = {
 };
 
 interface EmbindModule {
-  _InterpMethod: {PCHIP: _InterpMethodValue<0>, LINEAR: _InterpMethodValue<1>};
-  _TerminationReason: {NO_TERMINATE: _TerminationReasonValue<0>, TARGET_RANGE_REACHED: _TerminationReasonValue<1>, MINIMUM_VELOCITY_REACHED: _TerminationReasonValue<2>, MAXIMUM_DROP_REACHED: _TerminationReasonValue<3>, MINIMUM_ALTITUDE_REACHED: _TerminationReasonValue<4>, HANDLER_REQUESTED_STOP: _TerminationReasonValue<5>};
-  _TrajFlag: {NONE: _TrajFlagValue<0>, ZERO_UP: _TrajFlagValue<1>, ZERO_DOWN: _TrajFlagValue<2>, ZERO: _TrajFlagValue<3>, MACH: _TrajFlagValue<4>, RANGE: _TrajFlagValue<8>, APEX: _TrajFlagValue<16>, ALL: _TrajFlagValue<31>, MRT: _TrajFlagValue<32>};
-  _IntegrationMethod: {RK4: _IntegrationMethodValue<0>, EULER: _IntegrationMethodValue<1>};
-  _BaseTrajDataInterpKey: {TIME: _BaseTrajDataInterpKeyValue<0>, POS_X: _BaseTrajDataInterpKeyValue<2>, POS_Y: _BaseTrajDataInterpKeyValue<3>, POS_Z: _BaseTrajDataInterpKeyValue<4>, VEL_X: _BaseTrajDataInterpKeyValue<5>, VEL_Y: _BaseTrajDataInterpKeyValue<6>, VEL_Z: _BaseTrajDataInterpKeyValue<7>, MACH: _BaseTrajDataInterpKeyValue<1>};
-  _TrajectoryDataInterpKey: {TIME: _TrajectoryDataInterpKeyValue<0>, DISTANCE: _TrajectoryDataInterpKeyValue<1>, VELOCITY: _TrajectoryDataInterpKeyValue<2>, MACH: _TrajectoryDataInterpKeyValue<3>, HEIGHT: _TrajectoryDataInterpKeyValue<4>, SLANT_HEIGHT: _TrajectoryDataInterpKeyValue<5>, DROP_ANGLE: _TrajectoryDataInterpKeyValue<6>, WINDAGE: _TrajectoryDataInterpKeyValue<7>, WINDAGE_ANGLE: _TrajectoryDataInterpKeyValue<8>, SLANT_DISTANCE: _TrajectoryDataInterpKeyValue<9>, ANGLE: _TrajectoryDataInterpKeyValue<10>, DENSITY_RATIO: _TrajectoryDataInterpKeyValue<11>, DRAG: _TrajectoryDataInterpKeyValue<12>, ENERGY: _TrajectoryDataInterpKeyValue<13>, OGW: _TrajectoryDataInterpKeyValue<14>, FLAG: _TrajectoryDataInterpKeyValue<15>};
+  _InterpMethod: {PCHIP: 0, LINEAR: 1};
+  _TerminationReason: {NO_TERMINATE: 0, TARGET_RANGE_REACHED: 1, MINIMUM_VELOCITY_REACHED: 2, MAXIMUM_DROP_REACHED: 3, MINIMUM_ALTITUDE_REACHED: 4, HANDLER_REQUESTED_STOP: 5};
+  _TrajFlag: {NONE: 0, ZERO_UP: 1, ZERO_DOWN: 2, ZERO: 3, MACH: 4, RANGE: 8, APEX: 16, ALL: 31, MRT: 32};
+  _IntegrationMethod: {RK4: 0, EULER: 1};
+  _BaseTrajDataInterpKey: {TIME: 0, POS_X: 2, POS_Y: 3, POS_Z: 4, VEL_X: 5, VEL_Y: 6, VEL_Z: 7, MACH: 1};
+  _TrajectoryDataInterpKey: {TIME: 0, DISTANCE: 1, VELOCITY: 2, MACH: 3, HEIGHT: 4, SLANT_HEIGHT: 5, DROP_ANGLE: 6, WINDAGE: 7, WINDAGE_ANGLE: 8, SLANT_DISTANCE: 9, ANGLE: 10, DENSITY_RATIO: 11, DRAG: 12, ENERGY: 13, OGW: 14, FLAG: 15};
   _WindList: {
     new(): _WindList;
   };
@@ -311,44 +274,51 @@ interface EmbindModule {
 type MainModule = WasmModule & EmbindModule;
 
 /**
- * WASM Module Manager
- *
- * Centralized singleton manager for the BCLIBC WebAssembly module.
- *
- * Usage:
- * ```typescript
- * import { WasmManager } from './_wasm';
- *
- * // Initialize once
- * await WasmManager.init();
- *
- * // Use synchronously everywhere
- * const bclibc = WasmManager.get();
- * const result = bclibc.findZeroAngle(...);
- * ```
+ * Initializes the WASM module factory
  */
-
 declare const loadBclibc: () => Promise<MainModule>;
-declare const IntegrationMethod: {
-    readonly RK4: {
-        readonly value: 0;
-    };
-    readonly EULER: {
-        readonly value: 1;
-    };
+/**
+ * Singleton Manager for BCLIBC WASM
+ */
+declare const WasmManager: {
+    init: () => Promise<MainModule>;
+    get: () => MainModule;
 };
-type IntegrationMethod = typeof IntegrationMethod[keyof typeof IntegrationMethod];
-declare enum TrajFlag {
-    NONE = 0,
-    ZERO_UP = 1,
-    ZERO_DOWN = 2,
-    ZERO = 3,
-    MACH = 4,
-    RANGE = 8,
-    APEX = 16,
-    ALL = 31,
-    MRT = 32
-}
+/**
+ * Ballistic Solver Integration Methods
+ */
+declare const IntegrationMethod: {
+    readonly RK4: any;
+    readonly EULER: any;
+};
+type IntegrationMethod = _IntegrationMethod;
+/**
+ * Trajectory Data Flags
+ */
+declare const TrajFlag: {
+    readonly NONE: any;
+    readonly ZERO_UP: any;
+    readonly ZERO_DOWN: any;
+    readonly ZERO: any;
+    readonly MACH: any;
+    readonly RANGE: any;
+    readonly APEX: any;
+    readonly ALL: any;
+    readonly MRT: any;
+};
+type TrajFlag = _TrajFlag;
+/**
+ * Trajectory Termination Reasons
+ */
+declare const TerminationReason: {
+    readonly NO_TERMINATE: any;
+    readonly TARGET_RANGE_REACHED: any;
+    readonly MINIMUM_VELOCITY_REACHED: any;
+    readonly MAXIMUM_DROP_REACHED: any;
+    readonly MINIMUM_ALTITUDE_REACHED: any;
+    readonly HANDLER_REQUESTED_STOP: any;
+};
+type TerminationReason = _TerminationReason;
 type Config = _Config;
 type HitOutput = _HitOutput;
 type TrajectoryRequest = _TrajectoryRequest;
@@ -527,6 +497,7 @@ declare class Velocity extends Dimension<VelocityUnit> {
     static readonly KT: VelocityUnit;
     constructor(value: number, units: VelocityUnit);
     get fps(): number;
+    get mps(): number;
     protected toRaw(value: number, units: VelocityUnit): number;
     protected fromRaw(value: number, units: VelocityUnit): number;
 }
@@ -568,6 +539,7 @@ declare class Temperature extends Dimension<TemperatureUnit> {
     static readonly Kelvin: TemperatureUnit;
     static readonly Rankin: TemperatureUnit;
     constructor(value: number, units: TemperatureUnit);
+    get celsius(): number;
     protected toRaw(value: number, units: TemperatureUnit): number;
     protected fromRaw(value: number, units: TemperatureUnit): number;
 }
@@ -980,9 +952,6 @@ declare class Atmo {
     updateDensityRatio(): void;
     get densityMetric(): number;
     get densityImperial(): number;
-    temperatureAtAltitude(altitude: number): number;
-    pressureAtAltitude(altitude: number): number;
-    getDensityFactorAndMachForAltitude(altitude: number): [number, number];
     static standardTemperature(altitude: Distance): Temperature;
     static standardPressure(altitude: Distance): Pressure;
     static icao({ altitude, // Default altitude to 0 if not provided in the options object
@@ -994,10 +963,7 @@ declare class Atmo {
     }): Atmo;
     static standard: typeof Atmo.icao;
     static machF(fahrenheit: number): number;
-    static machC(celsius: number): number;
-    static machK(kelvin: number): number;
     static calculateAirDensity(t: number, p_hpa: number, humidity: number): number;
-    toWasmAtmo(): _Atmosphere;
 }
 declare class Vacuum extends Atmo {
     static cLowestTempC: number;
@@ -1118,17 +1084,11 @@ declare class Coriolis {
      * - If `azimuthDeg` is undefined, uses flat-fire approximation (horizontal drift only)
      * - If both provided, computes full 3D Coriolis effects
      */
-    constructor({ latitudeDeg, azimuthDeg, muzzleVelocityFps }: {
+    constructor({ latitudeDeg, azimuthDeg, muzzleVelocityFps, }: {
         latitudeDeg?: number;
         azimuthDeg?: number;
         muzzleVelocityFps: number;
     });
-    /**
-     * Converts to WASM-compatible Coriolis format.
-     *
-     * @returns Object with all Coriolis parameters, using 0.0 for undefined values
-     */
-    toWasmCoriolis(): _Coriolis;
 }
 
 /**
@@ -1275,6 +1235,7 @@ declare class Weapon {
         twist?: number | Distance;
         zeroElevation?: number | Angular;
     });
+    toWasmWeaponInput(): Pick<_ShotPropsInput, "sight_height_ft" | "twist_inch">;
 }
 declare class Ammo {
     dm: DragModel;
@@ -1311,6 +1272,7 @@ declare class Ammo {
      * @returns {Velocity} - The calculated muzzle velocity at the specified temperature.
      */
     getVelocityForTemp(currentTemp: number | Temperature): Velocity;
+    toWasmAmmoInput(): Pick<_ShotPropsInput, "bc" | "drag_table" | "weight_grain" | "diameter_inch" | "length_inch">;
 }
 
 /**
@@ -1358,8 +1320,10 @@ declare class Shot {
      */
     cantAngle: Angular;
     protected _winds?: Wind[];
-    protected _azimuthDeg?: number;
-    protected _latitudeDeg?: number;
+    protected _coriolis: {
+        azimuthDeg?: number;
+        latitudeDeg?: number;
+    };
     /**
      * Creates an instance of the Shot class.
      *
@@ -1375,9 +1339,10 @@ declare class Shot {
      * @param options.relativeAngle - Elevation adjustment ("hold") added to `weapon.zeroElevation`
      * @param options.cantAngle - Tilt of gun from vertical. Shifts barrel elevation
      *        from vertical plane into horizontal plane by `sin(cantAngle)`
-     * @param options.azimuthDeg - Azimuth of shooting direction in degrees [0, 360). Optional, for Coriolis effects.
+     * @param options.coriolis - Coriolis azimuth and latitude
+     * @param options.coriolis.azimuthDeg - Azimuth of shooting direction in degrees [0, 360). Optional, for Coriolis effects.
      *        Geographic bearing: 0 = North, 90 = East, 180 = South, 270 = West
-     * @param options.latitudeDeg - Latitude of shooting location in degrees [-90, 90]. Optional, for Coriolis effects
+     * @param options.coriolis.latitudeDeg - Latitude of shooting location in degrees [-90, 90]. Optional, for Coriolis effects
      *
      * @example
      * ```typescript
@@ -1390,7 +1355,7 @@ declare class Shot {
      * });
      * ```
      */
-    constructor({ weapon, ammo, lookAngle, relativeAngle, cantAngle, atmo, winds, azimuthDeg, latitudeDeg, }: {
+    constructor({ weapon, ammo, lookAngle, relativeAngle, cantAngle, atmo, winds, coriolis, }: {
         ammo: Ammo;
         atmo?: Atmo;
         weapon: Weapon;
@@ -1398,8 +1363,10 @@ declare class Shot {
         lookAngle?: number | Angular;
         relativeAngle?: number | Angular;
         cantAngle?: number | Angular;
-        azimuthDeg?: number;
-        latitudeDeg?: number;
+        coriolis?: {
+            azimuthDeg?: number;
+            latitudeDeg?: number;
+        };
     });
     /**
      * Azimuth of the shooting direction in degrees [0, 360).
@@ -1496,13 +1463,13 @@ declare class TrajectoryData {
     readonly velocity: Velocity;
     readonly mach: number;
     readonly height: Distance;
-    readonly targetDrop: Distance;
-    readonly dropAdjustment: Angular;
+    readonly slantHeight: Distance;
+    readonly dropAngle: Angular;
     readonly windage: Distance;
-    readonly windageAdjustment: Angular;
-    readonly lookDistance: Distance;
+    readonly windageAngle: Angular;
+    readonly slantDistance: Distance;
     readonly angle: Angular;
-    readonly densityFactor: number;
+    readonly densityRatio: number;
     readonly drag: number;
     readonly energy: Energy;
     readonly ogw: Weight;
@@ -1512,24 +1479,24 @@ declare class TrajectoryData {
      * This class is used solely as a return value from trajectory calculations.
      *
      * @class
-     * @param {number} time - The time elapsed in the trajectory calculation.
-     * @param {Distance} distance - The distance traveled.
+     * @param {number} time - Flight time in seconds
+     * @param {Distance} distance - Down-range (x-axis) coordinate of this point
      * @param {Velocity} velocity - The velocity at the given point.
-     * @param {number} mach - The Mach number at the given point.
-     * @param {Distance} height - The height above the reference point.
-     * @param {Distance} targetDrop - The drop from the target elevation.
-     * @param {Angular} dropAdjustment - Adjustment in angle due to drop.
-     * @param {Distance} windage - The amount of windage correction.
-     * @param {Angular} windageAdjustment - Adjustment in angle due to windage.
-     * @param {Distance} lookDistance - The distance to the target.
-     * @param {Angular} angle - The angle of the trajectory.
-     * @param {number} densityFactor - Factor representing air density effects.
-     * @param {number} drag - The drag experienced by the projectile.
-     * @param {Energy} energy - The energy of the projectile.
-     * @param {Weight} ogw - The optimal gun weight.
-     * @param {TrajFlag} flag - Flags representing various trajectory characteristics.
+     * @param {number} mach - Velocity in Mach terms
+     * @param {Distance} height - Vertical (y-axis) coordinate of this point
+     * @param {Distance} slantHeight - Distance orthogonal to sight-line
+     * @param {Angular} dropAngle - Slant_height in angular terms
+     * @param {Distance} windage - Windage (z-axis) coordinate of this point
+     * @param {Angular} windageAngle - Windage in angular terms
+     * @param {Distance} slantDistance - Distance along sight line that is closest to this point
+     * @param {Angular} angle - Angle of velocity vector relative to x-axis
+     * @param {number} densityRatio - Ratio of air density here to standard density
+     * @param {number} drag - Standard Drag Factor at this point
+     * @param {Energy} energy - Energy of bullet at this point
+     * @param {Weight} ogw - Optimal game weight, given .energy
+     * @param {TrajFlag} flag - Row type
      */
-    constructor(time: number, distance: Distance, velocity: Velocity, mach: number, height: Distance, targetDrop: Distance, dropAdjustment: Angular, windage: Distance, windageAdjustment: Angular, lookDistance: Distance, angle: Angular, densityFactor: number, drag: number, energy: Energy, ogw: Weight, flag: TrajFlag);
+    constructor(time: number, distance: Distance, velocity: Velocity, mach: number, height: Distance, slantHeight: Distance, dropAngle: Angular, windage: Distance, windageAngle: Angular, slantDistance: Distance, angle: Angular, densityRatio: number, drag: number, energy: Energy, ogw: Weight, flag: TrajFlag);
     /**
      * Returns an array of numerical values representing the trajectory data in default units.
      *
@@ -1561,11 +1528,13 @@ declare class HitResult {
      * @param shot - The parameters of the shot calculation
      * @param trajectory - Computed TrajectoryData points
      * @param error - RangeError if any (optional)
+     * @param filterFlags - Flags that were requested in the trajectory calculation
      */
     readonly shot: Shot;
     readonly trajectory: TrajectoryData[];
     error?: Error;
-    constructor(shot: Shot, trajectory: TrajectoryData[], error?: Error);
+    readonly filterFlags: TrajFlag;
+    constructor(shot: Shot, trajectory: TrajectoryData[], filterFlags?: TrajFlag, error?: Error);
     /**
      * Get Shot properties (alias for shot for Python compatibility)
      */
@@ -1621,7 +1590,47 @@ declare class HitResult {
      * @throws Error if interpolation requires at least 3 points
      */
     getAt(keyAttribute: _TrajectoryDataInterpKey, value: number, epsilon?: number, startFromTime?: number): Promise<TrajectoryData>;
-    static fromWasmHitOutput(shot: Shot, hit: HitOutput): HitResult;
+    /**
+     * Calculate the danger space for a target centered at the given range.
+     *
+     * Determines how much ranging error can be tolerated: finds the interval
+     * [begin, end] along the sight line within which the trajectory stays
+     * within ±targetHeight/2 of the target's slant height.
+     *
+     * @param atRange      - Sight-line distance to the target center
+     * @param targetHeight - Critical height of the target (h); danger space uses h/2
+     * @returns DangerSpace with begin/end trajectory points and the target row
+     * @throws Error if trajectory doesn't reach the requested range
+     *
+     * @example
+     * ```typescript
+     * const ds = await hitResult.dangerSpace(UNew.Yard(500), UNew.Meter(1.5));
+     * console.log(ds.begin.distance.yard, ds.end.distance.yard);
+     * ```
+     */
+    dangerSpace(atRange: number | Distance, targetHeight: number | Distance): Promise<DangerSpace>;
+    static fromWasmHitOutput(shot: Shot, hit: HitOutput, raiseRangeError?: boolean, filterFlags?: TrajFlag): HitResult;
+}
+/**
+ * Result of a danger space calculation.
+ *
+ * Describes the range interval within which the trajectory stays within
+ * ±targetHeight/2 of the target's slant height.
+ */
+declare class DangerSpace {
+    readonly atRange: TrajectoryData;
+    readonly targetHeight: Distance;
+    readonly begin: TrajectoryData;
+    readonly end: TrajectoryData;
+    readonly lookAngle: Angular;
+    /**
+     * @param atRange   - Trajectory point at the requested target range (slant distance)
+     * @param targetHeight - Target height used for the calculation
+     * @param begin     - First trajectory point still within targetHeight/2 of the target
+     * @param end       - Last trajectory point still within targetHeight/2 of the target
+     * @param lookAngle - Look angle of the shot
+     */
+    constructor(atRange: TrajectoryData, targetHeight: Distance, begin: TrajectoryData, end: TrajectoryData, lookAngle: Angular);
 }
 
 /**
@@ -1785,7 +1794,7 @@ declare class Calculator {
      * @param options.method The integration method to use
      * @param options.config The calculation configuration
      */
-    constructor(options?: Partial<Pick<ShotPropsInput, 'config' | 'method'>>);
+    constructor(options?: Partial<Pick<ShotPropsInput, "config" | "method">>);
     /**
      * Calculates the barrel elevation required to hit a target at a specified distance.
      *
@@ -1833,6 +1842,7 @@ declare class Calculator {
      * @param options.timeStep Time step for integration (default: 0)
      * @param options.filterFlags Trajectory data filter flags (default: ALL)
      * @param options.denseOutput Whether to generate dense output (default: false)
+     * @param options.raiseRangeError Should throw an error on termination (default: false)
      * @returns The complete trajectory result including hit data
      *
      * @example
@@ -1859,14 +1869,15 @@ declare class Calculator {
      * console.log(`Impact velocity: ${result.trajectory[result.trajectory.length - 1].velocity}`);
      * ```
      */
-    fire({ shot, trajectoryRange, trajectoryStep, timeStep, filterFlags, denseOutput }: {
+    fire({ shot, trajectoryRange, trajectoryStep, timeStep, filterFlags, denseOutput, raiseRangeError, }: {
         shot: Shot;
         trajectoryRange: number | Distance;
         trajectoryStep?: number | Distance;
         timeStep?: number;
         filterFlags?: TrajFlag;
         denseOutput?: boolean;
+        raiseRangeError?: boolean;
     }): Promise<HitResult>;
 }
 
-export { Ammo, Angular, type AngularUnit, Atmo, type MainModule as BCLIBC, BCPoint, type BaseTrajData, Calculator, type ClassHandle, type Config, Coriolis, DEFAULT_CONFIG, Dimension, Distance, type DistanceUnit, type DragDataPoint, DragModel, DragModelMultiBC, type DragTable, type DragTableDataType, DragTables, Energy, type EnergyUnit, type HitOutput, HitResult, type IPreferredUnits, IntegrationMethod, InterceptionError, type MainModule, Measure, OutOfRangeError, PreferredUnits, Pressure, type PressureUnit, RangeError, Shot, type ShotPropsInput, SolverRuntimeError, Temperature, type TemperatureUnit, TrajFlag, TrajectoryData, type TrajectoryRequest, UNew, Unit, UnitAliasError, UnitConversionError, UnitProps, UnitTypeError, Vacuum, Velocity, type VelocityUnit, Weapon, Weight, type WeightUnit, Wind, ZeroFindingError, type _Atmosphere, type _BaseTrajData, type _BaseTrajDataInterpKey, type _BaseTrajDataInterpKeyValue, type _Config, type _Coriolis, type _DragTable, type _DragTablePoint, type _HitOutput, type _IntegrationMethod, type _IntegrationMethodValue, type _Interception, type _InterpMethod, type _InterpMethodValue, type _MaxRangeResult, type _ShotPropsInput, type _TerminationReason, type _TerminationReasonValue, type _TrajFlag, type _TrajFlagValue, type _TrajectoryData, type _TrajectoryDataInterpKey, type _TrajectoryDataInterpKeyValue, type _TrajectoryRequest, type _Vector, type _Wind, type _WindList, cA0, cA1, cA2, cA3, cA4, cA5, cDegreesCtoK, cDegreesFtoR, cDensityImperialToMetric, cEarthAngularVelocityRadS, cGravityConstant, cGravityImperial, cLapseRateImperial, cLapseRateKperFoot, cLapseRateMetric, cLowestTempF, cMaxIterations, cMaxWindDistanceFeet, cMaximumDrop, cMinimumAltitude, cMinimumVelocity, cPressureExponent, cSpeedOfSoundImperial, cSpeedOfSoundMetric, cStandardDensity, cStandardDensityMetric, cStandardHumidity, cStandardPressure, cStandardPressureMetric, cStandardTemperatureC, cStandardTemperatureF, cStepMultiplier, cZeroFindingAccuracy, loadBclibc, makeDataPoints, preferredUnits, trajFlagName, trajFlagNames, unitTypeCoerce };
+export { Ammo, Angular, type AngularUnit, Atmo, BCPoint, type BaseTrajData, Calculator, type ClassHandle, type Config, Coriolis, DEFAULT_CONFIG, DangerSpace, Dimension, Distance, type DistanceUnit, type DragDataPoint, DragModel, DragModelMultiBC, type DragTable, type DragTableDataType, DragTables, Energy, type EnergyUnit, type HitOutput, HitResult, type IPreferredUnits, IntegrationMethod, InterceptionError, type MainModule, Measure, OutOfRangeError, PreferredUnits, Pressure, type PressureUnit, RangeError, Shot, type ShotPropsInput, SolverRuntimeError, Temperature, type TemperatureUnit, TerminationReason, TrajFlag, TrajectoryData, type TrajectoryRequest, UNew, Unit, UnitAliasError, UnitConversionError, UnitProps, UnitTypeError, Vacuum, Velocity, type VelocityUnit, WasmManager, Weapon, Weight, type WeightUnit, Wind, ZeroFindingError, type _BaseTrajData, type _BaseTrajDataInterpKey, type _Config, type _DragTable, type _DragTablePoint, type _HitOutput, type _IntegrationMethod, type _Interception, type _InterpMethod, type _MaxRangeResult, type _ShotPropsInput, type _TerminationReason, type _TrajFlag, type _TrajectoryData, type _TrajectoryDataInterpKey, type _TrajectoryRequest, type _Vector, type _Wind, type _WindList, cA0, cA1, cA2, cA3, cA4, cA5, cDegreesCtoK, cDegreesFtoR, cDensityImperialToMetric, cEarthAngularVelocityRadS, cGravityConstant, cGravityImperial, cLapseRateImperial, cLapseRateKperFoot, cLapseRateMetric, cLowestTempF, cMaxIterations, cMaxWindDistanceFeet, cMaximumDrop, cMinimumAltitude, cMinimumVelocity, cPressureExponent, cSpeedOfSoundImperial, cSpeedOfSoundMetric, cStandardDensity, cStandardDensityMetric, cStandardHumidity, cStandardPressure, cStandardPressureMetric, cStandardTemperatureC, cStandardTemperatureF, cStepMultiplier, cZeroFindingAccuracy, loadBclibc, makeDataPoints, preferredUnits, trajFlagName, trajFlagNames, unitTypeCoerce };
