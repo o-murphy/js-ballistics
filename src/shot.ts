@@ -279,7 +279,7 @@ class Shot {
             // Raw atmosphere — C++ builds BCLIBC_Atmosphere via from_conditions()
             altitude_ft: this.atmo.altitude.foot,
             temp_c: this.atmo._t0,
-            pressure_hpa: this.atmo._p0,   // 0 for Vacuum
+            pressure_hpa: this.atmo._p0, // 0 for Vacuum
             humidity: this.atmo.humidity,
             winds: this.winds.map((wind) => wind.toWasmWind()),
 

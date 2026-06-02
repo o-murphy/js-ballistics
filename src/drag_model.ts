@@ -1,6 +1,5 @@
 // Import necessary modules and classes
 import { Distance, unitTypeCoerce, Weight, Velocity, preferredUnits } from "./unit";
-// @ts-ignore
 import { DragTable, DragTableDataType, makeDataPoints } from "./drag_tables";
 import { cDegreesCtoK, cSpeedOfSoundMetric, cStandardTemperatureC } from "./constants";
 

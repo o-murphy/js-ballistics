@@ -80,12 +80,8 @@ const makeShotAndCalc = (method: typeof IntegrationMethod.RK4) => {
         // Apex lies between ZERO_UP and ZERO_DOWN
         const zeroUp = shotResult.flag(TrajFlag.ZERO_UP)!;
         const zeroDn = shotResult.flag(TrajFlag.ZERO_DOWN)!;
-        expect(apex!.distance.In(Distance.Yard)).toBeGreaterThan(
-            zeroUp.distance.In(Distance.Yard)
-        );
-        expect(apex!.distance.In(Distance.Yard)).toBeLessThan(
-            zeroDn.distance.In(Distance.Yard)
-        );
+        expect(apex!.distance.In(Distance.Yard)).toBeGreaterThan(zeroUp.distance.In(Distance.Yard));
+        expect(apex!.distance.In(Distance.Yard)).toBeLessThan(zeroDn.distance.In(Distance.Yard));
         expect(apex!.distance.In(Distance.Yard)).toBeCloseTo(70.5, 0);
     });
 

@@ -560,7 +560,12 @@ class HitResult {
         let endRow: TrajectoryData;
 
         try {
-            beginRow = await this.getAt(interpKey.SLANT_HEIGHT, slantHeightBegin, 1e-9, targetRow.time);
+            beginRow = await this.getAt(
+                interpKey.SLANT_HEIGHT,
+                slantHeightBegin,
+                1e-9,
+                targetRow.time
+            );
         } catch {
             beginRow = this.trajectory[0];
         }

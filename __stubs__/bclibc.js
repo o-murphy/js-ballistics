@@ -8,9 +8,7 @@
  */
 const notBuilt = () =>
     Promise.reject(
-        new Error(
-            "WASM module not built. Run 'make build-wasm' to build it, then re-run tests."
-        )
+        new Error("WASM module not built. Run 'make build-wasm' to build it, then re-run tests.")
     );
 
 export default notBuilt;
