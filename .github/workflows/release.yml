@@ -29,7 +29,7 @@ jobs:
       prerelease: ${{ steps.meta.outputs.prerelease }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Init bclibc submodule
         run: git submodule update --init lib/bclibc
@@ -121,7 +121,7 @@ jobs:
       id-token: write # required for OIDC trusted publishing to npm
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Publish GitHub Release (undraft)
         run: gh release edit "${{ needs.draft.outputs.tag }}" --draft=false
