@@ -8,8 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.0.0-beta.3] - 2026-06-26
+
 ### Changed
 - Bump `emscripten-core/setup-emsdk` to `v16`
+- Bump `bclibc` to `v1.1.4`
 
 ## [3.0.0-beta.2] - 2026-06-02
 
@@ -191,7 +194,9 @@ and this project adheres to
 ---
 
 [Unreleased]:
-    https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.2...HEAD
+    https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.3...HEAD
+[3.0.0-beta.3]:
+    https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.2...v3.0.0-beta.3
 [3.0.0-beta.2]:
     https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.1...v3.0.0-beta.2
 [3.0.0-beta.1]:
