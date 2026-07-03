@@ -11,6 +11,7 @@ and this project adheres to
 ## [3.0.0-beta.3] - 2026-06-26
 
 ### Changed
+
 - Bump `emscripten-core/setup-emsdk` to `v16`
 - Bump `bclibc` to `v1.1.4`
 
