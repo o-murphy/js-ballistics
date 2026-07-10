@@ -12,6 +12,7 @@ export default [
             "build/",
             "coverage/",
             "__stubs__/",
+            "lib/",
             "**/*.min.js",
             "**/*.bundle.js",
             "wasm/bclibc.js",
