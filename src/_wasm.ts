@@ -63,35 +63,35 @@ export const WasmManager = {
  * Ballistic Solver Integration Methods
  */
 export const IntegrationMethod = {
-    RK4: 0 as any,
-    EULER: 1 as any,
+    RK4: 0 as _IntegrationMethod,
+    EULER: 1 as _IntegrationMethod,
 } as const;
 
 /**
  * Trajectory Data Flags
  */
 export const TrajFlag = {
-    NONE: 0 as any,
-    ZERO_UP: 1 as any,
-    ZERO_DOWN: 2 as any,
-    ZERO: 3 as any, // ZERO_UP | ZERO_DOWN
-    MACH: 4 as any,
-    RANGE: 8 as any,
-    APEX: 16 as any,
-    ALL: 31 as any,
-    MRT: 32 as any,
+    NONE: 0 as _TrajFlag,
+    ZERO_UP: 1 as _TrajFlag,
+    ZERO_DOWN: 2 as _TrajFlag,
+    ZERO: 3 as _TrajFlag, // ZERO_UP | ZERO_DOWN
+    MACH: 4 as _TrajFlag,
+    RANGE: 8 as _TrajFlag,
+    APEX: 16 as _TrajFlag,
+    ALL: 31 as _TrajFlag,
+    MRT: 32 as _TrajFlag,
 } as const;
 
 /**
  * Trajectory Termination Reasons
  */
 export const TerminationReason = {
-    NO_TERMINATE: 0 as any,
-    TARGET_RANGE_REACHED: 1 as any,
-    MINIMUM_VELOCITY_REACHED: 2 as any,
-    MAXIMUM_DROP_REACHED: 3 as any,
-    MINIMUM_ALTITUDE_REACHED: 4 as any,
-    HANDLER_REQUESTED_STOP: 5 as any,
+    NO_TERMINATE: 0 as _TerminationReason,
+    TARGET_RANGE_REACHED: 1 as _TerminationReason,
+    MINIMUM_VELOCITY_REACHED: 2 as _TerminationReason,
+    MAXIMUM_DROP_REACHED: 3 as _TerminationReason,
+    MINIMUM_ALTITUDE_REACHED: 4 as _TerminationReason,
+    HANDLER_REQUESTED_STOP: 5 as _TerminationReason,
 } as const;
 
 // Clean type exports for TypeScript

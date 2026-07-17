@@ -17,7 +17,6 @@ import { Shot } from "./shot";
 import {
     _TrajectoryData,
     _TrajectoryDataInterpKey,
-    _InterpMethod,
     HitOutput,
     TrajFlag,
     TerminationReason,

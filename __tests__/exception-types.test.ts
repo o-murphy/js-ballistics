@@ -14,29 +14,34 @@ import {
 } from "../src/exceptions";
 import { testWasm } from "./wasmAvailable";
 
+type GlobalWithExceptions = typeof globalThis & {
+    SolverRuntimeError: typeof SolverRuntimeError;
+    ZeroFindingError: typeof ZeroFindingError;
+    OutOfRangeError: typeof OutOfRangeError;
+    InterceptionError: typeof InterceptionError;
+};
+
 describe("Exception Type Conversion", () => {
     test("globalThis should have exception classes registered", () => {
-        expect((globalThis as any).SolverRuntimeError).toBe(SolverRuntimeError);
-        expect((globalThis as any).ZeroFindingError).toBe(ZeroFindingError);
-        expect((globalThis as any).OutOfRangeError).toBe(OutOfRangeError);
-        expect((globalThis as any).InterceptionError).toBe(InterceptionError);
+        const globalWithExceptions = globalThis as GlobalWithExceptions;
+        expect(globalWithExceptions.SolverRuntimeError).toBe(SolverRuntimeError);
+        expect(globalWithExceptions.ZeroFindingError).toBe(ZeroFindingError);
+        expect(globalWithExceptions.OutOfRangeError).toBe(OutOfRangeError);
+        expect(globalWithExceptions.InterceptionError).toBe(InterceptionError);
     });
 
     testWasm("C++ SolverRuntimeError should become JS SolverRuntimeError", async () => {
         const bclibc = await WasmManager.init();
 
+        let caughtError: unknown;
         try {
-            (bclibc as any).testThrowSolverError("Test solver error");
-            fail("Should have thrown an error");
-        } catch (error: any) {
-            console.log("Error name:", error.name);
-            console.log("Error constructor:", error.constructor.name);
-            console.log("Is Error:", error instanceof Error);
-            console.log("Is SolverRuntimeError:", error instanceof SolverRuntimeError);
-
-            expect(error).toBeInstanceOf(Error);
-            expect(error).toBeInstanceOf(SolverRuntimeError);
-            expect(error.name).toBe("SolverRuntimeError");
+            bclibc.testThrowSolverError("Test solver error");
+        } catch (error) {
+            caughtError = error;
         }
+
+        expect(caughtError).toBeInstanceOf(Error);
+        expect(caughtError).toBeInstanceOf(SolverRuntimeError);
+        expect((caughtError as Error).name).toBe("SolverRuntimeError");
     });
 });

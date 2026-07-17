@@ -246,7 +246,7 @@ const methods = [
         test("test_no_duplicated_point_many_trajectories", async () => {
             // Bigger than max range of weapon
             const range = UNew.Meter(8000);
-            const bclibc = await WasmManager.init();
+            await WasmManager.init();
             for (const filterFlags of [TrajFlag.RANGE, TrajFlag.ALL]) {
                 for (let angle = 0; angle <= 90; angle += 10) {
                     const shot = shotWithRelativeAngleInDegrees(angle);

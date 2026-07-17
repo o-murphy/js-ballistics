@@ -13,7 +13,7 @@ import {
 } from "../src";
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
-import { WASM_AVAILABLE } from "./wasmAvailable";
+import { testWasm } from "./wasmAvailable";
 
 const methods = [
     { name: "RK4", method: IntegrationMethod.RK4 },
@@ -24,17 +24,11 @@ describe("Atmo Class Tests", () => {
     let standard: Atmo;
     let highICAO: Atmo;
     let highISA: Atmo;
-    let custom: Atmo;
 
     beforeEach(() => {
         standard = Atmo.standard();
         highICAO = Atmo.standard({ altitude: UNew.Foot(10000) });
         highISA = Atmo.standard({ altitude: UNew.Meter(1000) });
-        custom = new Atmo({
-            pressure: UNew.InHg(31),
-            temperature: UNew.Fahrenheit(30),
-            humidity: 0.5,
-        });
     });
 
     test("Standard atmosphere properties", () => {
@@ -85,7 +79,7 @@ describe("Atmo Class Tests", () => {
         expect(vac.mach.fps).toBeGreaterThan(0);
     });
 
-    (WASM_AVAILABLE ? test : test.skip).each(methods)("trajectory effects $name", async (obj) => {
+    testWasm.each(methods)("trajectory effects $name", async (obj) => {
         const { method } = obj;
         const check_distance = UNew.Yard(1000);
         const ammo = new Ammo({

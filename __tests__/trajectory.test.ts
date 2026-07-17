@@ -32,7 +32,7 @@ type TestItem = [
     number, // unit
 ];
 
-function customAssertEqual(a: number, b: number, accuracy: number, name: string) {
+function customAssertEqual(a: number, b: number, accuracy: number, _name: string) {
     expect(Math.abs(a - b)).toBeLessThan(accuracy);
 }
 

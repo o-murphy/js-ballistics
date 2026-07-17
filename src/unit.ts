@@ -127,8 +127,8 @@ class Dimension<AllowedUnitT extends Unit> {
      * @throws {TypeError} When the provided units are not of the expected type.
      * @throws {Error} When the provided units are not supported.
      */
-    protected _unit_support_error(value: number, units: any): number {
-        if (!(units instanceof this.constructor)) {
+    protected _unit_support_error(value: number, units: AllowedUnitT): number {
+        if (!((units as unknown) instanceof this.constructor)) {
             const err_msg = `Type expected: ${this.constructor.name}, ${typeof units} found: ${units} (${value})`;
             throw new TypeError(err_msg);
         }
@@ -838,8 +838,8 @@ export interface IPreferredUnits {
 }
 
 // Type guard to check if a value is a valid Unit
-function isUnit(value: any): value is Unit {
-    return Object.values(Unit).includes(value);
+function isUnit(value: unknown): value is Unit {
+    return Object.values(Unit).includes(value as Unit);
 }
 
 export class PreferredUnits implements IPreferredUnits {
@@ -880,7 +880,7 @@ export class PreferredUnits implements IPreferredUnits {
     setUnits(units: Partial<IPreferredUnits>): void {
         for (const [key, value] of Object.entries(units)) {
             if (isUnit(value)) {
-                (this as any)[key] = value;
+                (this as unknown as Record<string, Unit>)[key] = value;
             } else {
                 console.warn(`${value} is not a valid Unit`);
             }
