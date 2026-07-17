@@ -5,6 +5,7 @@
  * from src/exceptions.ts
  */
 
+import { describe, test, expect } from "@jest/globals";
 import { WasmManager } from "../src/_wasm";
 import {
     SolverRuntimeError,

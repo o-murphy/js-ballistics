@@ -4,6 +4,7 @@
  * Tests C++ exception to JavaScript exception conversion
  */
 
+import { expect, test } from "@jest/globals";
 import { WasmManager } from "../src/_wasm";
 import { describeWasm } from "./wasmAvailable";
 
