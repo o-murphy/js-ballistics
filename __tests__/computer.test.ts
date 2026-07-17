@@ -9,7 +9,6 @@ import {
     DragTables,
     UNew,
     Weapon,
-    RangeError,
     TrajectoryData,
     IntegrationMethod,
 } from "../src";

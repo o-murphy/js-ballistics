@@ -35,7 +35,7 @@ export default [
             ...tsPlugin.configs.recommended.rules,
             ...eslintConfigPrettier.rules,
             "@typescript-eslint/no-explicit-any": "warn",
-            "@typescript-eslint/no-unused-vars": "warn",
+            "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
         },
     },
     {
@@ -43,10 +43,16 @@ export default [
         plugins: { jest: pluginJest },
         rules: {
             ...pluginJest.configs.recommended.rules,
-            "jest/no-standalone-expect": "warn",
+            "jest/no-standalone-expect": [
+                "warn",
+                { additionalTestBlockFunctions: ["testWasm", "testWasm.each"] },
+            ],
             "jest/no-conditional-expect": "warn",
             "jest/no-jasmine-globals": "warn",
-            "jest/expect-expect": "warn",
+            "jest/expect-expect": [
+                "warn",
+                { assertFunctionNames: ["expect", "customAssertEqual"] },
+            ],
         },
         languageOptions: {
             globals: pluginJest.environments.globals.globals,
