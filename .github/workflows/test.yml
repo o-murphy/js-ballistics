@@ -10,6 +10,7 @@ on:
       - "__tests__/**"
       - "__stubs__/**"
       - "lib/bclibc/**"
+      - "lib/emsdk/**"
       - "package.json"
       - "tsconfig*.json"
       - "jest.config.*"
