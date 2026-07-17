@@ -1,4 +1,4 @@
-import { describe, expect, test } from "@jest/globals";
+import { beforeAll, describe, expect, test } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
 import { Calculator } from "../src/interface";
 import {

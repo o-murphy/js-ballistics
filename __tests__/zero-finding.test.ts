@@ -1,4 +1,4 @@
-import { expect } from "@jest/globals";
+import { describe, expect } from "@jest/globals";
 import { testWasm } from "./wasmAvailable";
 import {
     Ammo,
@@ -42,7 +42,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
     // The test name now uses Jest's $propertyName syntax for interpolation
     testWasm.each(testCases)(
         "test_set_weapon_zero with $engineObj.name and distance $distance",
-        async ({ obj, distance }) => {
+        async ({ obj, distance }: (typeof testCases)[number]) => {
             // Destructure the properties from the single test case object
             const { method } = obj;
             const zeroMinVelocityCalc = new Calculator({

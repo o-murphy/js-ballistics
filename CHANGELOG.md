@@ -8,6 +8,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- npm dependencies upgrade
+- eslint dependency upgrade
+
+### Fixed
+- Type annotations fixes
+
 ## [3.0.0-beta.3] - 2026-06-26
 
 ### Changed
