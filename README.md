@@ -7,6 +7,7 @@ powered by a C++ engine compiled to WebAssembly via Emscripten.
 ![License](https://img.shields.io/npm/l/js-ballistics?style=flat-square)
 [![powered by bclibc]][bclibc repo]
 [![Jest](https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml/badge.svg)](https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/o-murphy/js-ballistics/branch/master/graph/badge.svg)](https://codecov.io/gh/o-murphy/js-ballistics)
 [![Demo](https://img.shields.io/badge/demo-live-blue)](https://o-murphy.github.io/js-ballistics/)
 
 [![SWUbanner]][SWUBadge]
