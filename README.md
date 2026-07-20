@@ -1,36 +1,43 @@
-# js-ballistics
+# [js-ballistics](https://github.com/o-murphy/js-ballistics)
 
 JavaScript/TypeScript library for small arms ballistic trajectory calculations,
 powered by a C++ engine compiled to WebAssembly via Emscripten.
 
-![NPM version](https://img.shields.io/npm/v/js-ballistics?style=flat-square&logo=npm)
-![License](https://img.shields.io/npm/l/js-ballistics?style=flat-square)
+![NPM version][npm version badge]
+![License][license badge]
 [![powered by bclibc]][bclibc repo]
-[![Jest](https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml/badge.svg)](https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml)
-[![Demo](https://img.shields.io/badge/demo-live-blue)](https://o-murphy.github.io/js-ballistics/)
+[![Jest][jest badge]][jest workflow]
+[![codecov][codecov badge]][codecov]
+[![Demo][demo badge]][demo]
 
 [![SWUbanner]][SWUBadge]
 
-[SWUbanner]:
-    https://img.shields.io/badge/made_in-Ukraine-ffd700.svg?labelColor=0057b7&style=flat-square
-[SWUBadge]: https://stand-with-ukraine.pp.ua
+## Related projects
 
-> **Related projects**
->
-> - Python reference implementation:
->   [py-ballisticcalc](https://github.com/o-murphy/py-ballisticcalc)
-> - C++ core library: [bclibc](https://github.com/ballistics-lab/bclibc)
-> - Mobile app: [eBalistyka](https://github.com/o-murphy/ebalistyka)
+**js-ballistics** is part of the [**Ballistics Lab**](https://github.com/ballistics-lab) ecosystem —
+one C++/C99 physics core, bindings for every platform (Python, TypeScript, Dart,
+MicroPython) and the [**eBalistyka**](https://github.com/ballistics-lab/ebalistyka) app built on
+top of it.
 
 ---
 
 ## Table of Contents
 
-- [Development](#development)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Core Concepts](#core-concepts)
-- [Usage Examples](#usage-examples)
+- [js-ballistics](#js-ballistics)
+  - [Related projects](#related-projects)
+  - [Table of Contents](#table-of-contents)
+  - [Development](#development)
+    - [Prerequisites](#prerequisites)
+    - [Clone](#clone)
+    - [Emscripten setup](#emscripten-setup)
+    - [Build](#build)
+    - [Run tests](#run-tests)
+    - [Lint \& type-check](#lint--type-check)
+    - [Deploy to GitHub Pages](#deploy-to-github-pages)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+  - [Core Concepts](#core-concepts)
+  - [Usage Examples](#usage-examples)
     - [Basic Trajectory](#basic-trajectory)
     - [Zero-Finding](#zero-finding)
     - [Wind Layers](#wind-layers)
@@ -39,9 +46,19 @@ powered by a C++ engine compiled to WebAssembly via Emscripten.
     - [Coriolis Effect](#coriolis-effect)
     - [Trajectory Flags](#trajectory-flags)
     - [Danger Space](#danger-space)
-- [Browser / CDN Usage](#browser--cdn-usage)
-- [API Reference](#api-reference)
-- [Risk Notice](#risk-notice)
+    - [Powder Temperature Sensitivity](#powder-temperature-sensitivity)
+    - [Integration Method](#integration-method)
+    - [Custom Calculator Config](#custom-calculator-config)
+  - [Browser / CDN Usage](#browser--cdn-usage)
+    - [Via jsDelivr](#via-jsdelivr)
+    - [Via unpkg](#via-unpkg)
+    - [Interactive HTML Example](#interactive-html-example)
+  - [API Reference](#api-reference)
+    - [`Calculator`](#calculator)
+    - [`HitResult`](#hitresult)
+    - [`TrajectoryData` fields](#trajectorydata-fields)
+    - [Unit system](#unit-system)
+  - [Risk Notice](#risk-notice)
 
 ---
 
@@ -541,6 +558,19 @@ THE CODE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 
 <!-- REUSABLE LINKS -->
+
+[npm version badge]: https://img.shields.io/npm/v/js-ballistics?style=flat-square&logo=npm
+[license badge]: https://img.shields.io/npm/l/js-ballistics?style=flat-square
+[jest badge]:
+    https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml/badge.svg
+[jest workflow]: https://github.com/o-murphy/js-ballistics/actions/workflows/test.yml
+[codecov badge]: https://codecov.io/gh/o-murphy/js-ballistics/graph/badge.svg
+[codecov]: https://codecov.io/gh/o-murphy/js-ballistics
+[demo badge]: https://img.shields.io/badge/demo-live-blue
+[demo]: https://o-murphy.github.io/js-ballistics/
+[SWUbanner]:
+    https://img.shields.io/badge/made_in-Ukraine-ffd700.svg?labelColor=0057b7&style=flat-square
+[SWUBadge]: https://stand-with-ukraine.pp.ua
 
 <!-- EXTRA -->
 

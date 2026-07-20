@@ -1,0 +1,72 @@
+name: Coverage
+
+on:
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - "src/**"
+      - "wasm/**"
+      - "__tests__/**"
+      - "__stubs__/**"
+      - "lib/bclibc/**"
+      - "lib/emsdk/**"
+      - "package.json"
+      - "tsconfig*.json"
+      - "jest.config.*"
+      - "Makefile"
+      - ".github/workflows/coverage.yml"
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  EM_VERSION: "5.0.7"
+  EM_CACHE_FOLDER: "emsdk-cache"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Init bclibc submodule
+        run: git submodule update --init lib/bclibc
+
+      - name: Cache emsdk
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.EM_CACHE_FOLDER }}
+          key: ${{ env.EM_VERSION }}-${{ runner.os }}
+
+      - name: Setup Emscripten
+        uses: emscripten-core/setup-emsdk@v16
+        with:
+          version: ${{ env.EM_VERSION }}
+          actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
+
+      - name: Create emsdk stub for Makefile compatibility
+        run: mkdir -p lib/emsdk && echo "" > lib/emsdk/emsdk_env.sh
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: "yarn"
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Build WASM
+        run: make build-wasm
+
+      - name: Run tests with coverage
+        run: NODE_OPTIONS='--experimental-vm-modules' npx jest --coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

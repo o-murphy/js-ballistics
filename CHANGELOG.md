@@ -8,9 +8,17 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+- `.github/workflows/coverage.yml`: runs `jest --coverage` and uploads the
+  report to Codecov via `codecov/codecov-action@v5`
+- Codecov badge in README
+
 ### Changed
 - npm dependencies upgrade
 - eslint dependency upgrade
+- README: badges and links converted to reference-style, consolidated under a
+  `REUSABLE LINKS` section; `Related projects` rewritten as a short mention of
+  the Ballistics Lab ecosystem
 
 ### Fixed
 - Type annotations fixes
