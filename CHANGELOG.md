@@ -19,6 +19,7 @@ and this project adheres to
 - README: badges and links converted to reference-style, consolidated under a
   `REUSABLE LINKS` section; `Related projects` rewritten as a short mention of
   the Ballistics Lab ecosystem
+- Pin `bclibc` submodule to `v1.1.5`
 
 ### Fixed
 - Type annotations fixes
