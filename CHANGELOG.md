@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.0.0-rc.1] - 2026-07-21
+
 ### Added
 - `.github/workflows/coverage.yml`: runs `jest --coverage` and uploads the
   report to Codecov via `codecov/codecov-action@v5`
@@ -210,22 +212,16 @@ and this project adheres to
 
 ---
 
-[Unreleased]:
-    https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.3...HEAD
-[3.0.0-beta.3]:
-    https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.2...v3.0.0-beta.3
-[3.0.0-beta.2]:
-    https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.1...v3.0.0-beta.2
-[3.0.0-beta.1]:
-    https://github.com/o-murphy/js-ballistics/compare/v2.2.0-beta.2...v3.0.0-beta.1
-[2.2.0-beta.2]:
-    https://github.com/o-murphy/js-ballistics/compare/v2.0.0...v2.2.0-beta.2
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...HEAD
+[3.0.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.4...v3.0.0-rc.1
+[3.0.0-beta.4]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.3...v3.0.0-beta.4
+[3.0.0-beta.3]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.2...v3.0.0-beta.3
+[3.0.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.1...v3.0.0-beta.2
+[3.0.0-beta.1]: https://github.com/o-murphy/js-ballistics/compare/v2.2.0-beta.2...v3.0.0-beta.1
+[2.2.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v2.0.0...v2.2.0-beta.2
 [2.0.0]: https://github.com/o-murphy/js-ballistics/compare/v1.1.2...v2.0.0
 [1.1.2]: https://github.com/o-murphy/js-ballistics/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/o-murphy/js-ballistics/compare/v1.1.0...v1.1.1
-[1.1.0]:
-    https://github.com/o-murphy/js-ballistics/compare/v1.0.3-beta.5...v1.1.0
-[1.0.3-beta.5]:
-    https://github.com/o-murphy/js-ballistics/compare/v1.0.3-alpha.6...v1.0.3-beta.5
-[1.0.3-alpha.6]:
-    https://github.com/o-murphy/js-ballistics/releases/tag/v1.0.3-alpha.6
+[1.1.0]: https://github.com/o-murphy/js-ballistics/compare/v1.0.3-beta.5...v1.1.0
+[1.0.3-beta.5]: https://github.com/o-murphy/js-ballistics/compare/v1.0.3-alpha.6...v1.0.3-beta.5
+[1.0.3-alpha.6]: https://github.com/o-murphy/js-ballistics/releases/tag/v1.0.3-alpha.6
