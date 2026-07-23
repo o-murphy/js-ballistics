@@ -8,6 +8,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- Pin `bclibc` submodule to `v1.1.6`
+
 ## [3.0.0-rc.1] - 2026-07-21
 
 ### Added
