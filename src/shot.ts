@@ -245,7 +245,7 @@ class Shot {
      * Serializes all shot parameters into the format required by the WASM ballistic calculator.
      * Includes ballistic coefficient, angles, atmospheric conditions, winds, and calculation config.
      *
-     * @param method - Integration method to use (RK4 or EULER)
+     * @param method - Integration method to use (RK4, EULER, or VELOCITY_VERLET)
      * @param config - Optional partial configuration to override defaults
      * @returns WASM-compatible shot properties object
      *

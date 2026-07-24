@@ -19,7 +19,8 @@ using WindsIfaceList = val;
 enum class IntegrationMethod
 {
     RK4,
-    EULER
+    EULER,
+    VELOCITY_VERLET
 };
 
 struct DragTablePoint
@@ -108,6 +109,9 @@ inline static double selectCalcStep(const IntegrationMethod method)
     case IntegrationMethod::EULER:
         return 0.5;
         break;
+    case IntegrationMethod::VELOCITY_VERLET:
+        return 0.001;
+        break;
     default:
         throw std::invalid_argument("Unknown integration method");
         break;
@@ -123,6 +127,9 @@ BCLIBC_IntegrateCallable selectIntegrationMethod(const IntegrationMethod &method
         break;
     case IntegrationMethod::EULER:
         return BCLIBC_integrateEULER;
+        break;
+    case IntegrationMethod::VELOCITY_VERLET:
+        return BCLIBC_integrateVELOCITY_VERLET;
         break;
     default:
         throw std::invalid_argument("Unknown integration method");
@@ -561,7 +568,8 @@ EMSCRIPTEN_BINDINGS(bclibc)
 
     enum_<IntegrationMethod>("_IntegrationMethod", enum_value_type::number)
         .value("RK4", IntegrationMethod::RK4)
-        .value("EULER", IntegrationMethod::EULER);
+        .value("EULER", IntegrationMethod::EULER)
+        .value("VELOCITY_VERLET", IntegrationMethod::VELOCITY_VERLET);
 
     enum_<BCLIBC_BaseTrajData_InterpKey>("_BaseTrajDataInterpKey", enum_value_type::number)
         .value("TIME", BCLIBC_BaseTrajData_InterpKey::TIME)

@@ -1,5 +1,6 @@
 import { expect, describe, test, beforeAll, beforeEach } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
+import { methods } from "./integrationMethods";
 import {
     Ammo,
     Wind,
@@ -10,15 +11,9 @@ import {
     UNew,
     Weapon,
     TrajectoryData,
-    IntegrationMethod,
 } from "../src";
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
 
 (WASM_AVAILABLE ? describe : describe.skip).each(methods)("TestComputer $name", (obj) => {
     const { method } = obj;

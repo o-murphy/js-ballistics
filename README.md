@@ -414,13 +414,14 @@ const shot = new Shot({
 
 ### Integration Method
 
-Choose between RK4 (more accurate, default) and Euler (faster):
+Choose between RK4 (more accurate, default), Euler (faster), and Velocity Verlet (energy-conserving):
 
 ```typescript
 import { Calculator, IntegrationMethod } from "js-ballistics";
 
 const calcRK4 = new Calculator({ method: IntegrationMethod.RK4 });
 const calcEuler = new Calculator({ method: IntegrationMethod.EULER });
+const calcVerlet = new Calculator({ method: IntegrationMethod.VELOCITY_VERLET });
 ```
 
 ---
