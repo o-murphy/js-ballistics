@@ -1,15 +1,7 @@
 import { describe, expect } from "@jest/globals";
 import { testWasm } from "./wasmAvailable";
-import {
-    Ammo,
-    DragModel,
-    IntegrationMethod,
-    DragTables,
-    TrajFlag,
-    UNew,
-    Unit,
-    Weapon,
-} from "../src";
+import { methods } from "./integrationMethods";
+import { Ammo, DragModel, DragTables, TrajFlag, UNew, Unit, Weapon } from "../src";
 import { Shot } from "../src/shot";
 import { Calculator } from "../src/interface";
 
@@ -27,11 +19,6 @@ const createShot = () => {
 };
 
 const DISTANCES_FOR_CHECKING = [100, 500, 1000];
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
 
 const testCases = methods.flatMap((obj) =>
     DISTANCES_FOR_CHECKING.map((distance) => ({ obj, distance }))

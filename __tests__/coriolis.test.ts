@@ -1,13 +1,9 @@
 import { expect, describe, test, beforeAll } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
-import { Ammo, DragModel, DragTables, UNew, Weapon, IntegrationMethod } from "../src";
+import { Ammo, DragModel, DragTables, UNew, Weapon } from "../src";
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
+import { methods } from "./integrationMethods";
 
 // Matches Python's TestComputer Coriolis fixture:
 // DragModel(0.22, G7), Weapon(sightHeight=4, twist=12), Ammo(2600 fps)

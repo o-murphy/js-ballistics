@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
+import { methods } from "./integrationMethods";
 import { Calculator } from "../src/interface";
 import {
     Ammo,
@@ -15,7 +16,7 @@ import {
     TrajectoryData,
 } from "../src";
 import { Shot } from "../src/shot";
-import { IntegrationMethod, TrajFlag } from "../src/_wasm";
+import { TrajFlag } from "../src/_wasm";
 
 type TestItem = [
     number, // idx
@@ -113,11 +114,6 @@ const allValidations: Validation[] = [
         accuracy: 0.5,
         skip: (item) => item[1] <= 1,
     },
-];
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
 ];
 
 (WASM_AVAILABLE ? describe : describe.skip).each(methods)("trajectory $name", (obj) => {

@@ -1,5 +1,6 @@
 import { expect, describe, test, beforeAll } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
+import { methods } from "./integrationMethods";
 import {
     UNew,
     DragModel,
@@ -8,16 +9,10 @@ import {
     Weapon,
     DragModelMultiBC,
     BCPoint,
-    IntegrationMethod,
     TrajectoryData,
 } from "../src";
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
 
 describe("BCPoint validation", () => {
     test("bc_zero_throws", () => {

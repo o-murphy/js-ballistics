@@ -8,8 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.0.0-rc.2] - 2026-07-24
+
 ### Changed
-- Pin `bclibc` submodule to `v1.1.6`
+- Pin `bclibc` submodule to `v1.1.7`
 
 ## [3.0.0-rc.1] - 2026-07-21
 
@@ -215,7 +217,8 @@ and this project adheres to
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...HEAD
+[3.0.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...v3.0.0-rc.2
 [3.0.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.4...v3.0.0-rc.1
 [3.0.0-beta.4]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.3...v3.0.0-beta.4
 [3.0.0-beta.3]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.2...v3.0.0-beta.3

@@ -64,7 +64,7 @@ clean:
 
 clone-submodules:
 	@echo "📂 Checking submodules..."
-	@if [ ! -f "$(BCLIBC_SRC)/main.cpp" ]; then \
+	@if [ ! -e "lib/bclibc/.git" ]; then \
 		echo "📥 Cloning/Updating submodules (bclibc)..."; \
 		git submodule update --init --recursive; \
 		echo "✅ Submodules ready!"; \

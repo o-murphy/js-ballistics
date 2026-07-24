@@ -7,11 +7,11 @@ import {
     Distance,
     Weapon,
     Wind,
-    IntegrationMethod,
     WasmManager,
 } from "../src"; // Assuming these are in '../src'
 import { expect, describe, test, beforeEach } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
+import { methods } from "./integrationMethods";
 import { Shot } from "../src/shot";
 import { Calculator } from "../src/interface";
 import { TrajFlag } from "../src/_wasm";
@@ -44,12 +44,6 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
     });
     return shot;
 };
-
-// Define the engine types to test with for describe.each
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
 
 // --- Test Suite: Incomplete Shots (Parameterized by Engine) ---
 // Use describe.each to iterate over different engine implementations

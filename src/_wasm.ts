@@ -65,6 +65,7 @@ export const WasmManager = {
 export const IntegrationMethod = {
     RK4: 0 as _IntegrationMethod,
     EULER: 1 as _IntegrationMethod,
+    VELOCITY_VERLET: 2 as _IntegrationMethod,
 } as const;
 
 /**

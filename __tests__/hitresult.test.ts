@@ -1,5 +1,6 @@
 import { expect, describe, test, beforeAll } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
+import { methods } from "./integrationMethods";
 import {
     Ammo,
     DragModel,
@@ -14,11 +15,6 @@ import {
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
 import { HitResult, DangerSpace } from "../src/trajectory_data";
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
 
 // Matches Python's TestHitResult fixture (without powder sensitivity)
 const makeShotAndCalc = (method: typeof IntegrationMethod.RK4) => {

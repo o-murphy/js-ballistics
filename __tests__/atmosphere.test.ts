@@ -15,11 +15,7 @@ import {
 import { Calculator } from "../src/interface";
 import { Shot } from "../src/shot";
 import { testWasm } from "./wasmAvailable";
-
-const methods = [
-    { name: "RK4", method: IntegrationMethod.RK4 },
-    { name: "EULER", method: IntegrationMethod.EULER },
-];
+import { methods } from "./integrationMethods";
 
 describe("Atmo Class Tests", () => {
     let standard: Atmo;
