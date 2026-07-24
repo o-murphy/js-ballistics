@@ -12,6 +12,7 @@ on:
       - "lib/bclibc/**"
       - "lib/emsdk/**"
       - "package.json"
+      - "yarn.lock"
       - "tsconfig*.json"
       - "jest.config.*"
       - "Makefile"

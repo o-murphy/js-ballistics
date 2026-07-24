@@ -10,9 +10,14 @@ updates:
     schedule:
       interval: "weekly"
     groups:
+      typescript:
+        patterns:
+          - "typescript"
       all-dependencies:
         patterns:
           - "*"
+        exclude-patterns:
+          - "typescript"
 
   - package-ecosystem: "github-actions"
     directory: "/"
