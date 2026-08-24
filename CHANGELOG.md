@@ -17,6 +17,10 @@ and this project adheres to
 - Emscripten version moved into a single `.emsdk-version` file, read by both
   the `Makefile` (`EM_VERSION`) and all three CI workflows, so it only needs
   to be bumped in one place
+- Bump pinned Emscripten from `5.0.7` to `6.0.8`; `build-wasm` now compiles
+  `bindings.cpp` with `em++` instead of `emcc` — 6.0.8 no longer auto-links
+  the C++ standard library / exception-handling runtime for a `.cpp` file
+  built via `emcc`, which broke embind/exception symbols at link time
 
 ## [3.0.0-rc.2] - 2026-07-24
 

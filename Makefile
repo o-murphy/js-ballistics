@@ -27,7 +27,7 @@ build-wasm: clone-submodules
 	@mkdir -p $(WASM_OUT_DIR)
 	@bash -c "source $(EMSDK_ENV) && \
 		(command -v emcc >/dev/null 2>&1 && echo '✅ Emscripten is available' || (echo '❌ Emscripten not found!' && exit 1)) && \
-		emcc wasm/bindings.cpp $(CPP_SOURCES) -o $(WASM_OUT_DIR)/bclibc.js \
+		em++ wasm/bindings.cpp $(CPP_SOURCES) -o $(WASM_OUT_DIR)/bclibc.js \
 		--bind \
 		--post-js wasm/post.js \
 		-I$(BCLIBC_INCLUDE) \
@@ -86,8 +86,7 @@ install-emsdk:
 		echo "   Run 'make clean-emsdk' first if you want to reinstall"; \
 	else \
 		git clone https://github.com/emscripten-core/emsdk.git $(EMSDK_DIR); \
-		cd $(EMSDK_DIR) && ./emsdk install $(EM_VERSION); \
-		cd $(EMSDK_DIR) && ./emsdk activate $(EM_VERSION); \
+		cd $(EMSDK_DIR) && ./emsdk install $(EM_VERSION) && ./emsdk activate $(EM_VERSION); \
 		echo ""; \
 		echo "✅ Emscripten SDK installed!"; \
 		echo ""; \
