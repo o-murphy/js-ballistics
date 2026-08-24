@@ -137,3 +137,6 @@ dist
 
 build/
 dist/
+
+# Emscripten SDK (installed locally via `make install-emsdk`, not a submodule)
+lib/emsdk/

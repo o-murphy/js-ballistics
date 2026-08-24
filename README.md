@@ -86,8 +86,10 @@ git submodule update --init --recursive
 
 ### Emscripten setup
 
+Emscripten is installed locally (not tracked as a submodule):
+
 ```bash
-make install-emsdk                  # clone & install Emscripten SDK
+make install-emsdk                  # clone & install Emscripten SDK into lib/emsdk
 source lib/emsdk/emsdk_env.sh       # activate in current shell
 ```
 

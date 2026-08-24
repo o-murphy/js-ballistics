@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- Removed the unused `emsdk` git submodule; CI already installs Emscripten via
+  `emscripten-core/setup-emsdk`, and local dev installs it via
+  `make install-emsdk` — `lib/emsdk` is no longer tracked in `.gitmodules`
+
 ## [3.0.0-rc.2] - 2026-07-24
 
 ### Changed
