@@ -22,6 +22,11 @@ and this project adheres to
   the C++ standard library / exception-handling runtime for a `.cpp` file
   built via `emcc`, which broke embind/exception symbols at link time
 
+### Added
+- `.github/workflows/emsdk-update.yml`: weekly scheduled workflow that
+  resolves the latest Emscripten release, and opens (or updates) a PR
+  bumping `.emsdk-version` when it's out of date
+
 ## [3.0.0-rc.2] - 2026-07-24
 
 ### Changed
