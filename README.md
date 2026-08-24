@@ -87,7 +87,8 @@ git submodule update --init --recursive
 ### Emscripten setup
 
 Emscripten is installed locally (not tracked as a submodule). The version is
-pinned in the `Makefile`'s `EM_VERSION` to match the version CI uses:
+pinned in [`.emsdk-version`](.emsdk-version) — the single source of truth for
+both the `Makefile` and the CI workflows:
 
 ```bash
 make install-emsdk                  # clone & install Emscripten SDK into lib/emsdk

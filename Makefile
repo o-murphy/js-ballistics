@@ -16,8 +16,8 @@ CPP_SOURCES = $(wildcard $(BCLIBC_SRC)/*.cpp)
 EMSDK_DIR = ./lib/emsdk
 EMSDK_ENV = $(EMSDK_DIR)/emsdk_env.sh
 
-# Emscripten version (kept in sync with EM_VERSION in .github/workflows/*.yml)
-EM_VERSION = 5.0.7
+# Emscripten version — single source of truth shared with .github/workflows/*.yml
+EM_VERSION := $(shell cat .emsdk-version)
 
 build: build-wasm build-ts build-copy-html
 

@@ -16,6 +16,7 @@ on:
       - "tsconfig*.json"
       - "jest.config.*"
       - "Makefile"
+      - ".emsdk-version"
       - ".github/workflows/coverage.yml"
   push:
     branches:
@@ -23,7 +24,6 @@ on:
   workflow_dispatch:
 
 env:
-  EM_VERSION: "5.0.7"
   EM_CACHE_FOLDER: "emsdk-cache"
 
 concurrency:
@@ -38,6 +38,9 @@ jobs:
 
       - name: Init bclibc submodule
         run: git submodule update --init lib/bclibc
+
+      - name: Read Emscripten version
+        run: echo "EM_VERSION=$(cat .emsdk-version)" >> "$GITHUB_ENV"
 
       - name: Cache emsdk
         uses: actions/cache@v6
