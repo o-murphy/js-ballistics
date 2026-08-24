@@ -16,6 +16,9 @@ CPP_SOURCES = $(wildcard $(BCLIBC_SRC)/*.cpp)
 EMSDK_DIR = ./lib/emsdk
 EMSDK_ENV = $(EMSDK_DIR)/emsdk_env.sh
 
+# Emscripten version (kept in sync with EM_VERSION in .github/workflows/*.yml)
+EM_VERSION = 5.0.7
+
 build: build-wasm build-ts build-copy-html
 
 
@@ -77,14 +80,14 @@ clone-submodules:
 # ============================================================================
 
 install-emsdk:
-	@echo "📦 Installing Emscripten SDK..."
+	@echo "📦 Installing Emscripten SDK ($(EM_VERSION))..."
 	@if [ -d "$(EMSDK_DIR)" ]; then \
 		echo "⚠️  Emscripten SDK already exists at $(EMSDK_DIR)"; \
 		echo "   Run 'make clean-emsdk' first if you want to reinstall"; \
 	else \
 		git clone https://github.com/emscripten-core/emsdk.git $(EMSDK_DIR); \
-		cd $(EMSDK_DIR) && ./emsdk install latest; \
-		cd $(EMSDK_DIR) && ./emsdk activate latest; \
+		cd $(EMSDK_DIR) && ./emsdk install $(EM_VERSION); \
+		cd $(EMSDK_DIR) && ./emsdk activate $(EM_VERSION); \
 		echo ""; \
 		echo "✅ Emscripten SDK installed!"; \
 		echo ""; \
@@ -115,15 +118,15 @@ setup-emsdk: install-emsdk
 	@echo ""
 
 update-emsdk:
-	@echo "🔄 Оновлення Emscripten SDK..."
+	@echo "🔄 Оновлення Emscripten SDK до $(EM_VERSION)..."
 	@if [ -d "$(EMSDK_DIR)" ]; then \
 		cd $(EMSDK_DIR) && \
 		git fetch origin && \
 		git checkout main || git checkout master && \
 		git pull origin main || git pull origin master && \
-		./emsdk install latest && \
-		./emsdk activate latest && \
-		echo "✅ Emscripten оновлено до останньої версії!"; \
+		./emsdk install $(EM_VERSION) && \
+		./emsdk activate $(EM_VERSION) && \
+		echo "✅ Emscripten оновлено до $(EM_VERSION)!"; \
 	else \
 		echo "❌ EMSDK не знайдено в $(EMSDK_DIR). Спробуйте 'make install-emsdk'"; \
 	fi
