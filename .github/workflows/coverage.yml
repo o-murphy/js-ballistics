@@ -33,6 +33,8 @@ concurrency:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v7
 
@@ -70,4 +72,4 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
