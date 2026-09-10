@@ -8,19 +8,62 @@ and this project adheres to
 
 ## [Unreleased]
 
-## [3.0.0-rc.2] - 2026-07-24
+## [3.0.0] - 2026-09-10
+
+First stable release of the 3.x line. It promotes `3.0.0-rc.2` unchanged: no
+source, binding or test changes were made after that tag, only toolchain and CI
+updates. The prerelease sections below stay as the detailed record; the summary
+here is what changed relative to the previous published release, `2.2.0-beta.2`.
+
+### Highlights since `2.2.0-beta.2`
+
+- **Breaking:** trajectories are now solved by the WASM build of
+  [bclibc](https://github.com/ballistics-lab/bclibc) (pinned to `v1.1.7`); the
+  pure-TypeScript integrator is gone and a WASM build is required
+- **Breaking:** `WasmManager.init()` must be awaited before any calculation, and
+  `Calculator.fire()`, `setWeaponZero()`, `HitResult.getAt()` and
+  `HitResult.dangerSpace()` are asynchronous
+- `IntegrationMethod` with three solvers: `RK4` (default), `EULER` and
+  `VELOCITY_VERLET`
+- `HitResult.getAt()` trajectory interpolation, `HitResult.flag()` point lookup,
+  and `HitResult.dangerSpace()` returning a `DangerSpace`
+- `TrajFlag` enum: `NONE`, `ZERO_UP`, `ZERO_DOWN`, `ZERO`, `MACH`, `RANGE`,
+  `APEX`, `ALL`, `MRT`
+- Tag-driven release pipeline: draft GitHub Release, manual approval, npm
+  publish with provenance, and ESM + CJS smoke tests run against the packed
+  tarball
 
 ### Changed
+
+- Pin `lib/emsdk` submodule to `6.0.8` (local development toolchain only — CI
+  and release builds use Emscripten `5.0.7` via `setup-emsdk`)
+- npm dev-dependency updates
+
+### CI
+
+- `coverage.yml`: authenticate to Codecov with OIDC instead of a token
+
+## [3.0.0-rc.2] - 2026-07-24
+
+### Added
+
+- `IntegrationMethod.VELOCITY_VERLET` — third integration method alongside `RK4`
+  and `EULER`, exposed through `wasm/bindings.cpp`
+
+### Changed
+
 - Pin `bclibc` submodule to `v1.1.7`
 
 ## [3.0.0-rc.1] - 2026-07-21
 
 ### Added
+
 - `.github/workflows/coverage.yml`: runs `jest --coverage` and uploads the
   report to Codecov via `codecov/codecov-action@v5`
 - Codecov badge in README
 
 ### Changed
+
 - npm dependencies upgrade
 - eslint dependency upgrade
 - README: badges and links converted to reference-style, consolidated under a
@@ -29,7 +72,23 @@ and this project adheres to
 - Pin `bclibc` submodule to `v1.1.5`
 
 ### Fixed
+
 - Type annotations fixes
+
+## [3.0.0-beta.4] - 2026-07-03
+
+Maintenance release: no source or API changes.
+
+### Added
+
+- `gitsubmodule` ecosystem in `.github/dependabot.yml` so `lib/bclibc` and
+  `lib/emsdk` get automatic update PRs
+
+### Changed
+
+- `__stubs__/bclibc.d.ts` reformatted with Prettier (generated file, no API
+  change)
+- Bump `actions/cache` v5 → v6 in the test and release workflows
 
 ## [3.0.0-beta.3] - 2026-06-26
 
@@ -217,7 +276,8 @@ and this project adheres to
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...v3.0.0
 [3.0.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...v3.0.0-rc.2
 [3.0.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.4...v3.0.0-rc.1
 [3.0.0-beta.4]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.3...v3.0.0-beta.4
