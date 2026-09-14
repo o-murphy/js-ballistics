@@ -8,6 +8,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- `bclibc` submodule pin updated to `v1.1.8`
+
 ## [3.0.0] - 2026-09-10
 
 First stable release of the 3.x line. It promotes `3.0.0-rc.2` unchanged: no
