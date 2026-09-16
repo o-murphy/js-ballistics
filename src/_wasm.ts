@@ -66,6 +66,7 @@ export const IntegrationMethod = {
     RK4: 0 as _IntegrationMethod,
     EULER: 1 as _IntegrationMethod,
     VELOCITY_VERLET: 2 as _IntegrationMethod,
+    CASH_KARP: 3 as _IntegrationMethod,
 } as const;
 
 /**
