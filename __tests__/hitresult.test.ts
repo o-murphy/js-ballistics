@@ -1,4 +1,4 @@
-import { expect, describe, test, beforeAll } from "@jest/globals";
+import { expect, describe, test, beforeAll, jest } from "@jest/globals";
 import { WASM_AVAILABLE } from "./wasmAvailable";
 import { methods } from "./integrationMethods";
 import {
@@ -153,5 +153,57 @@ const makeShotAndCalc = (method: typeof IntegrationMethod.RK4) => {
     test("test_danger_space_returns_look_angle", async () => {
         const ds = await shotResult.dangerSpace(UNew.Yard(500), UNew.Meter(1.5));
         expect(ds.lookAngle.rad).toBeCloseTo(shot.lookAngle.rad, 10);
+    });
+
+    // -------------------------------------------------------------------------
+    // records / samples / events
+    // -------------------------------------------------------------------------
+
+    test("test_trajectory_is_deprecated_alias_for_records", () => {
+        // `trajectory` warns at most once per process (see warnTrajectoryDeprecated
+        // in src/trajectory_data.ts), so which describe.each iteration actually
+        // observes the console.warn call is order-dependent; only the returned
+        // value is asserted here, not the warning itself.
+        const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+        expect(shotResult.trajectory).toBe(shotResult.records);
+        warnSpy.mockRestore();
+    });
+
+    test("test_samples_annotate_schedule_while_records_stay_exact", () => {
+        // This shot's filterFlags=TrajFlag.ALL triggers ZERO/APEX/MACH events
+        // (see the flag tests above), so records must be strictly longer than
+        // the schedule-only samples table.
+        expect(shotResult.records.length).toBeGreaterThan(shotResult.samples.length);
+        expect(shotResult.records.length).toBe(
+            shotResult.samples.length + shotResult.events.length
+        );
+    });
+
+    test("test_samples_do_not_glue_distant_events_onto_nearest_sample", async () => {
+        // Regression test: with trajectoryRange == trajectoryStep, only the launch
+        // and terminal samples exist. ZERO_UP/APEX/ZERO_DOWN all occur well before
+        // the terminal sample, so an earlier "annotate whichever sample is nearest"
+        // implementation glued all three onto the launch sample (t=0), producing a
+        // nonsensical combined flag that misrepresented the launch state as every
+        // event's. None of these events are actually close (in time) to either
+        // sample, so none should be annotated in `.samples` -- they remain exact
+        // and findable via `.events`/`.flag()`.
+        const coarse = await calc.fire({
+            shot,
+            trajectoryRange: UNew.Yard(1000),
+            trajectoryStep: UNew.Yard(1000),
+            filterFlags: TrajFlag.ALL,
+        });
+        expect(coarse.samples.length).toBe(2);
+
+        const eventFlags = TrajFlag.ZERO | TrajFlag.MACH | TrajFlag.APEX;
+        for (const sample of coarse.samples) {
+            expect(sample.flag & eventFlags).toBe(0);
+        }
+
+        expect(coarse.flag(TrajFlag.ZERO_UP)).not.toBeUndefined();
+        expect(coarse.flag(TrajFlag.APEX)).not.toBeUndefined();
+        expect(coarse.flag(TrajFlag.ZERO_DOWN)).not.toBeUndefined();
+        expect(coarse.flag(TrajFlag.MACH)).not.toBeUndefined();
     });
 });

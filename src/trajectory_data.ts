@@ -33,6 +33,21 @@ const SAME_INSTANT_ABS_TOL = 1e-6;
 const EVENT_FLAGS: number =
     TrajFlag.ZERO | TrajFlag.MACH | TrajFlag.APEX | TrajFlag.MRT;
 
+// Logs the HitResult.trajectory deprecation notice once per process, rather than on
+// every access (it can be read in a hot loop, unlike Python's per-call warning).
+let trajectoryDeprecationWarned = false;
+function warnTrajectoryDeprecated(): void {
+    if (trajectoryDeprecationWarned) {
+        return;
+    }
+    trajectoryDeprecationWarned = true;
+    console.warn(
+        "HitResult.trajectory is deprecated; use `.records` for the exact " +
+            "chronological stream or `.samples` for the deterministic " +
+            "scheduled-sample table."
+    );
+}
+
 const trajFlagNames: Record<number, string> = {
     [TrajFlag.NONE]: "NONE",
     [TrajFlag.ZERO_UP]: "ZERO_UP",
@@ -416,6 +431,17 @@ class HitResult {
 
         this._samples = projected;
         return this._samples;
+    }
+
+    /**
+     * @deprecated Alias for {@link HitResult.records}, kept for source compatibility
+     * with the pre-`bclibc@2.0.0-beta.1` API. Use `.records` for the exact
+     * chronological stream, or `.samples` for the deterministic scheduled-sample
+     * table (what `.trajectory` used to mean). Logs a one-time console warning.
+     */
+    get trajectory(): TrajectoryData[] {
+        warnTrajectoryDeprecated();
+        return this.records;
     }
 
     /**

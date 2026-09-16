@@ -105,11 +105,11 @@
                     trajectoryStep: UNew.Yard(100),
                 });
 
-                log(`Trajectory points: ${hit.trajectory.length}\n`);
+                log(`Trajectory points: ${hit.samples.length}\n`);
 
                 // Show first few points
-                for (let i = 0; i < Math.min(5, hit.trajectory.length); i++) {
-                    const d = hit.trajectory[i];
+                for (let i = 0; i < Math.min(5, hit.samples.length); i++) {
+                    const d = hit.samples[i];
                     log(`[${i}] ${d.distance.In(Unit.Yard).toFixed(0)} yd:`);
                     log(`  Velocity: ${d.velocity.In(Unit.FPS).toFixed(1)} fps`);
                     log(`  Drop: ${d.height.In(Unit.Inch).toFixed(1)} in`);
@@ -163,12 +163,12 @@
                     trajectoryStep: UNew.Yard(100),
                 });
 
-                log(`Trajectory points: ${hit.trajectory.length}\n`);
+                log(`Trajectory points: ${hit.samples.length}\n`);
 
                 // Show some key distances
                 [0, 5, 10].forEach(i => {
-                    if (i < hit.trajectory.length) {
-                        const d = hit.trajectory[i];
+                    if (i < hit.samples.length) {
+                        const d = hit.samples[i];
                         log(`[${i}] ${d.distance.In(Unit.Yard).toFixed(0)} yd:`);
                         log(`  Velocity: ${d.velocity.In(Unit.FPS).toFixed(0)} fps`);
                         log(`  Drop: ${d.height.In(Unit.Inch).toFixed(1)} in`);

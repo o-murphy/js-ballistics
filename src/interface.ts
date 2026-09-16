@@ -180,7 +180,7 @@ class Calculator {
      *     denseOutput: true
      * });
      *
-     * console.log(`Impact velocity: ${result.trajectory[result.trajectory.length - 1].velocity}`);
+     * console.log(`Impact velocity: ${result.records[result.records.length - 1].velocity}`);
      * ```
      */
     async fire({

@@ -474,7 +474,7 @@
                 log(' (yd)     (fps)    (in)     (in)    (ft-lb)    (s)');
                 log('───────────────────────────────────────────────────');
 
-                hit.trajectory.forEach((d, i) => {
+                hit.samples.forEach((d, i) => {
                     const range = d.distance.In(Unit.Yard).toFixed(0).padStart(5);
                     const vel = d.velocity.In(Unit.FPS).toFixed(0).padStart(8);
                     const drop = d.height.In(Unit.Inch).toFixed(1).padStart(7);
@@ -490,7 +490,7 @@
                 log('✅ Calculation complete!');
 
                 // Update chart
-                updateChart(hit.trajectory);
+                updateChart(hit.samples);
 
             } catch (error) {
                 clear();
