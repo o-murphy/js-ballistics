@@ -130,10 +130,10 @@ jobs:
           const hit = await calc.fire({ shot, trajectoryRange: UNew.Yard(500), trajectoryStep: UNew.Yard(100) });
 
           // Verify trajectory has points
-          if (!hit.trajectory.length) throw new Error('Empty trajectory');
+          if (!hit.samples.length) throw new Error('Empty trajectory');
 
           // Verify velocity is a finite number in a realistic range (catches NaN/Infinity/garbage)
-          const last = hit.trajectory.at(-1);
+          const last = hit.samples.at(-1);
           const v = last.velocity.In(Velocity.FPS);
           if (!Number.isFinite(v) || v < 1000 || v > 3000)
             throw new Error('Unexpected velocity: ' + v);
@@ -166,8 +166,8 @@ jobs:
             await calc.setWeaponZero(shot, UNew.Yard(100));
             const hit = await calc.fire({ shot, trajectoryRange: UNew.Yard(300), trajectoryStep: UNew.Yard(100) });
 
-            if (!hit.trajectory.length) throw new Error('Empty trajectory');
-            const v = hit.trajectory.at(-1).velocity.In(Velocity.FPS);
+            if (!hit.samples.length) throw new Error('Empty trajectory');
+            const v = hit.samples.at(-1).velocity.In(Velocity.FPS);
             if (!Number.isFinite(v) || v < 1000 || v > 3000)
               throw new Error('Unexpected velocity: ' + v);
 
