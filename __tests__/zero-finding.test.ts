@@ -47,7 +47,7 @@ describe("Unit test for zero finding in ballistic calculator", () => {
                 trajectoryRange: UNew.Meter(distance),
                 filterFlags: TrajFlag.ALL,
             });
-            const t = hit.trajectory;
+            const t = hit.samples;
 
             const finalHitDistance = t[t.length - 1].distance.In(Unit.Meter);
             expect(Math.abs(finalHitDistance - distance)).toBeLessThanOrEqual(1.0);

@@ -37,7 +37,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const last = base.trajectory[base.trajectory.length - 1];
+        const last = base.samples[base.samples.length - 1];
         baseWindage = last.windage.rawValue;
         baseHeight = last.height.rawValue;
     });
@@ -51,7 +51,7 @@ const makeBaseShot = () => {
         const shot = makeBaseShot();
         shot.latitudeDeg = 0.0;
         const result = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
         expect(last.windage.rawValue).toBeCloseTo(baseWindage, 5);
         expect(last.height.rawValue).toBeCloseTo(baseHeight, 5);
     });
@@ -61,7 +61,7 @@ const makeBaseShot = () => {
         const shot = makeBaseShot();
         shot.latitudeDeg = -40.0;
         const result = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
         expect(last.windage.rawValue).toBeLessThan(baseWindage);
     });
 
@@ -74,7 +74,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
+        const lastNorth = resultNorth.samples[resultNorth.samples.length - 1];
 
         const shotSouth = makeBaseShot();
         shotSouth.latitudeDeg = -40.0;
@@ -83,7 +83,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastSouth = resultSouth.trajectory[resultSouth.trajectory.length - 1];
+        const lastSouth = resultSouth.samples[resultSouth.samples.length - 1];
 
         // North deflection magnitude exceeds south deflection (80° vs 40°)
         expect(lastNorth.windage.rawValue).toBeGreaterThan(-lastSouth.windage.rawValue);
@@ -111,7 +111,7 @@ const makeBaseShot = () => {
         shot.azimuthDeg = 90.0;
         shot.latitudeDeg = 0.0;
         const result = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
         expect(last.windage.rawValue).toBeCloseTo(baseWindage, 5);
     });
 
@@ -123,13 +123,13 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastBase = base.trajectory[base.trajectory.length - 1];
+        const lastBase = base.samples[base.samples.length - 1];
 
         const shot = makeBaseShot();
         shot.azimuthDeg = 90.0;
         shot.latitudeDeg = 0.0;
         const result = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
 
         expect(last.height.rawValue).toBeGreaterThan(lastBase.height.rawValue);
     });
@@ -143,7 +143,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastEq = resultEq.trajectory[resultEq.trajectory.length - 1];
+        const lastEq = resultEq.samples[resultEq.samples.length - 1];
 
         const shotSouth = makeBaseShot();
         shotSouth.azimuthDeg = 90.0;
@@ -153,7 +153,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastSouth = resultSouth.trajectory[resultSouth.trajectory.length - 1];
+        const lastSouth = resultSouth.samples[resultSouth.samples.length - 1];
 
         expect(lastSouth.windage.rawValue).toBeLessThan(lastEq.windage.rawValue);
         expect(lastSouth.height.rawValue).toBeLessThan(lastEq.height.rawValue);
@@ -168,7 +168,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastSouth = resultSouth.trajectory[resultSouth.trajectory.length - 1];
+        const lastSouth = resultSouth.samples[resultSouth.samples.length - 1];
 
         const shotNorth = makeBaseShot();
         shotNorth.azimuthDeg = 90.0;
@@ -178,7 +178,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
+        const lastNorth = resultNorth.samples[resultNorth.samples.length - 1];
 
         expect(lastNorth.windage.rawValue).toBeGreaterThan(-lastSouth.windage.rawValue);
         expect(lastNorth.height.rawValue).toBeLessThan(lastSouth.height.rawValue);
@@ -196,13 +196,13 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastBase = base.trajectory[base.trajectory.length - 1];
+        const lastBase = base.samples[base.samples.length - 1];
 
         const shot = makeBaseShot();
         shot.latitudeDeg = 0.0;
         shot.azimuthDeg = 0.0;
         const result = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
 
         expect(last.height.rawValue).toBeCloseTo(lastBase.height.rawValue, 5);
     });
@@ -216,7 +216,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
+        const lastNorth = resultNorth.samples[resultNorth.samples.length - 1];
 
         const shotNE = makeBaseShot();
         shotNE.latitudeDeg = 0.0;
@@ -226,7 +226,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastNE = resultNE.trajectory[resultNE.trajectory.length - 1];
+        const lastNE = resultNE.samples[resultNE.samples.length - 1];
 
         expect(lastNE.height.rawValue).toBeGreaterThan(lastNorth.height.rawValue);
     });
@@ -240,7 +240,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
+        const lastNorth = resultNorth.samples[resultNorth.samples.length - 1];
 
         const shotWest = makeBaseShot();
         shotWest.latitudeDeg = 0.0;
@@ -250,7 +250,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const lastWest = resultWest.trajectory[resultWest.trajectory.length - 1];
+        const lastWest = resultWest.samples[resultWest.samples.length - 1];
 
         expect(lastWest.height.rawValue).toBeLessThan(lastNorth.height.rawValue);
     });
@@ -271,7 +271,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
         expect(last.windage.rawValue).toBeCloseTo(0.0, 5);
     });
 
@@ -289,7 +289,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const last = result.trajectory[result.trajectory.length - 1];
+        const last = result.samples[result.samples.length - 1];
         expect(last.windage.rawValue).toBeLessThan(0);
     });
 
@@ -308,7 +308,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const lastEq = resultEq.trajectory[resultEq.trajectory.length - 1];
+        const lastEq = resultEq.samples[resultEq.samples.length - 1];
 
         const shotNorth = makeBaseShot();
         shotNorth.relativeAngle = UNew.Degree(90);
@@ -319,7 +319,7 @@ const makeBaseShot = () => {
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const lastNorth = resultNorth.trajectory[resultNorth.trajectory.length - 1];
+        const lastNorth = resultNorth.samples[resultNorth.samples.length - 1];
 
         // Both drift west (< 0), equator has stronger effect
         expect(lastEq.windage.rawValue).toBeLessThan(lastNorth.windage.rawValue);

@@ -62,7 +62,7 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
         });
 
         // This beforeEach hook runs before each 'test' function in this describe block.
-        beforeEach(async () => {});
+        beforeEach(async () => { });
 
         test("test_shot_incomplete", async () => {
             const angleInDegrees = 5.0;
@@ -71,15 +71,15 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
             const shot = shotWithRelativeAngleInDegrees(angleInDegrees);
 
             const checkEndPoint = (hitResult: HitResult) => {
-                console.log(`=== Trajectory points (${hitResult.trajectory.length} total) ===`);
-                hitResult.trajectory.forEach((point, i) => {
+                console.log(`=== Trajectory points (${hitResult.samples.length} total) ===`);
+                hitResult.samples.forEach((point, i) => {
                     console.log(
                         `${i}: distance=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft`
                     );
                 });
                 console.log(`Error: ${hitResult.error?.message || "none"}`);
 
-                const lastPoint = hitResult.trajectory[hitResult.trajectory.length - 1];
+                const lastPoint = hitResult.samples[hitResult.samples.length - 1];
                 const lastPointDistance = lastPoint.distance.In(Distance.Foot);
                 const lastPointHeight = lastPoint.height.In(Distance.Foot);
 
@@ -148,17 +148,17 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
 
             // Debug output
             console.log("=== Vertical Shot Debug ===");
-            console.log("Trajectory length:", hitResult.trajectory.length);
+            console.log("Trajectory length:", hitResult.samples.length);
             console.log("Error:", hitResult.error);
-            hitResult.trajectory.forEach((point, i) => {
+            hitResult.samples.forEach((point, i) => {
                 console.log(
                     `Point ${i}: dist=${point.distance.foot.toFixed(2)}ft, height=${point.height.foot.toFixed(2)}ft, time=${point.time.toFixed(3)}s`
                 );
             });
 
-            expect(hitResult.trajectory.length).toBe(2);
+            expect(hitResult.samples.length).toBe(2);
             expect(
-                hitResult.trajectory[hitResult.trajectory.length - 1].height.rawValue
+                hitResult.samples[hitResult.samples.length - 1].height.rawValue
             ).toBeLessThan(1e-9);
 
             // Case 2: With ALL flags and config to allow crossing zero
@@ -183,8 +183,8 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
             expect(zeroDown!.height.In(Distance.Meter)).toBeCloseTo(0, 6);
 
             // Don't duplicate points
-            expect(hitResult.trajectory[hitResult.trajectory.length - 1].time).not.toBe(
-                hitResult.trajectory[hitResult.trajectory.length - 2].time
+            expect(hitResult.samples[hitResult.samples.length - 1].time).not.toBe(
+                hitResult.samples[hitResult.samples.length - 2].time
             );
         });
 
@@ -211,9 +211,9 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
                 raiseRangeError: false,
             });
 
-            expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(2);
-            expect(hitResult.trajectory[hitResult.trajectory.length - 2]).not.toEqual(
-                hitResult.trajectory[hitResult.trajectory.length - 1]
+            expect(hitResult.records.length).toBeGreaterThanOrEqual(2);
+            expect(hitResult.samples[hitResult.samples.length - 2]).not.toEqual(
+                hitResult.samples[hitResult.samples.length - 1]
             );
 
             const resultAtZero = await hitResult.getAt(
@@ -226,8 +226,8 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
             // JS numerics give a slightly different trajectory (~0.7 ft off at 1000 ft).
             expect(Math.abs(resultAtZero.height.In(Distance.Foot))).toBeLessThan(1.0);
 
-            const secondLastPoint = hitResult.trajectory[hitResult.trajectory.length - 2];
-            const lastPoint = hitResult.trajectory[hitResult.trajectory.length - 1];
+            const secondLastPoint = hitResult.samples[hitResult.samples.length - 2];
+            const lastPoint = hitResult.samples[hitResult.samples.length - 1];
 
             expect(lastPoint.distance.In(Distance.Foot)).toBeGreaterThan(
                 secondLastPoint.distance.In(Distance.Foot)
@@ -252,17 +252,17 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
                         raiseRangeError: false,
                     });
 
-                    expect(hitResult.trajectory.length).toBeGreaterThanOrEqual(0); // Ensure trajectory is not null/undefined/empty on error
-                    // console.log(`len(hitResult.trajectory)=${hitResult.trajectory.length}`);
+                    expect(hitResult.samples.length).toBeGreaterThanOrEqual(0); // Ensure trajectory is not null/undefined/empty on error
+                    // console.log(`len(hitResult.samples)=${hitResult.samples.length}`);
                     // In JS, converting array to Set removes duplicates if elements are primitive.
                     // For objects, it removes if they are the exact same reference.
                     // To check for duplicate data, we need to convert to a comparable primitive or string.
                     const uniquePoints = new Set(
-                        hitResult.trajectory.map((p) => JSON.stringify(p.inDefUnits()))
+                        hitResult.samples.map((p) => JSON.stringify(p.inDefUnits()))
                     );
-                    // Python's test `assert len(hit_result.trajectory)==len(set(hit_result.trajectory))`
+                    // Python's test `assert len(hit_result.samples)==len(set(hit_result.samples))`
                     // This implicitly means if there's an incomplete trajectory, its points are unique.
-                    expect(hitResult.trajectory.length).toBe(uniquePoints.size);
+                    expect(hitResult.samples.length).toBe(uniquePoints.size);
                 }
             }
         });
@@ -305,17 +305,17 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
                         raiseRangeError: false,
                     });
                     // Ensure trajectory is not empty before accessing elements.
-                    expect(hitResultExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
+                    expect(hitResultExtraData.samples.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
                     let distanceExtraData = 0;
                     let heightExtraData = 0;
-                    if (hitResultExtraData.trajectory.length > 0) {
+                    if (hitResultExtraData.samples.length > 0) {
                         const lastPointExtraData =
-                            hitResultExtraData.trajectory[hitResultExtraData.trajectory.length - 1];
+                            hitResultExtraData.samples[hitResultExtraData.samples.length - 1];
                         distanceExtraData = lastPointExtraData.distance.In(Distance.Meter);
                         heightExtraData = lastPointExtraData.height.In(Distance.Meter);
                     }
                     console.log(
-                        `extra_data=${extraDataFlag} len(hitResultExtraData.trajectory)=${hitResultExtraData.trajectory.length} Distance ${distanceExtraData.toFixed(2)} Height ${heightExtraData.toFixed(2)}`
+                        `extra_data=${extraDataFlag} len(hitResultExtraData.samples)=${hitResultExtraData.samples.length} Distance ${distanceExtraData.toFixed(2)} Height ${heightExtraData.toFixed(2)}`
                     );
 
                     // Test with extra_data = false
@@ -327,19 +327,19 @@ const shotWithRelativeAngleInDegrees = (angleInDegrees: number): Shot => {
                         raiseRangeError: false,
                     });
                     // Ensure trajectory is not empty before accessing elements.
-                    expect(hitResultNoExtraData.trajectory.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
+                    expect(hitResultNoExtraData.samples.length).toBeGreaterThanOrEqual(0); // Can be 0 if error at start
                     let distanceNoExtraData = 0;
                     let heightNoExtraData = 0;
-                    if (hitResultNoExtraData.trajectory.length > 0) {
+                    if (hitResultNoExtraData.samples.length > 0) {
                         const lastPointNoExtraData =
-                            hitResultNoExtraData.trajectory[
-                                hitResultNoExtraData.trajectory.length - 1
+                            hitResultNoExtraData.samples[
+                            hitResultNoExtraData.samples.length - 1
                             ];
                         distanceNoExtraData = lastPointNoExtraData.distance.In(Distance.Meter);
                         heightNoExtraData = lastPointNoExtraData.height.In(Distance.Meter);
                     }
                     console.log(
-                        `extra_data=${noExtraDataFlag} len(hitResultNoExtraData.trajectory)=${hitResultNoExtraData.trajectory.length} Distance ${distanceNoExtraData.toFixed(2)} Height ${heightNoExtraData.toFixed(2)}`
+                        `extra_data=${noExtraDataFlag} len(hitResultNoExtraData.samples)=${hitResultNoExtraData.samples.length} Distance ${distanceNoExtraData.toFixed(2)} Height ${heightNoExtraData.toFixed(2)}`
                     );
 
                     const distanceDifference = Math.abs(distanceExtraData - distanceNoExtraData);

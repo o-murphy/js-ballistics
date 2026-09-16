@@ -40,10 +40,10 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        baselineTrajectory = hit.trajectory;
+        baselineTrajectory = hit.samples;
     });
 
-    beforeEach(() => {});
+    beforeEach(() => { });
 
     // region Cant
 
@@ -60,7 +60,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const t = hit.trajectory;
+        const t = hit.samples;
 
         expect(t[5].height.rawValue - weapon.sightHeight.rawValue).toBeCloseTo(
             baselineTrajectory[5].height.rawValue,
@@ -93,7 +93,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const t = hit.trajectory;
+        const t = hit.samples;
 
         expect(t[5].height.rawValue - weapon.sightHeight.rawValue).toBeCloseTo(
             baselineTrajectory[5].height.rawValue,
@@ -120,7 +120,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const t = hit.trajectory;
+        const t = hit.samples;
 
         expect(t[5].height.rawValue - weapon.sightHeight.rawValue).toBeCloseTo(
             baselineTrajectory[5].height.rawValue,
@@ -142,7 +142,7 @@ import { Shot } from "../src/shot";
             winds: [new Wind({ velocity: UNew.MPH(5), directionFrom: UNew.OClock(3) })],
         });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].windage.rawValue).toBeGreaterThan(
+        expect(hit.samples[5].windage.rawValue).toBeGreaterThan(
             baselineTrajectory[5].windage.rawValue
         );
     });
@@ -156,7 +156,7 @@ import { Shot } from "../src/shot";
             winds: [new Wind({ velocity: UNew.MPH(5), directionFrom: UNew.OClock(9) })],
         });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].windage.rawValue).toBeLessThan(
+        expect(hit.samples[5].windage.rawValue).toBeLessThan(
             baselineTrajectory[5].windage.rawValue
         );
     });
@@ -170,7 +170,7 @@ import { Shot } from "../src/shot";
             winds: [new Wind({ velocity: UNew.MPH(5), directionFrom: UNew.OClock(0) })],
         });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeGreaterThan(
+        expect(hit.samples[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -184,7 +184,7 @@ import { Shot } from "../src/shot";
             winds: [new Wind({ velocity: UNew.MPH(5), directionFrom: UNew.OClock(6) })],
         });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeLessThan(
+        expect(hit.samples[5].height.rawValue).toBeLessThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -217,8 +217,8 @@ import { Shot } from "../src/shot";
             trajectoryStep: step,
         });
 
-        const tLag = baseHit.trajectory[5].time - vacHit.trajectory[5].time;
-        expect(baseHit.trajectory[5].windage.foot).toBeCloseTo(tLag * vW.fps);
+        const tLag = baseHit.samples[5].time - vacHit.samples[5].time;
+        expect(baseHit.samples[5].windage.foot).toBeCloseTo(tLag * vW.fps);
     });
 
     test("multiple_wind", async () => {
@@ -281,14 +281,14 @@ import { Shot } from "../src/shot";
         });
 
         // Winds are the same to 500 yards
-        expect(tMulti.trajectory[5].windage.rawValue).toBeCloseTo(
-            tRight.trajectory[5].windage.rawValue
+        expect(tMulti.samples[5].windage.rawValue).toBeCloseTo(
+            tRight.samples[5].windage.rawValue
         );
-        expect(tMulti.trajectory[7].windage.rawValue).toBeGreaterThan(
-            tRight.trajectory[7].windage.rawValue
+        expect(tMulti.samples[7].windage.rawValue).toBeGreaterThan(
+            tRight.samples[7].windage.rawValue
         );
-        expect(tMultiMore.trajectory[9].windage.rawValue).toBeGreaterThan(
-            tMulti.trajectory[9].windage.rawValue
+        expect(tMultiMore.samples[9].windage.rawValue).toBeGreaterThan(
+            tMulti.samples[9].windage.rawValue
         );
     });
 
@@ -299,8 +299,8 @@ import { Shot } from "../src/shot";
         const hit1 = await calc.fire({ shot: shot1, trajectoryRange: range, trajectoryStep: step });
         const hit2 = await calc.fire({ shot: shot2, trajectoryRange: range, trajectoryStep: step });
 
-        expect(hit1.trajectory.length).toBeGreaterThan(0);
-        expect(hit2.trajectory.length).toBeGreaterThan(0);
+        expect(hit1.samples.length).toBeGreaterThan(0);
+        expect(hit2.samples.length).toBeGreaterThan(0);
     });
 
     test("winds_sort", async () => {
@@ -348,7 +348,7 @@ import { Shot } from "../src/shot";
         /** Barrel with no twist should have no spin drift */
         const shot = new Shot({ weapon: new Weapon({ twist: 0 }), ammo, atmo: atmosphere });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].windage.rawValue).toBe(0);
+        expect(hit.samples[5].windage.rawValue).toBe(0);
     });
 
     test("twist", async () => {
@@ -359,7 +359,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        expect(hitRight.trajectory[5].windage.rawValue).toBeGreaterThan(0);
+        expect(hitRight.samples[5].windage.rawValue).toBeGreaterThan(0);
 
         const shotLeft = new Shot({ weapon: new Weapon({ twist: -8 }), ammo, atmo: atmosphere });
         const hitLeft = await calc.fire({
@@ -367,11 +367,11 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        expect(hitLeft.trajectory[5].windage.rawValue).toBeLessThan(0);
+        expect(hitLeft.samples[5].windage.rawValue).toBeLessThan(0);
 
         // Slower twist (left=-8) produces more magnitude than faster (right=12)
-        expect(-hitLeft.trajectory[5].windage.rawValue).toBeGreaterThan(
-            hitRight.trajectory[5].windage.rawValue
+        expect(-hitLeft.samples[5].windage.rawValue).toBeGreaterThan(
+            hitRight.samples[5].windage.rawValue
         );
     });
 
@@ -383,7 +383,7 @@ import { Shot } from "../src/shot";
         /** Increasing relative humidity should decrease drop */
         const shot = new Shot({ weapon, ammo, atmo: new Atmo({ humidity: 0.9 }) });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeGreaterThan(
+        expect(hit.samples[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -392,7 +392,7 @@ import { Shot } from "../src/shot";
         /** Dropping temperature should increase drop */
         const shot = new Shot({ weapon, ammo, atmo: new Atmo({ temperature: UNew.Celsius(0) }) });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeLessThan(
+        expect(hit.samples[5].height.rawValue).toBeLessThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -405,7 +405,7 @@ import { Shot } from "../src/shot";
             atmo: Atmo.icao({ altitude: UNew.Foot(5000) }),
         });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeGreaterThan(
+        expect(hit.samples[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -414,7 +414,7 @@ import { Shot } from "../src/shot";
         /** Decreasing pressure should decrease drop */
         const shot = new Shot({ weapon, ammo, atmo: new Atmo({ pressure: UNew.InHg(20.0) }) });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeGreaterThan(
+        expect(hit.samples[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -435,7 +435,7 @@ import { Shot } from "../src/shot";
         const slick = new Ammo({ dm: tdm, mv: ammo.mv });
         const shot = new Shot({ weapon, ammo: slick, atmo: atmosphere });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeGreaterThan(
+        expect(hit.samples[5].height.rawValue).toBeGreaterThan(
             baselineTrajectory[5].height.rawValue
         );
     });
@@ -446,7 +446,7 @@ import { Shot } from "../src/shot";
         const reducedAmmo = new Ammo({ dm: tdm, mv: ammo.mv });
         const shot = new Shot({ weapon, ammo: reducedAmmo, atmo: atmosphere });
         const hit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(hit.trajectory[5].height.rawValue).toBeCloseTo(
+        expect(hit.samples[5].height.rawValue).toBeCloseTo(
             baselineTrajectory[5].height.rawValue,
             1e-2
         );
@@ -467,7 +467,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        expect(hitNoSens.trajectory[0].velocity.rawValue).toBeCloseTo(
+        expect(hitNoSens.samples[0].velocity.rawValue).toBeCloseTo(
             baselineTrajectory[0].velocity.rawValue
         );
 
@@ -483,7 +483,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        expect(hitSameTemp.trajectory[0].velocity.rawValue).toBeLessThan(
+        expect(hitSameTemp.samples[0].velocity.rawValue).toBeLessThan(
             baselineTrajectory[0].velocity.rawValue
         );
 
@@ -498,7 +498,7 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        expect(hitDiffTemp.trajectory[0].velocity.rawValue).toBeLessThan(
+        expect(hitDiffTemp.samples[0].velocity.rawValue).toBeLessThan(
             baselineTrajectory[0].velocity.rawValue
         );
 
@@ -513,30 +513,30 @@ import { Shot } from "../src/shot";
         /** Flat-fire Coriolis approximation based on latitude only (no azimuth) */
         const shot = new Shot({ weapon: new Weapon({ twist: 0 }), ammo, atmo: atmosphere });
         const baseHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = baseHit.trajectory.length - 1;
+        const last = baseHit.samples.length - 1;
 
         shot.latitudeDeg = 0.0; // At equator — no effect
         const equatorHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(equatorHit.trajectory[last].windage.rawValue).toBeCloseTo(
-            baseHit.trajectory[last].windage.rawValue
+        expect(equatorHit.samples[last].windage.rawValue).toBeCloseTo(
+            baseHit.samples[last].windage.rawValue
         );
-        expect(equatorHit.trajectory[last].height.rawValue).toBeCloseTo(
-            baseHit.trajectory[last].height.rawValue
+        expect(equatorHit.samples[last].height.rawValue).toBeCloseTo(
+            baseHit.samples[last].height.rawValue
         );
 
         shot.latitudeDeg = -40.0; // South — deflects left
         const southHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(southHit.trajectory[last].windage.rawValue).toBeLessThan(
-            baseHit.trajectory[last].windage.rawValue
+        expect(southHit.samples[last].windage.rawValue).toBeLessThan(
+            baseHit.samples[last].windage.rawValue
         );
 
         shot.latitudeDeg = 80.0; // North — deflects right (more than south deflects left)
         const northHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(northHit.trajectory[last].windage.rawValue).toBeGreaterThan(
-            -southHit.trajectory[last].windage.rawValue
+        expect(northHit.samples[last].windage.rawValue).toBeGreaterThan(
+            -southHit.samples[last].windage.rawValue
         );
-        expect(northHit.trajectory[last].height.rawValue).toBeCloseTo(
-            baseHit.trajectory[last].height.rawValue
+        expect(northHit.samples[last].height.rawValue).toBeCloseTo(
+            baseHit.samples[last].height.rawValue
         );
 
         // Invalid latitude must throw
@@ -549,34 +549,34 @@ import { Shot } from "../src/shot";
         /** Shoot east at different latitudes — vertical effect greatest at equator */
         const shot = new Shot({ weapon: new Weapon({ twist: 0 }), ammo, atmo: atmosphere });
         const baseHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = baseHit.trajectory.length - 1;
+        const last = baseHit.samples.length - 1;
 
         shot.azimuthDeg = 90.0; // East
         shot.latitudeDeg = 0.0;
         const equatorHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(equatorHit.trajectory[last].windage.rawValue).toBeCloseTo(
-            baseHit.trajectory[last].windage.rawValue
+        expect(equatorHit.samples[last].windage.rawValue).toBeCloseTo(
+            baseHit.samples[last].windage.rawValue
         );
-        expect(equatorHit.trajectory[last].height.rawValue).toBeGreaterThan(
-            baseHit.trajectory[last].height.rawValue
+        expect(equatorHit.samples[last].height.rawValue).toBeGreaterThan(
+            baseHit.samples[last].height.rawValue
         );
 
         shot.latitudeDeg = -40.0;
         const southHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(southHit.trajectory[last].windage.rawValue).toBeLessThan(
-            equatorHit.trajectory[last].windage.rawValue
+        expect(southHit.samples[last].windage.rawValue).toBeLessThan(
+            equatorHit.samples[last].windage.rawValue
         );
-        expect(southHit.trajectory[last].height.rawValue).toBeLessThan(
-            equatorHit.trajectory[last].height.rawValue
+        expect(southHit.samples[last].height.rawValue).toBeLessThan(
+            equatorHit.samples[last].height.rawValue
         );
 
         shot.latitudeDeg = 80.0;
         const northHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(northHit.trajectory[last].windage.rawValue).toBeGreaterThan(
-            -southHit.trajectory[last].windage.rawValue
+        expect(northHit.samples[last].windage.rawValue).toBeGreaterThan(
+            -southHit.samples[last].windage.rawValue
         );
-        expect(northHit.trajectory[last].height.rawValue).toBeLessThan(
-            southHit.trajectory[last].height.rawValue
+        expect(northHit.samples[last].height.rawValue).toBeLessThan(
+            southHit.samples[last].height.rawValue
         );
     });
 
@@ -584,13 +584,13 @@ import { Shot } from "../src/shot";
         /** Shoot different directions at equator — vertical Coriolis effect greatest */
         const shot = new Shot({ weapon: new Weapon({ twist: 0 }), ammo, atmo: atmosphere });
         const baseHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        const last = baseHit.trajectory.length - 1;
+        const last = baseHit.samples.length - 1;
 
         shot.latitudeDeg = 0.0;
         shot.azimuthDeg = 0.0; // North — no vertical effect at equator
         const northHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(northHit.trajectory[last].height.rawValue).toBeCloseTo(
-            baseHit.trajectory[last].height.rawValue
+        expect(northHit.samples[last].height.rawValue).toBeCloseTo(
+            baseHit.samples[last].height.rawValue
         );
 
         shot.azimuthDeg = 45.0; // Northeast — increasingly positive vertical
@@ -599,14 +599,14 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        expect(northeastHit.trajectory[last].height.rawValue).toBeGreaterThan(
-            northHit.trajectory[last].height.rawValue
+        expect(northeastHit.samples[last].height.rawValue).toBeGreaterThan(
+            northHit.samples[last].height.rawValue
         );
 
         shot.azimuthDeg = 270.0; // West — increasingly negative vertical
         const westHit = await calc.fire({ shot, trajectoryRange: range, trajectoryStep: step });
-        expect(westHit.trajectory[last].height.rawValue).toBeLessThan(
-            northHit.trajectory[last].height.rawValue
+        expect(westHit.samples[last].height.rawValue).toBeLessThan(
+            northHit.samples[last].height.rawValue
         );
     });
 
@@ -621,8 +621,8 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const last = baseHit.trajectory.length - 1;
-        expect(baseHit.trajectory[last].windage.rawValue).toBe(0.0);
+        const last = baseHit.samples.length - 1;
+        expect(baseHit.samples[last].windage.rawValue).toBe(0.0);
 
         shot.latitudeDeg = 0.0;
         shot.azimuthDeg = 0.0; // Face North — negative windage is west
@@ -631,8 +631,8 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const lastE = equatorHit.trajectory.length - 1;
-        expect(equatorHit.trajectory[lastE].windage.rawValue).toBeLessThan(0);
+        const lastE = equatorHit.samples.length - 1;
+        expect(equatorHit.samples[lastE].windage.rawValue).toBeLessThan(0);
 
         shot.latitudeDeg = 40.0;
         const northHit = await calcCoriolis.fire({
@@ -640,11 +640,11 @@ import { Shot } from "../src/shot";
             trajectoryRange: range,
             raiseRangeError: false,
         });
-        const lastN = northHit.trajectory.length - 1;
-        expect(equatorHit.trajectory[lastE].windage.rawValue).toBeLessThan(
-            northHit.trajectory[lastN].windage.rawValue
+        const lastN = northHit.samples.length - 1;
+        expect(equatorHit.samples[lastE].windage.rawValue).toBeLessThan(
+            northHit.samples[lastN].windage.rawValue
         );
-        expect(northHit.trajectory[lastN].windage.rawValue).toBeLessThan(0);
+        expect(northHit.samples[lastN].windage.rawValue).toBeLessThan(0);
     });
 
     // endregion Coriolis

@@ -200,7 +200,7 @@ const allValidations: Validation[] = [
                 timeStep: 0.0,
                 denseOutput: false,
             });
-            tData = hit.trajectory;
+            tData = hit.samples;
         });
 
         test("length", () => {
@@ -270,7 +270,7 @@ const allValidations: Validation[] = [
                 timeStep: 0.0,
                 denseOutput: false,
             });
-            tData = hit.trajectory;
+            tData = hit.samples;
         });
 
         test("length", () => {

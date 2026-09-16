@@ -24,6 +24,15 @@ import {
 } from "./_wasm";
 import { RangeError } from "./exceptions";
 
+// "Same instant" tolerance for HitResult.samples' event-to-sample annotation.
+// Mirrors Python's _SAME_INSTANT_REL_TOL / _SAME_INSTANT_ABS_TOL.
+const SAME_INSTANT_REL_TOL = 1e-3;
+const SAME_INSTANT_ABS_TOL = 1e-6;
+
+// Flags that mark a record as a physical event (as opposed to a scheduled sample).
+const EVENT_FLAGS: number =
+    TrajFlag.ZERO | TrajFlag.MACH | TrajFlag.APEX | TrajFlag.MRT;
+
 const trajFlagNames: Record<number, string> = {
     [TrajFlag.NONE]: "NONE",
     [TrajFlag.ZERO_UP]: "ZERO_UP",
@@ -36,43 +45,89 @@ const trajFlagNames: Record<number, string> = {
     [TrajFlag.MRT]: "MRT",
 };
 
-const trajFlagName = (value: TrajFlag) => {
+const trajFlagName = (value: TrajFlag): string => {
     if (Object.prototype.hasOwnProperty.call(trajFlagNames, value)) {
         return trajFlagNames[value];
     }
 
     let parts: string[] = [];
-    // Object.entries iterates over key-value pairs. Keys (bitStr) will be strings, so convert to number.
     for (const [bitStr, name] of Object.entries(trajFlagNames)) {
-        const bit = Number(bitStr); // Convert the string key back to a number
+        const bit = Number(bitStr);
 
-        // Ensure 'bit' is not 0 (e.g., TrajFlag.NONE) as (value & 0) == 0 is always true.
-        // And check if the 'bit' flag is set in the 'value'.
         if (bit !== 0 && (value & bit) === bit) {
             parts.push(name);
         }
     }
 
-    // This block handles the special case where both ZERO_UP and ZERO_DOWN are present,
-    // and you want to represent it as "ZERO".
     if (
         (value & TrajFlag.ZERO_UP) === TrajFlag.ZERO_UP &&
         (value & TrajFlag.ZERO_DOWN) === TrajFlag.ZERO_DOWN
     ) {
-        // If ZERO_UP and ZERO_DOWN are both in parts, replace them with "ZERO"
-        parts = parts.filter((part) => part !== "ZERO_UP" && part !== "ZERO_DOWN");
-        // Only add "ZERO" if it's not already implicitly handled by direct lookup
-        // and if it makes sense as a combined flag.
+        parts = parts.filter(
+            (part) => part !== "ZERO_UP" && part !== "ZERO_DOWN"
+        );
         if (!parts.includes("ZERO")) {
             parts.push("ZERO");
         }
     }
 
-    // Sort parts to ensure consistent output, useful for testing
     parts.sort();
 
     return parts.length > 0 ? parts.join("|") : "UNKNOWN";
 };
+
+/**
+ * `math.isclose` equivalent from Python's standard library.
+ *
+ * Returns true when `a` and `b` differ by no more than
+ * `max(relTol * max(|a|, |b|), absTol)`. Handles `NaN` and `±Infinity`
+ * consistently with the Python implementation.
+ */
+function isClose(
+    a: number,
+    b: number,
+    relTol = 1e-9,
+    absTol = 0.0
+): boolean {
+    if (relTol < 0 || absTol < 0) {
+        throw new Error("tolerances must be non-negative");
+    }
+
+    if (a === b) {
+        return true;
+    }
+
+    if (!Number.isFinite(a) || !Number.isFinite(b)) {
+        return false;
+    }
+
+    const diff = Math.abs(a - b);
+    const scale = Math.max(Math.abs(a), Math.abs(b));
+
+    return diff <= Math.max(relTol * scale, absTol);
+}
+
+/**
+ * `bisect.bisect_left` equivalent from Python's standard library.
+ *
+ * Returns the leftmost index at which `x` could be inserted into the
+ * sorted array `arr` to keep it sorted.
+ */
+function bisectLeft(arr: readonly number[], x: number): number {
+    let lo = 0;
+    let hi = arr.length;
+
+    while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (arr[mid] < x) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+
+    return lo;
+}
 
 class TrajectoryData {
     /**
@@ -114,7 +169,34 @@ class TrajectoryData {
         readonly energy: Energy,
         readonly ogw: Weight,
         readonly flag: TrajFlag
-    ) {} // Properties are automatically assigned due to 'readonly' and constructor parameters
+    ) { }
+
+    /**
+     * Return a copy of this point with a new flag value.
+     *
+     * Replaces Python's `NamedTuple._replace(flag=...)`. Preserves the
+     * `TrajectoryData` prototype so all instance methods survive.
+     */
+    withFlag(flag: TrajFlag): TrajectoryData {
+        return new TrajectoryData(
+            this.time,
+            this.distance,
+            this.velocity,
+            this.mach,
+            this.height,
+            this.slantHeight,
+            this.dropAngle,
+            this.windage,
+            this.windageAngle,
+            this.slantDistance,
+            this.angle,
+            this.densityRatio,
+            this.drag,
+            this.energy,
+            this.ogw,
+            flag
+        );
+    }
 
     /**
      * Returns an array of numerical values representing the trajectory data in default units.
@@ -128,7 +210,7 @@ class TrajectoryData {
             this.distance.In(preferredUnits.distance),
             this.velocity.In(preferredUnits.velocity),
             this.mach,
-            this.height.In(preferredUnits.drop), // Changed to preferredUnits.drop as per python
+            this.height.In(preferredUnits.drop),
             this.slantHeight.In(preferredUnits.drop),
             this.dropAngle.In(preferredUnits.adjustment),
             this.windage.In(preferredUnits.drop),
@@ -149,11 +231,6 @@ class TrajectoryData {
      * @returns {string[]} An array of formatted strings, each representing a piece of trajectory data.
      */
     formatted(): string[] {
-        /** simple formatter
-         * @param {Dimension} value
-         * @param {Unit} unit
-         * @return {string} time
-         */
         function _fmt<AllowedUnitT extends Unit>(
             value: Dimension<AllowedUnitT>,
             unit: AllowedUnitT
@@ -162,11 +239,11 @@ class TrajectoryData {
         }
 
         return [
-            `${this.time.toFixed(3)} s`, // Changed to 3 decimal places as per python
+            `${this.time.toFixed(3)} s`,
             _fmt(this.distance, preferredUnits.distance),
             _fmt(this.velocity, preferredUnits.velocity),
             `${this.mach.toFixed(2)} mach`,
-            _fmt(this.height, preferredUnits.drop), // Changed to preferredUnits.drop as per python
+            _fmt(this.height, preferredUnits.drop),
             _fmt(this.slantHeight, preferredUnits.drop),
             _fmt(this.dropAngle, preferredUnits.adjustment),
             _fmt(this.windage, preferredUnits.drop),
@@ -183,11 +260,6 @@ class TrajectoryData {
 
     /**
      * Converts TrajectoryData instance to WASM-compatible format.
-     *
-     * This method serializes all trajectory data fields into the raw format
-     * expected by WASM functions like interpolateTrajectoryData.
-     *
-     * @returns WASM-compatible trajectory data object
      */
     toWasmTrajectoryData(): _TrajectoryData {
         return {
@@ -210,7 +282,7 @@ class TrajectoryData {
         };
     }
 
-    static fromWasmTrajectoryData(data: _TrajectoryData) {
+    static fromWasmTrajectoryData(data: _TrajectoryData): TrajectoryData {
         return new TrajectoryData(
             data.time,
             UNew.Foot(data.distance_ft),
@@ -237,30 +309,117 @@ class HitResult {
      * Computed trajectory data of the shot.
      *
      * @param shot - The parameters of the shot calculation
-     * @param trajectory - Computed TrajectoryData points
-     * @param error - RangeError if any (optional)
+     * @param records - Computed TrajectoryData points (exact, chronological stream)
      * @param filterFlags - Flags that were requested in the trajectory calculation
+     * @param error - RangeError if any (optional)
      */
-
     readonly shot: Shot;
-    readonly trajectory: TrajectoryData[];
+    readonly records: TrajectoryData[];
     error?: Error;
     readonly filterFlags: TrajFlag;
 
+    private _samples?: TrajectoryData[];
+    private _events?: TrajectoryData[];
+
     constructor(
         shot: Shot,
-        trajectory: TrajectoryData[],
+        records: TrajectoryData[],
         filterFlags: TrajFlag = TrajFlag.NONE,
         error?: Error
     ) {
         this.shot = shot;
-        this.trajectory = trajectory;
+        this.records = records;
         this.filterFlags = filterFlags;
         this.error = error;
     }
 
     /**
-     * Get Shot properties (alias for shot for Python compatibility)
+     * Exact physical event records (ZERO, MACH, APEX, MRT), without the
+     * scheduled-sample projection. Memoized — mirrors Python's
+     * `@cached_property`.
+     */
+    get events(): TrajectoryData[] {
+        if (this._events) {
+            return this._events;
+        }
+        this._events = this.records.filter(
+            (row) => (row.flag & EVENT_FLAGS) !== 0
+        );
+        return this._events;
+    }
+
+    /**
+     * Return the deterministic scheduled-sample table.
+     *
+     * Physical events remain exact in {@link events}; this presentation view
+     * annotates a scheduled sample with an event's flag only when the two
+     * are, to floating-point precision, the *same instant*. It never
+     * annotates merely the *nearest* sample when no sample is actually
+     * that close. Cardinality always equals the sampling schedule's,
+     * regardless of whether any annotation occurs.
+     */
+    get samples(): TrajectoryData[] {
+        if (this._samples) {
+            return this._samples;
+        }
+
+        const samples = this.records.filter(
+            (row) =>
+                // RANGE identifies an explicit sample. A terminal NONE row
+                // is also a sample so incomplete trajectories retain their
+                // endpoint.
+                (row.flag & TrajFlag.RANGE) !== 0 ||
+                (row.flag & EVENT_FLAGS) === 0
+        );
+
+        if (samples.length === 0) {
+            this._samples = [];
+            return this._samples;
+        }
+
+        const projected = samples.slice();
+        const sampleTimes = samples.map((row) => row.time);
+
+        for (const event of this.events) {
+            const right = bisectLeft(sampleTimes, event.time);
+            let index: number;
+
+            if (right === 0) {
+                index = 0;
+            } else if (right === samples.length) {
+                index = samples.length - 1;
+            } else {
+                const left = right - 1;
+
+                // For an exact tie use the later scheduled row, consistently.
+                index =
+                    event.time - sampleTimes[left] <
+                        sampleTimes[right] - event.time
+                        ? left
+                        : right;
+            }
+
+            if (
+                isClose(
+                    sampleTimes[index],
+                    event.time,
+                    SAME_INSTANT_REL_TOL,
+                    SAME_INSTANT_ABS_TOL
+                )
+            ) {
+                const sample = projected[index];
+                projected[index] = sample.withFlag(
+                    (sample.flag | event.flag) as TrajFlag
+                );
+            }
+        }
+
+        this._samples = projected;
+        return this._samples;
+    }
+
+    /**
+     * Get Shot properties (alias for shot for Python compatibility).
      */
     get props(): Shot {
         return this.shot;
@@ -271,29 +430,24 @@ class HitResult {
      * Allows iterating over the HitResult object directly.
      */
     *[Symbol.iterator](): Iterator<TrajectoryData> {
-        yield* this.trajectory;
+        yield* this.records;
     }
 
     /**
      * Allows accessing trajectory elements by index.
-     * @param {number} index - The index of the element.
-     * @returns {TrajectoryData} - Trajectory data at the specified index.
      */
     at(index: number): TrajectoryData {
-        return this.trajectory[index];
+        return this.records[index];
     }
 
     get length(): number {
-        return this.trajectory.length;
+        return this.records.length;
     }
 
     /**
      * Check if the specified flag was requested in the trajectory calculation.
-     * @param flag - The flag to check
-     * @throws Error if the flag was not requested
      */
     protected _checkFlag(flag: TrajFlag): void {
-        // Check if the flag was requested in filter_flags
         const wasRequested = (this.filterFlags & flag) !== 0;
         if (!wasRequested) {
             const flagName = trajFlagName(flag);
@@ -305,24 +459,23 @@ class HitResult {
 
     /**
      * Get first TrajectoryData row with the specified flag.
-     * @param flag - The flag to search for
-     * @returns First TrajectoryData row with the specified flag, or undefined if not found
-     * @throws Error if the flag was not requested
+     *
+     * For event flags the search is restricted to {@link events}, matching
+     * the Python implementation.
      */
     flag(flag: TrajFlag): TrajectoryData | undefined {
         this._checkFlag(flag);
-        return this.trajectory.find((row) => row.flag & flag);
+        const rows = (flag & EVENT_FLAGS) !== 0 ? this.events : this.records;
+        return rows.find((row) => (row.flag & flag) !== 0);
     }
 
     /**
      * Get all zero crossing points.
-     * @returns Array of TrajectoryData at zero crossings
-     * @throws Error if zero crossing points are not found
      */
     zeros(): TrajectoryData[] {
         this._checkFlag(TrajFlag.ZERO);
 
-        const data = this.trajectory.filter((row) => row.flag & TrajFlag.ZERO);
+        const data = this.events.filter((row) => (row.flag & TrajFlag.ZERO) !== 0);
         if (data.length < 1) {
             throw new Error("Can't find zero crossing points");
         }
@@ -332,13 +485,13 @@ class HitResult {
 
     /**
      * Finds the index of the TrajectoryData item closest to the given distance.
-     * @param {Distance} distance - The distance to search for.
-     * @returns {number} - The index of the closest TrajectoryData item.
+     *
+     * Matches Python's deprecated `index_at_distance`, including its
+     * deliberately loose epsilon (1e-1).
      */
     indexAtDistance(distance: Distance): number {
-        // Adding epsilon to avoid floating-point issues, similar to Python
-        const epsilon = 1e-8;
-        return this.trajectory.findIndex(
+        const epsilon = 1e-1;
+        return this.records.findIndex(
             (item) => item.distance.rawValue >= distance.rawValue - epsilon
         );
     }
@@ -347,23 +500,15 @@ class HitResult {
         const index = this.indexAtDistance(d);
         if (index < 0) {
             throw new Error(
-                `Calculated trajectory doesn't reach requested distance ${d.rawValue}` // Changed to d.rawValue for better output
+                `Calculated trajectory doesn't reach requested distance ${d.rawValue}`
             );
         }
-        return this.trajectory[index];
+        return this.records[index];
     }
 
     /**
      * Get TrajectoryData where the specified attribute equals the target value.
      * Interpolates to create a new TrajectoryData point if necessary.
-     *
-     * @param keyAttribute - The TrajectoryDataInterpKey to interpolate on
-     * @param value - The target value for the key attribute
-     * @param epsilon - Allowed difference to match existing TrajectoryData without interpolating (default: 1e-9)
-     * @param startFromTime - Time to center the search from (default: 0.0)
-     * @returns TrajectoryData where keyAttribute equals value
-     * @throws Error if trajectory doesn't reach the requested value
-     * @throws Error if interpolation requires at least 3 points
      */
     async getAt(
         keyAttribute: _TrajectoryDataInterpKey,
@@ -371,13 +516,12 @@ class HitResult {
         epsilon: number = 1e-9,
         startFromTime: number = 0.0
     ): Promise<TrajectoryData> {
-        const traj = this.trajectory;
+        const traj = this.records;
         const n = traj.length;
 
-        // Helper to get raw value of the key attribute from TrajectoryData
         const getKeyVal = (td: TrajectoryData): number => {
-            // Map _TrajectoryDataInterpKey to TrajectoryData property
-            const keyIndex = typeof keyAttribute === "object" ? keyAttribute : keyAttribute;
+            const keyIndex =
+                typeof keyAttribute === "object" ? keyAttribute : keyAttribute;
             switch (keyIndex) {
                 case 0:
                     return td.time;
@@ -414,7 +558,6 @@ class HitResult {
             }
         };
 
-        // Check if we have enough points for interpolation
         if (n < 3) {
             if (Math.abs(getKeyVal(traj[0]) - value) < epsilon) {
                 return traj[0];
@@ -422,10 +565,11 @@ class HitResult {
             if (n > 1 && Math.abs(getKeyVal(traj[1]) - value) < epsilon) {
                 return traj[1];
             }
-            throw new Error("Interpolation requires at least 3 TrajectoryData points.");
+            throw new Error(
+                "Interpolation requires at least 3 TrajectoryData points."
+            );
         }
 
-        // Find starting index based on startFromTime
         let startIdx = 0;
         if (startFromTime > 0) {
             startIdx = traj.findIndex((td) => td.time >= startFromTime);
@@ -437,26 +581,30 @@ class HitResult {
             return traj[startIdx];
         }
 
-        // Determine search direction
         let searchForward = true;
         if (startIdx === n - 1) {
             searchForward = false;
         } else if (startIdx > 0 && startIdx < n - 1) {
             const nextVal = getKeyVal(traj[startIdx + 1]);
-            if ((nextVal > currVal && value > currVal) || (nextVal < currVal && value < currVal)) {
+            if (
+                (nextVal > currVal && value > currVal) ||
+                (nextVal < currVal && value < currVal)
+            ) {
                 searchForward = true;
             } else {
                 searchForward = false;
             }
         }
 
-        // Search for target value
         let targetIdx = -1;
         if (searchForward) {
             for (let i = startIdx; i < n - 1; i++) {
                 const curr = getKeyVal(traj[i]);
                 const next = getKeyVal(traj[i + 1]);
-                if ((curr < value && value <= next) || (next <= value && value < curr)) {
+                if (
+                    (curr < value && value <= next) ||
+                    (next <= value && value < curr)
+                ) {
                     targetIdx = i + 1;
                     break;
                 }
@@ -466,7 +614,10 @@ class HitResult {
             for (let i = startIdx; i > 0; i--) {
                 const curr = getKeyVal(traj[i]);
                 const prev = getKeyVal(traj[i - 1]);
-                if ((prev <= value && value < curr) || (curr < value && value <= prev)) {
+                if (
+                    (prev <= value && value < curr) ||
+                    (curr < value && value <= prev)
+                ) {
                     targetIdx = i;
                     break;
                 }
@@ -479,17 +630,14 @@ class HitResult {
             );
         }
 
-        // Check for exact match
         if (Math.abs(getKeyVal(traj[targetIdx]) - value) < epsilon) {
             return traj[targetIdx];
         }
 
-        // Step forward from first point if needed
         if (targetIdx === 0) {
             targetIdx = 1;
         }
 
-        // Choose three bracketing points (p0, p1, p2)
         let p0: TrajectoryData, p1: TrajectoryData, p2: TrajectoryData;
         if (targetIdx >= n - 1) {
             p0 = traj[n - 3];
@@ -501,7 +649,6 @@ class HitResult {
             p2 = traj[targetIdx + 1];
         }
 
-        // Use WASM interpolation
         const bclibc = await WasmManager.init();
         const interpolated = bclibc.interpolateTrajectoryData(
             keyAttribute,
@@ -518,21 +665,6 @@ class HitResult {
 
     /**
      * Calculate the danger space for a target centered at the given range.
-     *
-     * Determines how much ranging error can be tolerated: finds the interval
-     * [begin, end] along the sight line within which the trajectory stays
-     * within ±targetHeight/2 of the target's slant height.
-     *
-     * @param atRange      - Sight-line distance to the target center
-     * @param targetHeight - Critical height of the target (h); danger space uses h/2
-     * @returns DangerSpace with begin/end trajectory points and the target row
-     * @throws Error if trajectory doesn't reach the requested range
-     *
-     * @example
-     * ```typescript
-     * const ds = await hitResult.dangerSpace(UNew.Yard(500), UNew.Meter(1.5));
-     * console.log(ds.begin.distance.yard, ds.end.distance.yard);
-     * ```
      */
     async dangerSpace(
         atRange: number | Distance,
@@ -541,19 +673,31 @@ class HitResult {
         const bclibc = await WasmManager.init();
         const interpKey = bclibc._TrajectoryDataInterpKey;
 
-        const _atRange = unitTypeCoerce(atRange, Distance, preferredUnits.distance);
-        const _targetHeight = unitTypeCoerce(targetHeight, Distance, preferredUnits.drop);
+        const _atRange = unitTypeCoerce(
+            atRange,
+            Distance,
+            preferredUnits.distance
+        );
+        const _targetHeight = unitTypeCoerce(
+            targetHeight,
+            Distance,
+            preferredUnits.drop
+        );
         const halfHeight = _targetHeight.foot / 2.0;
 
-        // Point at the requested slant distance
-        const targetRow = await this.getAt(interpKey.SLANT_DISTANCE, _atRange.foot);
+        const targetRow = await this.getAt(
+            interpKey.SLANT_DISTANCE,
+            _atRange.foot
+        );
 
-        // Is the bullet still climbing at this point?
-        const isClimbing = targetRow.angle.rad - this.shot.lookAngle.rad > 0;
+        const isClimbing =
+            targetRow.angle.rad - this.shot.lookAngle.rad > 0;
         const sign = isClimbing ? -1 : 1;
 
-        const slantHeightBegin = targetRow.slantHeight.foot + sign * halfHeight;
-        const slantHeightEnd = targetRow.slantHeight.foot - sign * halfHeight;
+        const slantHeightBegin =
+            targetRow.slantHeight.foot + sign * halfHeight;
+        const slantHeightEnd =
+            targetRow.slantHeight.foot - sign * halfHeight;
 
         let beginRow: TrajectoryData;
         let endRow: TrajectoryData;
@@ -566,16 +710,27 @@ class HitResult {
                 targetRow.time
             );
         } catch {
-            beginRow = this.trajectory[0];
+            beginRow = this.records[0];
         }
 
         try {
-            endRow = await this.getAt(interpKey.SLANT_HEIGHT, slantHeightEnd, 1e-9, targetRow.time);
+            endRow = await this.getAt(
+                interpKey.SLANT_HEIGHT,
+                slantHeightEnd,
+                1e-9,
+                targetRow.time
+            );
         } catch {
-            endRow = this.trajectory[this.trajectory.length - 1];
+            endRow = this.records[this.records.length - 1];
         }
 
-        return new DangerSpace(targetRow, _targetHeight, beginRow, endRow, this.shot.lookAngle);
+        return new DangerSpace(
+            targetRow,
+            _targetHeight,
+            beginRow,
+            endRow,
+            this.shot.lookAngle
+        );
     }
 
     static fromWasmHitOutput(
@@ -583,12 +738,11 @@ class HitResult {
         hit: HitOutput,
         raiseRangeError: boolean = true,
         filterFlags: TrajFlag = TrajFlag.NONE
-    ) {
+    ): HitResult {
         const trajectory = (hit.trajectory as _TrajectoryData[]).map((item) =>
             TrajectoryData.fromWasmTrajectoryData(item)
         );
 
-        // Check termination reason and create error if needed
         let error: Error | undefined = undefined;
         const reasonValue = hit.reason;
 
@@ -600,7 +754,6 @@ class HitResult {
             error = new RangeError(RangeError.MinimumAltitudeReached, trajectory);
         }
 
-        // If raiseRangeError is true and there's an error, throw it
         if (raiseRangeError && error) {
             throw error;
         }
@@ -611,25 +764,26 @@ class HitResult {
 
 /**
  * Result of a danger space calculation.
- *
- * Describes the range interval within which the trajectory stays within
- * ±targetHeight/2 of the target's slant height.
  */
 class DangerSpace {
-    /**
-     * @param atRange   - Trajectory point at the requested target range (slant distance)
-     * @param targetHeight - Target height used for the calculation
-     * @param begin     - First trajectory point still within targetHeight/2 of the target
-     * @param end       - Last trajectory point still within targetHeight/2 of the target
-     * @param lookAngle - Look angle of the shot
-     */
     constructor(
         readonly atRange: TrajectoryData,
         readonly targetHeight: Distance,
         readonly begin: TrajectoryData,
         readonly end: TrajectoryData,
         readonly lookAngle: Angular
-    ) {}
+    ) { }
 }
 
-export { TrajectoryData, trajFlagName, trajFlagNames, HitResult, DangerSpace };
+export {
+    TrajectoryData,
+    trajFlagName,
+    trajFlagNames,
+    HitResult,
+    DangerSpace,
+    isClose,
+    bisectLeft,
+    EVENT_FLAGS,
+    SAME_INSTANT_REL_TOL,
+    SAME_INSTANT_ABS_TOL,
+};
