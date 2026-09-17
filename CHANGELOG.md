@@ -13,7 +13,7 @@ and this project adheres to
 ### Changed
 - Add `Calculator.aimingSolutionForTarget` method
 - `HitResult.trajectory` is replaced by three views to match
-  `bclibc@2.0.0-beta.3`: `records` (the complete, exact chronological output —
+  `bclibc@2.0.0-beta.4`: `records` (the complete, exact chronological output —
   every scheduled sample and every physical event, each its own row; now what
   `length`, iteration, and `at()` read from), `samples` (the deterministic
   RANGE/TIME schedule table — a sample is annotated with an event's flag only
