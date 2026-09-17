@@ -386,7 +386,7 @@ inline static double findZeroAngle(const ShotPropsInput &shotProps, double dista
             ALLOWED_ZERO_ERROR_FEET); });
 }
 
-inline static BCLIBC_ZeroPointResult findZeroPoint(const ShotPropsInput &shotProps, double distance, double APEX_IS_MAX_RANGE_RADIANS, double ALLOWED_ZERO_ERROR_FEET)
+inline static BCLIBC_ZeroPointResult findZeroPoint(const ShotPropsInput &shotProps, double distance)
 {
     return wrapExceptions([&]()
                           {

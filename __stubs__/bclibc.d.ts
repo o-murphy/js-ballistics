@@ -206,7 +206,7 @@ interface EmbindModule {
   findApex(_0: _ShotPropsInput): _TrajectoryData;
   findMaxRange(_0: _ShotPropsInput, _1: number, _2: number): _MaxRangeResult;
   findZeroAngle(_0: _ShotPropsInput, _1: number): number;
-  findZeroPoint(_0: _ShotPropsInput, _1: number, _2: number, _3: number): _ZeroPointResult;
+  findZeroPoint(_0: _ShotPropsInput, _1: number): _ZeroPointResult;
   integrateRawAt(_0: _ShotPropsInput, _1: _BaseTrajDataInterpKey, _2: number): _Interception;
   interpolateBasetrajData(_0: _BaseTrajDataInterpKey, _1: number, _2: _BaseTrajData, _3: _BaseTrajData, _4: _BaseTrajData): _BaseTrajData;
   integrate(_0: _ShotPropsInput, _1: _TrajectoryRequest): _HitOutput;

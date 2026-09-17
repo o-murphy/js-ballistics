@@ -17,6 +17,7 @@ import type {
     _TrajFlag,
     _IntegrationMethod,
     _TerminationReason,
+    _ZeroPointResult,
 } from "@wasm/bclibc";
 import * as Exceptions from "./exceptions";
 
@@ -107,3 +108,4 @@ export type HitOutput = import("@wasm/bclibc")._HitOutput;
 export type TrajectoryRequest = import("@wasm/bclibc")._TrajectoryRequest;
 export type BaseTrajData = import("@wasm/bclibc")._BaseTrajData;
 export type ShotPropsInput = import("@wasm/bclibc")._ShotPropsInput;
+export type ZeroPointResult = import("@wasm/bclibc")._ZeroPointResult;

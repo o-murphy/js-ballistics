@@ -11,6 +11,7 @@ and this project adheres to
 ## [3.1.0] - 2026-09-16
 
 ### Changed
+- Add `Calculator.aimingSolutionForTarget` method
 - `HitResult.trajectory` is replaced by three views to match
   `bclibc@2.0.0-beta.3`: `records` (the complete, exact chronological output —
   every scheduled sample and every physical event, each its own row; now what
@@ -20,7 +21,6 @@ and this project adheres to
   the nearest one, so a coarse schedule doesn't smear every event onto one
   row), and `events` (exact ZERO/MACH/APEX/MRT rows). `flag()` and `zeros()`
   now search `events` for event flags.
-- `bclibc` submodule pin updated to `v1.1.8`
 
 ### Deprecated
 - `HitResult.trajectory`: alias for `HitResult.records`, kept for source
