@@ -67,6 +67,7 @@ export const IntegrationMethod = {
     EULER: 1 as _IntegrationMethod,
     VELOCITY_VERLET: 2 as _IntegrationMethod,
     CASH_KARP: 3 as _IntegrationMethod,
+    DOPRI: 4 as _IntegrationMethod,
 } as const;
 
 /**
