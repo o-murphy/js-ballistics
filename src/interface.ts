@@ -138,7 +138,8 @@ class Calculator {
      * @example
      * ```typescript
      * const calc = new Calculator();
-     * const point = await calc.aimingSolutionForTarget(shot, 1000);
+     * const [verticalHold, windage, data] =
+     *     await calc.aimingSolutionForTarget(shot, 1000);
      * ```
      */
     async aim(
