@@ -386,7 +386,20 @@ inline static double findZeroAngle(const ShotPropsInput &shotProps, double dista
             ALLOWED_ZERO_ERROR_FEET); });
 }
 
-inline static HitOutput integrate(const ShotPropsInput &shotProps, const TrajectoryRequest &request)
+inline static BCLIBC_ZeroPointResult findZeroPoint(const ShotPropsInput &shotProps, double distance, double APEX_IS_MAX_RANGE_RADIANS, double ALLOWED_ZERO_ERROR_FEET)
+{
+    return wrapExceptions([&]()
+                          {
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
+        return engine.zero_point_with_fallback(
+            distance,
+            APEX_IS_MAX_RANGE_RADIANS,
+            ALLOWED_ZERO_ERROR_FEET); });
+}
+
+inline static HitOutput
+integrate(const ShotPropsInput &shotProps, const TrajectoryRequest &request)
 {
     return wrapExceptions([&]()
                           {
@@ -679,6 +692,11 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .field("angle_at_max_rad", &BCLIBC_MaxRangeResult::angle_at_max_rad)
         .field("max_range_ft", &BCLIBC_MaxRangeResult::max_range_ft);
 
+    value_object<BCLIBC_ZeroPointResult>("_ZeroPointResult")
+        .field("angle_rad", &BCLIBC_ZeroPointResult::angle_rad)
+        .field("point", &BCLIBC_ZeroPointResult::point)
+        .field("has_point", &BCLIBC_ZeroPointResult::has_point);
+
     value_object<BCLIBC_TrajectoryData>("_TrajectoryData")
         .field("time", &BCLIBC_TrajectoryData::time)
         .field("distance_ft", &BCLIBC_TrajectoryData::distance_ft)
@@ -717,6 +735,7 @@ EMSCRIPTEN_BINDINGS(bclibc)
     function("findApex", &findApex);
     function("findMaxRange", &findMaxRange);
     function("findZeroAngle", &findZeroAngle);
+    function("findZeroPoint", &findZeroPoint);
     function("integrate", &integrate);
     function("integrateRawAt", &integrateRawAt);
 
