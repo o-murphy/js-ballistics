@@ -18,7 +18,7 @@ export type _TerminationReason = 0|1|2|3|4|5;
 
 export type _TrajFlag = 0|1|2|3|4|8|16|31|32;
 
-export type _IntegrationMethod = 0|1|2;
+export type _IntegrationMethod = 0|1|2|3|4;
 
 export type _BaseTrajDataInterpKey = 0|2|3|4|5|6|7|1;
 
@@ -120,6 +120,12 @@ export type _TrajectoryData = {
   flag: _TrajFlag
 };
 
+export type _ZeroPointResult = {
+  angle_rad: number,
+  point: _TrajectoryData,
+  has_point: boolean
+};
+
 export type _ShotPropsInput = {
   bc: number,
   look_angle_rad: number,
@@ -172,7 +178,7 @@ interface EmbindModule {
   _InterpMethod: {PCHIP: 0, LINEAR: 1};
   _TerminationReason: {NO_TERMINATE: 0, TARGET_RANGE_REACHED: 1, MINIMUM_VELOCITY_REACHED: 2, MAXIMUM_DROP_REACHED: 3, MINIMUM_ALTITUDE_REACHED: 4, HANDLER_REQUESTED_STOP: 5};
   _TrajFlag: {NONE: 0, ZERO_UP: 1, ZERO_DOWN: 2, ZERO: 3, MACH: 4, RANGE: 8, APEX: 16, ALL: 31, MRT: 32};
-  _IntegrationMethod: {RK4: 0, EULER: 1, VELOCITY_VERLET: 2};
+  _IntegrationMethod: {RK4: 0, EULER: 1, VELOCITY_VERLET: 2, CASH_KARP: 3, DOPRI: 4};
   _BaseTrajDataInterpKey: {TIME: 0, POS_X: 2, POS_Y: 3, POS_Z: 4, VEL_X: 5, VEL_Y: 6, VEL_Z: 7, MACH: 1};
   _TrajectoryDataInterpKey: {TIME: 0, DISTANCE: 1, VELOCITY: 2, MACH: 3, HEIGHT: 4, SLANT_HEIGHT: 5, DROP_ANGLE: 6, WINDAGE: 7, WINDAGE_ANGLE: 8, SLANT_DISTANCE: 9, ANGLE: 10, DENSITY_RATIO: 11, DRAG: 12, ENERGY: 13, OGW: 14, FLAG: 15};
   _WindList: {
@@ -200,6 +206,7 @@ interface EmbindModule {
   findApex(_0: _ShotPropsInput): _TrajectoryData;
   findMaxRange(_0: _ShotPropsInput, _1: number, _2: number): _MaxRangeResult;
   findZeroAngle(_0: _ShotPropsInput, _1: number): number;
+  findZeroPoint(_0: _ShotPropsInput, _1: number): _ZeroPointResult;
   integrateRawAt(_0: _ShotPropsInput, _1: _BaseTrajDataInterpKey, _2: number): _Interception;
   interpolateBasetrajData(_0: _BaseTrajDataInterpKey, _1: number, _2: _BaseTrajData, _3: _BaseTrajData, _4: _BaseTrajData): _BaseTrajData;
   integrate(_0: _ShotPropsInput, _1: _TrajectoryRequest): _HitOutput;

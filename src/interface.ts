@@ -1,17 +1,19 @@
 import { Shot } from "./shot";
-import { UNew, Angular, Distance, unitTypeCoerce, preferredUnits } from "./unit";
+import { UNew, Angular, Distance, unitTypeCoerce, preferredUnits, Unit } from "./unit";
 import {
     WasmManager,
     ShotPropsInput,
     Config,
     IntegrationMethod,
     TrajectoryRequest,
+    ZeroPointResult,
     _TrajFlag,
     HitOutput,
     TrajFlag,
 } from "./_wasm";
-import { HitResult } from "./trajectory_data";
+import { HitResult, TrajectoryData } from "./trajectory_data";
 import { cGravityImperial } from "./constants";
+import { SolverRuntimeError } from "./exceptions";
 
 export { Calculator };
 
@@ -123,6 +125,76 @@ class Calculator {
     }
 
     /**
+     * Calculate a target's zero solution and retain its trajectory point.
+     *
+     * This method automatically initializes the WASM module on first call.
+     *
+     * @param shot The shot parameters including weapon and ammo data
+     * @param targetDistance The distance to the target (number in default units or Distance object)
+     * @returns The vertical hold relative to the weapon's zero, the windage
+     *      angle, and the trajectory point evaluated by the successful
+     *      zero-finding iteration.
+     *
+     * @example
+     * ```typescript
+     * const calc = new Calculator();
+     * const [verticalHold, windage, data] =
+     *     await calc.aimingSolutionForTarget(shot, 1000);
+     * ```
+     */
+    async aim(
+        shot: Shot,
+        targetDistance: number | Distance
+    ): Promise<[Angular, Angular, TrajectoryData]> {
+        const _targetDistance = unitTypeCoerce(targetDistance, Distance, preferredUnits.distance);
+
+        // Auto-initialize WASM if needed
+        const engine = await WasmManager.init();
+
+        const { angle_rad: totalElevationRad, point, has_point } = engine.findZeroPoint(
+            shot.toWasmShotProps(this.method, this.config),
+            _targetDistance.foot
+        );
+
+        if (!has_point) {
+            throw new SolverRuntimeError("Zero-angle fast path did not evaluate a trajectory point");
+        }
+
+        const targetZeroElevation = UNew.Radian(totalElevationRad - shot.lookAngle.rad);
+        const verticalHold = UNew.Radian(
+            targetZeroElevation.In(Unit.Radian) - shot.weapon.zeroElevation.In(Unit.Radian)
+        );
+        const windage = UNew.Radian(point.windage_angle_rad);
+        const data = TrajectoryData.fromWasmTrajectoryData(point);
+
+        return [verticalHold, windage, data];
+    }
+
+    /**
+     * Calculate a target's zero solution and retain its trajectory point.
+     *
+     * This method automatically initializes the WASM module on first call.
+     *
+     * @param shot The shot parameters including weapon and ammo data
+     * @param targetDistance The distance to the target (number in default units or Distance object)
+     * @returns The vertical hold relative to the weapon's zero, the windage
+     *      angle, and the trajectory point evaluated by the successful
+     *      zero-finding iteration.
+     *
+     * @example
+     * ```typescript
+     * const calc = new Calculator();
+     * const point = await calc.aimingSolutionForTarget(shot, 1000);
+     * ```
+     */
+    async aimingSolutionForTarget(
+        shot: Shot,
+        targetDistance: number | Distance
+    ): Promise<[Angular, Angular, TrajectoryData]> {
+        return this.aim(shot, targetDistance);
+    }
+
+    /**
      * Sets the weapon's zero elevation based on the specified zero distance.
      *
      * This method automatically initializes the WASM module on first call.
@@ -180,7 +252,7 @@ class Calculator {
      *     denseOutput: true
      * });
      *
-     * console.log(`Impact velocity: ${result.trajectory[result.trajectory.length - 1].velocity}`);
+     * console.log(`Impact velocity: ${result.records[result.records.length - 1].velocity}`);
      * ```
      */
     async fire({

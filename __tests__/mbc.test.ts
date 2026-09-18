@@ -48,7 +48,7 @@ describe("BCPoint validation", () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        baselineTrajectory = hit.trajectory;
+        baselineTrajectory = hit.samples;
     });
 
     test("mbc1", async () => {
@@ -69,7 +69,7 @@ describe("BCPoint validation", () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const multiTrajectory = hit.trajectory;
+        const multiTrajectory = hit.samples;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
             expect(multiTrajectory[i].formatted()).toEqual(baselineTrajectory[i].formatted());
@@ -93,7 +93,7 @@ describe("BCPoint validation", () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const multiTrajectory = hit.trajectory;
+        const multiTrajectory = hit.samples;
 
         for (let i = 0; i < multiTrajectory.length; i++) {
             expect(multiTrajectory[i].formatted()).toEqual(baselineTrajectory[i].formatted());
@@ -117,7 +117,7 @@ describe("BCPoint validation", () => {
             trajectoryRange: range,
             trajectoryStep: step,
         });
-        const multiTrajectory = hit.trajectory;
+        const multiTrajectory = hit.samples;
 
         expect(multiTrajectory[1].velocity.rawValue).toBeCloseTo(
             baselineTrajectory[1].velocity.rawValue,

@@ -20,7 +20,9 @@ enum class IntegrationMethod
 {
     RK4,
     EULER,
-    VELOCITY_VERLET
+    VELOCITY_VERLET,
+    CASH_KARP,
+    DOPRI
 };
 
 struct DragTablePoint
@@ -47,12 +49,12 @@ public:
     DragTableIface drag_table;
     // raw atmosphere — BCLIBC_Atmosphere is built inside C++ via from_conditions()
     double temp_c;
-    double pressure_hpa;   ///< 0 → vacuum (zero drag)
+    double pressure_hpa; ///< 0 → vacuum (zero drag)
     double altitude_ft;
     double humidity;
     // Coriolis inputs (degrees; NaN disables)
-    double latitude_deg;   ///< NaN → no Coriolis effect
-    double azimuth_deg;    ///< NaN → flat-fire drift only
+    double latitude_deg; ///< NaN → no Coriolis effect
+    double azimuth_deg;  ///< NaN → flat-fire drift only
     WindsIfaceList winds;
     // options
     IntegrationMethod method;
@@ -84,7 +86,6 @@ public:
     BCLIBC_TerminationReason reason = BCLIBC_TerminationReason();
 };
 
-
 double interpolate2pt(
     double x, double x0, double y0, double x1, double y1)
 {
@@ -112,6 +113,12 @@ inline static double selectCalcStep(const IntegrationMethod method)
     case IntegrationMethod::VELOCITY_VERLET:
         return 0.001;
         break;
+    case IntegrationMethod::CASH_KARP:
+        return 0.0025;
+        break;
+    case IntegrationMethod::DOPRI:
+        return 0.0025;
+        break;
     default:
         throw std::invalid_argument("Unknown integration method");
         break;
@@ -130,6 +137,12 @@ BCLIBC_IntegrateCallable selectIntegrationMethod(const IntegrationMethod &method
         break;
     case IntegrationMethod::VELOCITY_VERLET:
         return BCLIBC_integrateVELOCITY_VERLET;
+        break;
+    case IntegrationMethod::CASH_KARP:
+        return BCLIBC_integrateCashKarp;
+        break;
+    case IntegrationMethod::DOPRI:
+        return BCLIBC_integrateDormandPrince;
         break;
     default:
         throw std::invalid_argument("Unknown integration method");
@@ -152,7 +165,7 @@ BCLIBC_ShotProps shotPropsFromVal(const ShotPropsInput &props)
         {
             auto item = props.drag_table[i];
             mach_v[i] = item["Mach"].as<double>();
-            cd_v[i]   = item["CD"].as<double>();
+            cd_v[i] = item["CD"].as<double>();
         }
     }
 
@@ -167,30 +180,30 @@ BCLIBC_ShotProps shotPropsFromVal(const ShotPropsInput &props)
     }
 
     BCLIBC_Shot shot;
-    shot.bc                   = props.bc;
-    shot.weight_grain         = props.weight_grain;
-    shot.diameter_inch        = props.diameter_inch;
-    shot.length_inch          = props.length_inch;
-    shot.muzzle_velocity_fps  = props.muzzle_velocity_fps;
+    shot.bc = props.bc;
+    shot.weight_grain = props.weight_grain;
+    shot.diameter_inch = props.diameter_inch;
+    shot.length_inch = props.length_inch;
+    shot.muzzle_velocity_fps = props.muzzle_velocity_fps;
     shot.stability_coefficient = 0.0;
-    shot.mach_data            = mach_v.empty() ? nullptr : mach_v.data();
-    shot.cd_data              = cd_v.empty()   ? nullptr : cd_v.data();
-    shot.drag_table_size      = static_cast<int>(n);
-    shot.sight_height_ft      = props.sight_height_ft;
-    shot.twist_inch           = props.twist_inch;
-    shot.temp_c               = props.temp_c;
-    shot.pressure_hpa         = props.pressure_hpa;
-    shot.altitude_ft          = props.altitude_ft;
-    shot.humidity             = props.humidity;
-    shot.winds                = winds_v.empty() ? nullptr : winds_v.data();
-    shot.wind_count           = static_cast<int>(winds_v.size());
-    shot.look_angle_rad       = props.look_angle_rad;
+    shot.mach_data = mach_v.empty() ? nullptr : mach_v.data();
+    shot.cd_data = cd_v.empty() ? nullptr : cd_v.data();
+    shot.drag_table_size = static_cast<int>(n);
+    shot.sight_height_ft = props.sight_height_ft;
+    shot.twist_inch = props.twist_inch;
+    shot.temp_c = props.temp_c;
+    shot.pressure_hpa = props.pressure_hpa;
+    shot.altitude_ft = props.altitude_ft;
+    shot.humidity = props.humidity;
+    shot.winds = winds_v.empty() ? nullptr : winds_v.data();
+    shot.wind_count = static_cast<int>(winds_v.size());
+    shot.look_angle_rad = props.look_angle_rad;
     shot.barrel_elevation_rad = props.barrel_elevation_rad;
-    shot.barrel_azimuth_rad   = props.barrel_azimuth_rad;
-    shot.cant_angle_rad       = props.cant_angle_rad;
-    shot.latitude_deg         = props.latitude_deg;
-    shot.azimuth_deg          = props.azimuth_deg;
-    shot.calc_step            = selectCalcStep(props.method) * props.config.cStepMultiplier;
+    shot.barrel_azimuth_rad = props.barrel_azimuth_rad;
+    shot.cant_angle_rad = props.cant_angle_rad;
+    shot.latitude_deg = props.latitude_deg;
+    shot.azimuth_deg = props.azimuth_deg;
+    shot.calc_step = selectCalcStep(props.method) * props.config.cStepMultiplier;
 
     return shot.to_shot_props();
 }
@@ -373,7 +386,20 @@ inline static double findZeroAngle(const ShotPropsInput &shotProps, double dista
             ALLOWED_ZERO_ERROR_FEET); });
 }
 
-inline static HitOutput integrate(const ShotPropsInput &shotProps, const TrajectoryRequest &request)
+inline static BCLIBC_ZeroPointResult findZeroPoint(const ShotPropsInput &shotProps, double distance)
+{
+    return wrapExceptions([&]()
+                          {
+        BCLIBC_BaseEngine engine;
+        initEngine(engine, shotProps);
+        return engine.zero_point_with_fallback(
+            distance,
+            APEX_IS_MAX_RANGE_RADIANS,
+            ALLOWED_ZERO_ERROR_FEET); });
+}
+
+inline static HitOutput
+integrate(const ShotPropsInput &shotProps, const TrajectoryRequest &request)
 {
     return wrapExceptions([&]()
                           {
@@ -569,7 +595,9 @@ EMSCRIPTEN_BINDINGS(bclibc)
     enum_<IntegrationMethod>("_IntegrationMethod", enum_value_type::number)
         .value("RK4", IntegrationMethod::RK4)
         .value("EULER", IntegrationMethod::EULER)
-        .value("VELOCITY_VERLET", IntegrationMethod::VELOCITY_VERLET);
+        .value("VELOCITY_VERLET", IntegrationMethod::VELOCITY_VERLET)
+        .value("CASH_KARP", IntegrationMethod::CASH_KARP)
+        .value("DOPRI", IntegrationMethod::DOPRI);
 
     enum_<BCLIBC_BaseTrajData_InterpKey>("_BaseTrajDataInterpKey", enum_value_type::number)
         .value("TIME", BCLIBC_BaseTrajData_InterpKey::TIME)
@@ -664,6 +692,11 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .field("angle_at_max_rad", &BCLIBC_MaxRangeResult::angle_at_max_rad)
         .field("max_range_ft", &BCLIBC_MaxRangeResult::max_range_ft);
 
+    value_object<BCLIBC_ZeroPointResult>("_ZeroPointResult")
+        .field("angle_rad", &BCLIBC_ZeroPointResult::angle_rad)
+        .field("point", &BCLIBC_ZeroPointResult::point)
+        .field("has_point", &BCLIBC_ZeroPointResult::has_point);
+
     value_object<BCLIBC_TrajectoryData>("_TrajectoryData")
         .field("time", &BCLIBC_TrajectoryData::time)
         .field("distance_ft", &BCLIBC_TrajectoryData::distance_ft)
@@ -702,6 +735,7 @@ EMSCRIPTEN_BINDINGS(bclibc)
     function("findApex", &findApex);
     function("findMaxRange", &findMaxRange);
     function("findZeroAngle", &findZeroAngle);
+    function("findZeroPoint", &findZeroPoint);
     function("integrate", &integrate);
     function("integrateRawAt", &integrateRawAt);
 

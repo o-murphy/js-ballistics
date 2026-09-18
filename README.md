@@ -175,7 +175,7 @@ const result = await calc.fire({
     trajectoryStep: UNew.Yard(100),
 });
 
-result.trajectory.forEach((p) => {
+result.samples.forEach((p) => {
     console.log(
         `${p.distance.In(Distance.Yard).toFixed(0)} yd` +
             `  drop: ${p.height.In(Distance.Inch).toFixed(1)} in` +
@@ -234,7 +234,7 @@ const hit = await calc.fire({
     trajectoryStep: UNew.Meter(100),
 });
 
-hit.trajectory.forEach((p) => console.log(p.formatted().join("  ")));
+hit.samples.forEach((p) => console.log(p.formatted().join("  ")));
 ```
 
 ---
@@ -510,8 +510,11 @@ calc.barrelElevationForTarget(shot: Shot, distance: number | Distance): Promise<
 ### `HitResult`
 
 ```typescript
-hit.trajectory: TrajectoryData[]
-hit.error?:     Error              // set when raiseRangeError=false and shot is incomplete
+hit.records: TrajectoryData[]     // exact, chronological output: every scheduled sample and every event, each its own row
+hit.samples: TrajectoryData[]     // deterministic RANGE/TIME schedule table; a sample is annotated with an event's flag
+                                   // only when the two are the same instant, never merely the nearest one
+hit.events:  TrajectoryData[]     // exact ZERO/MACH/APEX/MRT event rows
+hit.error?:  Error                // set when raiseRangeError=false and shot is incomplete
 hit.flag(flag: TrajFlag): TrajectoryData | undefined
 hit.zeros():    TrajectoryData[]
 hit.getAtDistance(d: Distance): TrajectoryData

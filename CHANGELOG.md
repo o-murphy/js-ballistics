@@ -8,8 +8,28 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-16
+
 ### Changed
-- `bclibc` submodule pin updated to `v1.1.8`
+- Pin `bclibc` to `v2.0.0-beta.7`, including the zero-point FFI/WASM export
+  fixes used by `Calculator.aimingSolutionForTarget`.
+- Add `Calculator.aimingSolutionForTarget` method
+- `HitResult.trajectory` is replaced by three views to match
+  `bclibc@2.0.0-beta.4`: `records` (the complete, exact chronological output —
+  every scheduled sample and every physical event, each its own row; now what
+  `length`, iteration, and `at()` read from), `samples` (the deterministic
+  RANGE/TIME schedule table — a sample is annotated with an event's flag only
+  when the two are the same instant to floating-point precision, never merely
+  the nearest one, so a coarse schedule doesn't smear every event onto one
+  row), and `events` (exact ZERO/MACH/APEX/MRT rows). `flag()` and `zeros()`
+  now search `events` for event flags.
+
+### Deprecated
+- `HitResult.trajectory`: alias for `HitResult.records`, kept for source
+  compatibility with the pre-`bclibc@2.0.0-beta.1` API. Logs a one-time
+  `console.warn`. Use `.records` for the exact chronological stream, or
+  `.samples` for the deterministic scheduled-sample table (what `.trajectory`
+  used to mean).
 
 ## [3.0.0] - 2026-09-10
 
@@ -279,7 +299,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...v3.0.0
 [3.0.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...v3.0.0-rc.2
 [3.0.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.4...v3.0.0-rc.1
