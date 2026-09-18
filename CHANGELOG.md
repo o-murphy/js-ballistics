@@ -11,7 +11,7 @@ and this project adheres to
 ## [3.1.0] - 2026-09-16
 
 ### Changed
-- Pin `bclibc` to `v2.0.0-beta.6`, including the zero-point FFI/WASM export
+- Pin `bclibc` to `v2.0.0-beta.7`, including the zero-point FFI/WASM export
   fixes used by `Calculator.aimingSolutionForTarget`.
 - Add `Calculator.aimingSolutionForTarget` method
 - `HitResult.trajectory` is replaced by three views to match
