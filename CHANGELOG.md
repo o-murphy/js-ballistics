@@ -8,7 +8,7 @@ and this project adheres to
 
 ## [Unreleased]
 
-## [3.1.0] - 2026-09-16
+## [3.1.0-beta.1] - 2026-09-18
 
 ### Changed
 - Pin `bclibc` to `v2.0.0-beta.7`, including the zero-point FFI/WASM export
@@ -299,8 +299,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...HEAD
-[3.1.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...HEAD
+[3.1.0-beta.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0-beta.1
 [3.0.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...v3.0.0
 [3.0.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...v3.0.0-rc.2
 [3.0.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-beta.4...v3.0.0-rc.1
