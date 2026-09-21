@@ -8,6 +8,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0-beta.2] - 2026-09-21
+
+### Added
+- `cythonized_tsitouras_engine` (`py_ballisticcalc_exts.CythonizedTsitourasIntegrationEngine`):
+  a compiled Tsitouras 5(4) ("Tsit5") adaptive engine, wrapping
+  [bclibc](https://github.com/ballistics-lab/bclibc)'s new `BCLIBC_integrateTsitouras`.
+  Structurally identical to `DOPRI` (same 7-stage FSAL shape, same SciPy
+  RK45-style component scaling and controller); coefficients verified against
+  `ARKODE_TSITOURAS_7_4_5` in SUNDIALS/ARKODE. Measured against `CKRK` and
+  `DOPRI` across a sweep of shot profiles: accepted+rejected step counts come
+  out within 1-2 steps of each other for smooth, well-conditioned trajectories at
+  `rtol=atol=1e-6` — no consistent win, despite Tsitouras' smaller leading truncation-error
+  coefficient.
+
 ## [3.1.0-beta.1] - 2026-09-18
 
 ### Changed
@@ -299,7 +313,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...HEAD
+[3.1.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...v3.1.0-beta.2
 [3.1.0-beta.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0-beta.1
 [3.0.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...v3.0.0
 [3.0.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...v3.0.0-rc.2

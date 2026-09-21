@@ -6,4 +6,5 @@ export const methods = [
     { name: "VELOCITY_VERLET", method: IntegrationMethod.VELOCITY_VERLET },
     { name: "CASH_KARP", method: IntegrationMethod.CASH_KARP },
     { name: "DOPRI", method: IntegrationMethod.DOPRI },
+    { name: "TSITOURAS", method: IntegrationMethod.TSITOURAS },
 ];
