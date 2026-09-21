@@ -205,8 +205,8 @@ class Shot {
     get barrelElevation(): Angular {
         return UNew.Radian(
             this.lookAngle.rad +
-            Math.cos(this.cantAngle.rad) *
-            (this.weapon.zeroElevation.rad + this.relativeAngle.rad)
+                Math.cos(this.cantAngle.rad) *
+                    (this.weapon.zeroElevation.rad + this.relativeAngle.rad)
         );
     }
 
@@ -221,8 +221,8 @@ class Shot {
     set barrelElevation(value: Angular | number) {
         this.relativeAngle = UNew.Radian(
             unitTypeCoerce(value, Angular, preferredUnits.angular).rad -
-            this.lookAngle.rad -
-            Math.cos(this.cantAngle.rad) * this.weapon.zeroElevation.rad
+                this.lookAngle.rad -
+                Math.cos(this.cantAngle.rad) * this.weapon.zeroElevation.rad
         );
     }
 
@@ -245,7 +245,7 @@ class Shot {
      * Serializes all shot parameters into the format required by the WASM ballistic calculator.
      * Includes ballistic coefficient, angles, atmospheric conditions, winds, and calculation config.
      *
-     * @param method - Integration method to use (RK4, EULER, VELOCITY_VERLET, CASH_KARP or DOPRI)
+     * @param method - Integration method to use (RK4, EULER, VELOCITY_VERLET, CASH_KARP, DOPRI or TSITOURAS)
      * @param config - Optional partial configuration to override defaults
      * @returns WASM-compatible shot properties object
      *

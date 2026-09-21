@@ -8,6 +8,21 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0-beta.2] - 2026-09-21
+
+### Added
+- `IntegrationMethod.TSITOURAS`: Tsitouras 5(4) ("Tsit5") adaptive integration
+  method, wrapping [bclibc](https://github.com/ballistics-lab/bclibc)'s new
+  `BCLIBC_integrateTsitouras`. Exposed through the WASM bindings
+  (`_IntegrationMethod`), `IntegrationMethod` in `src/_wasm.ts` and the type
+  stubs, and added to the integration-method test matrix. Structurally
+  identical to `DOPRI` (same 7-stage FSAL shape and step controller), with the
+  same default calculation step (`0.0025`). Accuracy and step counts are
+  comparable to `DOPRI` for smooth trajectories.
+
+### Changed
+- Bump the `bclibc` submodule to pick up `BCLIBC_integrateTsitouras`.
+
 ## [3.1.0-beta.1] - 2026-09-18
 
 ### Changed
@@ -299,7 +314,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...HEAD
+[3.1.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...v3.1.0-beta.2
 [3.1.0-beta.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0-beta.1
 [3.0.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...v3.0.0
 [3.0.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.1...v3.0.0-rc.2

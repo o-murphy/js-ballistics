@@ -22,7 +22,8 @@ enum class IntegrationMethod
     EULER,
     VELOCITY_VERLET,
     CASH_KARP,
-    DOPRI
+    DOPRI,
+    TSITOURAS
 };
 
 struct DragTablePoint
@@ -119,6 +120,9 @@ inline static double selectCalcStep(const IntegrationMethod method)
     case IntegrationMethod::DOPRI:
         return 0.0025;
         break;
+    case IntegrationMethod::TSITOURAS:
+        return 0.0025;
+        break;
     default:
         throw std::invalid_argument("Unknown integration method");
         break;
@@ -143,6 +147,9 @@ BCLIBC_IntegrateCallable selectIntegrationMethod(const IntegrationMethod &method
         break;
     case IntegrationMethod::DOPRI:
         return BCLIBC_integrateDormandPrince;
+        break;
+    case IntegrationMethod::TSITOURAS:
+        return BCLIBC_integrateTsitouras;
         break;
     default:
         throw std::invalid_argument("Unknown integration method");
@@ -597,7 +604,8 @@ EMSCRIPTEN_BINDINGS(bclibc)
         .value("EULER", IntegrationMethod::EULER)
         .value("VELOCITY_VERLET", IntegrationMethod::VELOCITY_VERLET)
         .value("CASH_KARP", IntegrationMethod::CASH_KARP)
-        .value("DOPRI", IntegrationMethod::DOPRI);
+        .value("DOPRI", IntegrationMethod::DOPRI)
+        .value("TSITOURAS", IntegrationMethod::TSITOURAS);
 
     enum_<BCLIBC_BaseTrajData_InterpKey>("_BaseTrajDataInterpKey", enum_value_type::number)
         .value("TIME", BCLIBC_BaseTrajData_InterpKey::TIME)
