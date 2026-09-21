@@ -11,16 +11,17 @@ and this project adheres to
 ## [3.1.0-beta.2] - 2026-09-21
 
 ### Added
-- `cythonized_tsitouras_engine` (`py_ballisticcalc_exts.CythonizedTsitourasIntegrationEngine`):
-  a compiled Tsitouras 5(4) ("Tsit5") adaptive engine, wrapping
-  [bclibc](https://github.com/ballistics-lab/bclibc)'s new `BCLIBC_integrateTsitouras`.
-  Structurally identical to `DOPRI` (same 7-stage FSAL shape, same SciPy
-  RK45-style component scaling and controller); coefficients verified against
-  `ARKODE_TSITOURAS_7_4_5` in SUNDIALS/ARKODE. Measured against `CKRK` and
-  `DOPRI` across a sweep of shot profiles: accepted+rejected step counts come
-  out within 1-2 steps of each other for smooth, well-conditioned trajectories at
-  `rtol=atol=1e-6` — no consistent win, despite Tsitouras' smaller leading truncation-error
-  coefficient.
+- `IntegrationMethod.TSITOURAS`: Tsitouras 5(4) ("Tsit5") adaptive integration
+  method, wrapping [bclibc](https://github.com/ballistics-lab/bclibc)'s new
+  `BCLIBC_integrateTsitouras`. Exposed through the WASM bindings
+  (`_IntegrationMethod`), `IntegrationMethod` in `src/_wasm.ts` and the type
+  stubs, and added to the integration-method test matrix. Structurally
+  identical to `DOPRI` (same 7-stage FSAL shape and step controller), with the
+  same default calculation step (`0.0025`). Accuracy and step counts are
+  comparable to `DOPRI` for smooth trajectories.
+
+### Changed
+- Bump the `bclibc` submodule to pick up `BCLIBC_integrateTsitouras`.
 
 ## [3.1.0-beta.1] - 2026-09-18
 
