@@ -8,6 +8,18 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0-rc.1] - 2026-09-22
+
+### Changed
+- Bump the `bclibc` submodule to `v2.0.0-rc.1`: the embedded RK45 methods'
+  per-method tolerance/stats API (thread-local, shared by every engine on a
+  thread using the same method) is replaced by stateful
+  `BCLIBC_CashKarpIntegrator`/`BCLIBC_DormandPrinceIntegrator`/
+  `BCLIBC_TsitourasIntegrator` classes. No functional change here — the WASM
+  FFI layer only ever assigns the plain `BCLIBC_integrate*` free functions
+  (unchanged, default `1e-6`/`1e-6` tolerances, no exposed step stats), never
+  the tolerance/stats API this replaces.
+
 ## [3.1.0-beta.2] - 2026-09-21
 
 ### Added
@@ -314,7 +326,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.1...HEAD
+[3.1.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...v3.1.0-rc.1
 [3.1.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...v3.1.0-beta.2
 [3.1.0-beta.1]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0-beta.1
 [3.0.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0-rc.2...v3.0.0
