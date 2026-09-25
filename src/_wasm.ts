@@ -11,33 +11,28 @@
  * ```
  */
 
-import MainModuleFactory from "@wasm/bclibc";
+import wasmBase64 from "@wasm/bclibc";
+import { instantiate } from "./wasm/bclibc";
 import type {
     MainModule as BCLIBC,
     _TrajFlag,
     _IntegrationMethod,
     _TerminationReason,
-    _ZeroPointResult,
-} from "@wasm/bclibc";
-import * as Exceptions from "./exceptions";
+} from "./wasm/types";
 
-// Export all raw types from the WASM module
-export type * from "@wasm/bclibc";
-
-// Register exception classes in globalThis for C++ Embind access
-if (typeof globalThis !== "undefined") {
-    Object.assign(globalThis, Exceptions);
-}
+// Export all raw types of the module
+export type * from "./wasm/types";
 
 let bclibcReady: Promise<BCLIBC> | null = null;
 let instance: BCLIBC | null = null;
 
 /**
- * Initializes the WASM module factory
+ * Initializes the WASM module: instantiates the bare WebAssembly module of bclibc (it imports nothing and has its
+ * own memory), once.
  */
 export const loadBclibc = (): Promise<BCLIBC> => {
     if (!bclibcReady) {
-        bclibcReady = MainModuleFactory().then((module) => {
+        bclibcReady = instantiate(wasmBase64).then((module) => {
             instance = module;
             return module;
         });
@@ -104,9 +99,9 @@ export type IntegrationMethod = _IntegrationMethod;
 export type TrajFlag = _TrajFlag;
 export type TerminationReason = _TerminationReason;
 
-export type Config = import("@wasm/bclibc")._Config;
-export type HitOutput = import("@wasm/bclibc")._HitOutput;
-export type TrajectoryRequest = import("@wasm/bclibc")._TrajectoryRequest;
-export type BaseTrajData = import("@wasm/bclibc")._BaseTrajData;
-export type ShotPropsInput = import("@wasm/bclibc")._ShotPropsInput;
-export type ZeroPointResult = import("@wasm/bclibc")._ZeroPointResult;
+export type Config = import("./wasm/types")._Config;
+export type HitOutput = import("./wasm/types")._HitOutput;
+export type TrajectoryRequest = import("./wasm/types")._TrajectoryRequest;
+export type BaseTrajData = import("./wasm/types")._BaseTrajData;
+export type ShotPropsInput = import("./wasm/types")._ShotPropsInput;
+export type ZeroPointResult = import("./wasm/types")._ZeroPointResult;

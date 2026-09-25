@@ -1,7 +1,7 @@
 # [js-ballistics](https://github.com/o-murphy/js-ballistics)
 
 JavaScript/TypeScript library for small arms ballistic trajectory calculations,
-powered by a C++ engine compiled to WebAssembly via Emscripten.
+powered by a C++ engine compiled to a standalone WebAssembly module.
 
 ![NPM version][npm version badge]
 ![License][license badge]
@@ -29,7 +29,7 @@ top of it.
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Clone](#clone)
-    - [Emscripten setup](#emscripten-setup)
+    - [WASI SDK setup](#wasi-sdk-setup)
     - [Build](#build)
     - [Run tests](#run-tests)
     - [Lint \& type-check](#lint--type-check)
@@ -66,9 +66,9 @@ top of it.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24+ (or a browser that supports WebAssembly exception handling)
 - Yarn (`npm install -g yarn`)
-- Emscripten (for WASM build — see below)
+- [wasi-sdk 34+](https://github.com/WebAssembly/wasi-sdk/releases) (for the bare-WASM build)
 
 ### Clone
 
@@ -84,21 +84,20 @@ If you already cloned without `--recursive`:
 git submodule update --init --recursive
 ```
 
-### Emscripten setup
+### WASI SDK setup
 
 ```bash
-make install-emsdk                  # clone & install Emscripten SDK
-source lib/emsdk/emsdk_env.sh       # activate in current shell
+export WASI_SDK_PATH=/opt/wasi-sdk-34.0
 ```
 
-Add the `source` line to your `~/.bashrc` / `~/.zshrc` to avoid running it every
-time.
+Set `WASI_SDK_PATH` to the directory where you unpacked wasi-sdk. Add the export to
+your shell profile if you build regularly.
 
 ### Build
 
 ```bash
-make build          # WASM + TypeScript (full build)
-make build-wasm     # WASM only  → generates build/bclibc.{js,d.ts} and updates __stubs__/bclibc.d.ts
+make build          # bare WASM + TypeScript (full build)
+make build-wasm     # WASM only  → generates build/bclibc.js (base64-embedded module)
 make build-ts       # TypeScript only  → generates dist/
 ```
 
