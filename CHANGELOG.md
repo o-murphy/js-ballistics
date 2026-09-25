@@ -8,6 +8,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0-rc.3] - 2026-09-25
+
+### Chores
+- Bump the `bclibc` submodule to `v2.0.0-rc.3`: it adds a bare-WebAssembly build of the core (one module that
+  imports nothing, `make wasm` in `bclibc`, no Emscripten) and makes the engine's lock and the log work where there
+  are no threads and no iostream. Nothing changes for this package: the embind bindings still build with Emscripten,
+  and all the tests pass on the new core.
+
 ## [3.1.0-rc.2] - 2026-09-24
 
 ### Chores
@@ -331,7 +339,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...HEAD
+[3.1.0-rc.3]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...v3.1.0-rc.3
 [3.1.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.1...v3.1.0-rc.2
 [3.1.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...v3.1.0-rc.1
 [3.1.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...v3.1.0-beta.2
