@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- Replace the Emscripten/Embind runtime with bclibc's standalone WebAssembly module and its flat C ABI. The JavaScript adapter now owns marshalling, memory lifetime and typed error conversion; the packaged bundle still contains the engine as a single base64-embedded JavaScript module.
+- Build the engine with wasi-sdk (`WASI_SDK_PATH`) and remove the Emscripten SDK submodule and type dependency.
+
 ## [3.1.0-rc.3] - 2026-09-25
 
 ### Chores

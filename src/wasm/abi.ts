@@ -164,7 +164,7 @@ export class Arena {
 }
 
 /**
- * The error a call returned, as the JavaScript error the Embind build used to throw: the class of the error is made
+ * The error a call returned, converted to the JavaScript error exposed by this package: the class of the error is made
  * with the message (the same construction it had), the fields of the C++ exception are set on it.
  */
 export function errorFromStatus(view: DataView, errPtr: number, layout: Layout): Error {

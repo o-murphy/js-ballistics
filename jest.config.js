@@ -9,8 +9,8 @@ export default {
     setupFilesAfterEnv: ["<rootDir>/src/_wasm.ts"],
     // Only pick up *.test.ts / *.test.js files (excludes helper files like wasmAvailable.ts)
     testMatch: ["**/__tests__/**/*.test.[jt]s?(x)"],
-    testPathIgnorePatterns: ["/node_modules/", "/emsdk/", "emsdk-cache"],
-    transformIgnorePatterns: ["/node_modules/", "/emsdk/", "emsdk-cache"],
+    testPathIgnorePatterns: ["/node_modules/"],
+    transformIgnorePatterns: ["/node_modules/"],
     transform: {
         "^.+\\.ts$": ["ts-jest", { useESM: true }],
         "^.+\\.tsx?$": ["ts-jest", { useESM: true }],

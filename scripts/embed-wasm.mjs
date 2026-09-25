@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Embeds a WebAssembly module in a JavaScript module as base64, so the library is one file that needs no asset
-// handling from a bundler (as Emscripten's SINGLE_FILE did): `node scripts/embed-wasm.mjs <in.wasm> <out.js>`.
+// handling from a bundler: `node scripts/embed-wasm.mjs <in.wasm> <out.js>`.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname } from "node:path";
 

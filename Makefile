@@ -12,7 +12,7 @@ BCLIBC_WASM = lib/bclibc/build/wasm/bclibc_wasm.wasm
 build: build-wasm build-ts build-copy-html
 
 
-# bclibc's flat C ABI as one WebAssembly module that imports nothing (no Emscripten, no Embind), embedded in
+# bclibc's flat C ABI as one WebAssembly module that imports nothing, embedded in
 # build/bclibc.js as base64: the library stays one file for a bundler. Its C++ exceptions use WebAssembly's final
 # exception encoding, so the module needs a runtime that has it (Node 24+, recent browsers).
 build-wasm: clone-submodules
