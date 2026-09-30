@@ -6,11 +6,9 @@ on:
       - "*"
     paths:
       - "src/**"
-      - "wasm/**"
       - "__tests__/**"
       - "__stubs__/**"
       - "lib/bclibc"
-      - "lib/emsdk"
       - "package.json"
       - "yarn.lock"
       - "tsconfig*.json"
@@ -18,10 +16,6 @@ on:
       - "Makefile"
       - ".github/workflows/test.yml"
   workflow_dispatch:
-
-env:
-  EM_VERSION: "5.0.7"
-  EM_CACHE_FOLDER: "emsdk-cache"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,20 +30,10 @@ jobs:
       - name: Init bclibc submodule
         run: git submodule update --init lib/bclibc
 
-      - name: Cache emsdk
-        uses: actions/cache@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
         with:
-          path: ${{ env.EM_CACHE_FOLDER }}
-          key: ${{ env.EM_VERSION }}-${{ runner.os }}
-
-      - name: Setup Emscripten
-        uses: emscripten-core/setup-emsdk@v16
-        with:
-          version: ${{ env.EM_VERSION }}
-          actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
-
-      - name: Create emsdk stub for Makefile compatibility
-        run: mkdir -p lib/emsdk && echo "" > lib/emsdk/emsdk_env.sh
+          python-version: "3.13"
 
       - uses: actions/setup-node@v7
         with:
@@ -59,7 +43,7 @@ jobs:
       - run: yarn install --frozen-lockfile
 
       - name: Build WASM
-        run: make build-wasm
+        run: uv run --no-project --with ziglang make build-wasm
 
       - name: TypeScript type check
         run: npx tsc --noEmit
