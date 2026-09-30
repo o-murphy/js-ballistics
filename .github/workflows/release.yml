@@ -10,10 +10,6 @@ on:
         description: "Tag to release (e.g. v2.2.0)"
         required: true
 
-env:
-  EM_VERSION: "5.0.7"
-  EM_CACHE_FOLDER: "emsdk-cache"
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -34,20 +30,10 @@ jobs:
       - name: Init bclibc submodule
         run: git submodule update --init lib/bclibc
 
-      - name: Cache emsdk
-        uses: actions/cache@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
         with:
-          path: ${{ env.EM_CACHE_FOLDER }}
-          key: ${{ env.EM_VERSION }}-${{ runner.os }}
-
-      - name: Setup Emscripten
-        uses: emscripten-core/setup-emsdk@v16
-        with:
-          version: ${{ env.EM_VERSION }}
-          actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
-
-      - name: Create emsdk stub for Makefile compatibility
-        run: mkdir -p lib/emsdk && echo "" > lib/emsdk/emsdk_env.sh
+          python-version: "3.13"
 
       - uses: actions/setup-node@v7
         with:
@@ -57,7 +43,7 @@ jobs:
       - run: yarn install --frozen-lockfile
 
       - name: Build (WASM + JS bundle)
-        run: yarn build
+        run: uv run --no-project --with ziglang yarn build
 
       - name: Run tests
         run: yarn test

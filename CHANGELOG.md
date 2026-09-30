@@ -9,8 +9,17 @@ and this project adheres to
 ## [Unreleased]
 
 ### Changed
-- Replace the Emscripten/Embind runtime with bclibc's standalone WebAssembly module and its flat C ABI. The JavaScript adapter now owns marshalling, memory lifetime and typed error conversion; the packaged bundle still contains the engine as a single base64-embedded JavaScript module.
-- Build the engine with wasi-sdk (`WASI_SDK_PATH`) and remove the Emscripten SDK submodule and type dependency.
+- Replace the Emscripten/Embind runtime with bclibc's standalone WebAssembly module and its flat C ABI. The JavaScript
+  adapter now owns marshalling, memory lifetime and typed error conversion; the packaged bundle still contains the
+  engine as a single base64-embedded JavaScript module.
+- The module is built without C++ exceptions: bclibc's core never throws (every fallible call returns a result that the
+  flat C ABI maps to an error code), so it needs no WebAssembly exception handling. The `engines.node >=24.15.0`
+  requirement is gone; the whole suite passes on Node 22, and any WebAssembly host can run the module.
+- Build the engine with zig (`uv run --with ziglang make build`, ~84 KB, the default) or wasi-sdk (`WASM_TOOLCHAIN=wasi-sdk
+  WASI_SDK_PATH=...`, ~1 MB), and remove the Emscripten SDK submodule, its CI steps and the type dependency. The base64
+  bundle shrinks from ~1.35 MB to ~112 KB with zig.
+- Bump the `bclibc` submodule to its exception-free (`noexcept`) revision, which also carries the flat-C-ABI
+  interpolation functions (`BCLIBCFFI_hermite`, `BCLIBCFFI_interpolate_2pt`/`_3pt`, `BCLIBCFFI_interpolate_trajectory_data`).
 
 ## [3.1.0-rc.3] - 2026-09-25
 

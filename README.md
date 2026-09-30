@@ -29,7 +29,7 @@ top of it.
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Clone](#clone)
-    - [WASI SDK setup](#wasi-sdk-setup)
+    - [WASM toolchain](#wasm-toolchain)
     - [Build](#build)
     - [Run tests](#run-tests)
     - [Lint \& type-check](#lint--type-check)
@@ -66,9 +66,10 @@ top of it.
 
 ### Prerequisites
 
-- Node.js 24+ (or a browser that supports WebAssembly exception handling)
+- Node.js 22+ (any WebAssembly host works: the module uses no exception handling)
 - Yarn (`npm install -g yarn`)
-- [wasi-sdk 34+](https://github.com/WebAssembly/wasi-sdk/releases) (for the bare-WASM build)
+- [uv](https://docs.astral.sh/uv/) and [zig](https://ziglang.org/) (the `ziglang` package) for the bare-WASM build, or
+  [wasi-sdk 34+](https://github.com/WebAssembly/wasi-sdk/releases) as an alternative
 
 ### Clone
 
@@ -84,14 +85,21 @@ If you already cloned without `--recursive`:
 git submodule update --init --recursive
 ```
 
-### WASI SDK setup
+### WASM toolchain
+
+The engine is bclibc's bare WebAssembly module (imports nothing; the core never throws, so it is built without C++
+exceptions). `make build-wasm` compiles it with zig (~84 KB):
+
+```bash
+uv run --with ziglang make build-wasm     # zig comes from the ziglang package; or put zig on PATH / pass ZIG=/path/to/zig
+```
+
+wasi-sdk builds the same module (~1 MB) if you prefer it:
 
 ```bash
 export WASI_SDK_PATH=/opt/wasi-sdk-34.0
+make build WASM_TOOLCHAIN=wasi-sdk
 ```
-
-Set `WASI_SDK_PATH` to the directory where you unpacked wasi-sdk. Add the export to
-your shell profile if you build regularly.
 
 ### Build
 
