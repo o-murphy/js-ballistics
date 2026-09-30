@@ -18,8 +18,8 @@ and this project adheres to
 - Build the engine with zig (`uv run --with ziglang make build`, ~84 KB, the default) or wasi-sdk (`WASM_TOOLCHAIN=wasi-sdk
   WASI_SDK_PATH=...`, ~1 MB), and remove the Emscripten SDK submodule, its CI steps and the type dependency. The base64
   bundle shrinks from ~1.35 MB to ~112 KB with zig.
-- Bump the `bclibc` submodule to its exception-free (`noexcept`) revision, which also carries the flat-C-ABI
-  interpolation functions (`BCLIBCFFI_hermite`, `BCLIBCFFI_interpolate_2pt`/`_3pt`, `BCLIBCFFI_interpolate_trajectory_data`).
+- Bump the `bclibc` submodule to its exception-free (`noexcept`) revision ([ballistics-lab/bclibc#40](https://github.com/ballistics-lab/bclibc/pull/40)),
+  which also carries the flat-C-ABI interpolation functions (`BCLIBCFFI_hermite`, `BCLIBCFFI_interpolate_2pt`/`_3pt`, `BCLIBCFFI_interpolate_trajectory_data`).
 
 ## [3.1.0-rc.3] - 2026-09-25
 
