@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0-rc.4] - 2026-10-01
+
 ### Changed
 - Replace the Emscripten/Embind runtime with bclibc's standalone WebAssembly module and its flat C ABI. The JavaScript
   adapter now owns marshalling, memory lifetime and typed error conversion; the packaged bundle still contains the
@@ -354,7 +356,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.4...HEAD
+[3.1.0-rc.4]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...v3.1.0-rc.4
 [3.1.0-rc.3]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...v3.1.0-rc.3
 [3.1.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.1...v3.1.0-rc.2
 [3.1.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...v3.1.0-rc.1
