@@ -1,7 +1,7 @@
 # [js-ballistics](https://github.com/o-murphy/js-ballistics)
 
 JavaScript/TypeScript library for small arms ballistic trajectory calculations,
-powered by a C++ engine compiled to WebAssembly via Emscripten.
+powered by a C++ engine compiled to a standalone WebAssembly module.
 
 ![NPM version][npm version badge]
 ![License][license badge]
@@ -29,7 +29,7 @@ top of it.
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Clone](#clone)
-    - [Emscripten setup](#emscripten-setup)
+    - [WASM toolchain](#wasm-toolchain)
     - [Build](#build)
     - [Run tests](#run-tests)
     - [Lint \& type-check](#lint--type-check)
@@ -66,9 +66,10 @@ top of it.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (any WebAssembly host works: the module uses no exception handling)
 - Yarn (`npm install -g yarn`)
-- Emscripten (for WASM build — see below)
+- [uv](https://docs.astral.sh/uv/) and [zig](https://ziglang.org/) (the `ziglang` package) for the bare-WASM build, or
+  [wasi-sdk 34+](https://github.com/WebAssembly/wasi-sdk/releases) as an alternative
 
 ### Clone
 
@@ -84,21 +85,27 @@ If you already cloned without `--recursive`:
 git submodule update --init --recursive
 ```
 
-### Emscripten setup
+### WASM toolchain
+
+The engine is bclibc's bare WebAssembly module (imports nothing; the core never throws, so it is built without C++
+exceptions). `make build-wasm` compiles it with zig (~84 KB):
 
 ```bash
-make install-emsdk                  # clone & install Emscripten SDK
-source lib/emsdk/emsdk_env.sh       # activate in current shell
+uv run --with ziglang make build-wasm     # zig comes from the ziglang package; or put zig on PATH / pass ZIG=/path/to/zig
 ```
 
-Add the `source` line to your `~/.bashrc` / `~/.zshrc` to avoid running it every
-time.
+wasi-sdk builds the same module (~1 MB) if you prefer it:
+
+```bash
+export WASI_SDK_PATH=/opt/wasi-sdk-34.0
+make build WASM_TOOLCHAIN=wasi-sdk
+```
 
 ### Build
 
 ```bash
-make build          # WASM + TypeScript (full build)
-make build-wasm     # WASM only  → generates build/bclibc.{js,d.ts} and updates __stubs__/bclibc.d.ts
+make build          # bare WASM + TypeScript (full build)
+make build-wasm     # WASM only  → generates build/bclibc.js (base64-embedded module)
 make build-ts       # TypeScript only  → generates dist/
 ```
 

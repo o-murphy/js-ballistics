@@ -8,6 +8,31 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0-rc.4] - 2026-10-01
+
+### Changed
+- Replace the Emscripten/Embind runtime with bclibc's standalone WebAssembly module and its flat C ABI. The JavaScript
+  adapter now owns marshalling, memory lifetime and typed error conversion; the packaged bundle still contains the
+  engine as a single base64-embedded JavaScript module.
+- The module is built without C++ exceptions: bclibc's core never throws (every fallible call returns a result that the
+  flat C ABI maps to an error code), so it needs no WebAssembly exception handling. The `engines.node >=24.15.0`
+  requirement is gone; the whole suite passes on Node 22, and any WebAssembly host can run the module.
+- Build the engine with zig (`uv run --with ziglang make build`, ~84 KB, the default) or wasi-sdk (`WASM_TOOLCHAIN=wasi-sdk
+  WASI_SDK_PATH=...`, ~1 MB), and remove the Emscripten SDK submodule, its CI steps and the type dependency. The base64
+  bundle shrinks from ~1.35 MB to ~112 KB with zig.
+- Remove the last Emscripten leftovers (`lib/emsdk` include paths in `.vscode`, `emsdk/` and the generated `wasm/` in
+  `.prettierignore`).
+- Bump the `bclibc` submodule to its exception-free (`noexcept`) revision ([ballistics-lab/bclibc#40](https://github.com/ballistics-lab/bclibc/pull/40)),
+  which also carries the flat-C-ABI interpolation functions (`BCLIBCFFI_hermite`, `BCLIBCFFI_interpolate_2pt`/`_3pt`, `BCLIBCFFI_interpolate_trajectory_data`).
+
+## [3.1.0-rc.3] - 2026-09-25
+
+### Chores
+- Bump the `bclibc` submodule to `v2.0.0-rc.3`: it adds a bare-WebAssembly build of the core (one module that
+  imports nothing, `make wasm` in `bclibc`, no Emscripten) and makes the engine's lock and the log work where there
+  are no threads and no iostream. Nothing changes for this package: the embind bindings still build with Emscripten,
+  and all the tests pass on the new core.
+
 ## [3.1.0-rc.2] - 2026-09-24
 
 ### Chores
@@ -331,7 +356,9 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.4...HEAD
+[3.1.0-rc.4]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...v3.1.0-rc.4
+[3.1.0-rc.3]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...v3.1.0-rc.3
 [3.1.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.1...v3.1.0-rc.2
 [3.1.0-rc.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.2...v3.1.0-rc.1
 [3.1.0-beta.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-beta.1...v3.1.0-beta.2
