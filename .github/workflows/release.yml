@@ -15,14 +15,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  draft:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
+      body: ${{ steps.changelog.outputs.body }}
 
     steps:
       - uses: actions/checkout@v7
@@ -88,18 +87,8 @@ jobs:
           path: ${{ steps.pack.outputs.filename }}
           retention-days: 7
 
-      - name: Create draft GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          name: ${{ steps.meta.outputs.tag }}
-          body: ${{ steps.changelog.outputs.body }}
-          prerelease: ${{ steps.meta.outputs.prerelease }}
-          draft: true
-          files: ${{ steps.pack.outputs.filename }}
-
   publish:
-    needs: draft
+    needs: build
     runs-on: ubuntu-latest
     environment: release # requires manual approval in repo Settings → Environments
     permissions:
@@ -107,29 +96,31 @@ jobs:
       id-token: write # required for OIDC trusted publishing to npm
 
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Publish GitHub Release (undraft)
-        run: gh release edit "${{ needs.draft.outputs.tag }}" --draft=false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org/
-
       - name: Download tarball
         uses: actions/download-artifact@v8
         with:
           name: npm-package
           path: dist-release
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.build.outputs.tag }}
+          name: ${{ needs.build.outputs.tag }}
+          body: ${{ needs.build.outputs.body }}
+          prerelease: ${{ needs.build.outputs.prerelease }}
+          files: dist-release/*.tgz
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+
       - name: Publish to npm
         run: |
           TARBALL=$(ls dist-release/*.tgz)
-          if [ "${{ needs.draft.outputs.prerelease }}" = "true" ]; then
-            DIST_TAG=$(echo "${{ needs.draft.outputs.version }}" | grep -oE '(alpha|beta|rc|pre)' | head -1)
+          if [ "${{ needs.build.outputs.prerelease }}" = "true" ]; then
+            DIST_TAG=$(echo "${{ needs.build.outputs.version }}" | grep -oE '(alpha|beta|rc|pre)' | head -1)
             npm publish "./$TARBALL" --provenance --tag "${DIST_TAG:-prerelease}"
           else
             npm publish "./$TARBALL" --provenance
