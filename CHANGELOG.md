@@ -8,6 +8,30 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-03
+
+Stable release, covering the whole arc from 3.0.0 through 3.1.0-rc.4. Highlights below; full details are in
+the beta/rc entries beneath this one. Built against [bclibc v2.0.0](https://github.com/ballistics-lab/bclibc/releases/tag/v2.0.0),
+itself the stable release of the same noexcept rework rc.4 already pinned.
+
+### Changed
+- **The WASM runtime no longer uses Emscripten/Embind.** It now runs bclibc's standalone, import-free
+  WebAssembly module over its flat C ABI, with the JavaScript adapter owning marshalling, memory lifetime and
+  typed error conversion. Built with zig by default (~84 KB module, ~112 KB base64-embedded bundle, down from
+  ~1.35 MB) or wasi-sdk; `lib/emsdk` and all Emscripten CI steps are gone.
+- **The `engines.node >=24.15.0` requirement is gone.** Because bclibc's core never throws, the module needs no
+  WebAssembly exception handling, so the whole suite passes on Node 22 and any WebAssembly host can run it.
+- **BREAKING: `HitResult.trajectory` is replaced by three views.** `records` (the exact chronological stream —
+  every scheduled sample and physical event as its own row; what `length`, iteration, and `at()` now read from),
+  `samples` (the deterministic RANGE/TIME schedule, annotated with an event's flag only when the two are the
+  same instant to floating-point precision) and `events` (exact ZERO/MACH/APEX/MRT rows). `trajectory` is kept
+  as a deprecated alias for `records` (one-time `console.warn`).
+- `bclibc` pinned through its whole noexcept rework, up to [v2.0.0](https://github.com/ballistics-lab/bclibc/releases/tag/v2.0.0).
+
+### Added
+- `IntegrationMethod.TSITOURAS`: Tsitouras 5(4) adaptive integration, alongside the existing DOPRI/Cash-Karp.
+- `Calculator.aimingSolutionForTarget`.
+
 ## [3.1.0-rc.4] - 2026-10-01
 
 ### Changed
@@ -356,7 +380,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.4...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0
 [3.1.0-rc.4]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...v3.1.0-rc.4
 [3.1.0-rc.3]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...v3.1.0-rc.3
 [3.1.0-rc.2]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.1...v3.1.0-rc.2
