@@ -8,6 +8,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- Built against bclibc be7978f (was v2.0.0). `BCLIBCFFI_get_layout` now has 96 values (was 85): `StepStats` and `ZeroInit`
+  are appended at its end, and `src/wasm/abi.ts` reads them (`LAYOUT_FIELD_COUNT` is 96). Its zero search no longer depends on the early-termination limits
+  (`maximumDrop`, `minimumAltitude`): a zero with either set to `0` ("stop at muzzle level"), or a long one (3500 yd and
+  more) at the default limits, no longer fails with "Trajectory too short to determine error at distance", and the
+  higher (lofted) zero is found. Zero angles at the default limits are unchanged.
+- **A zero beyond the maximum range is an `OutOfRangeError`** (`requestedDistanceFt`, `maxRangeFt`), as documented. It used
+  to come out as a plain `SolverRuntimeError` (the first shot of Newton's method ended short of the target, which nothing
+  caught). `OutOfRangeError` is a `SolverRuntimeError`, so `instanceof SolverRuntimeError` still matches.
+
 ## [3.1.0] - 2026-10-03
 
 Stable release, covering the whole arc from 3.0.0 through 3.1.0-rc.4. Highlights below; full details are in
