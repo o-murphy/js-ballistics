@@ -72,16 +72,24 @@ describe("Exception Type Conversion", () => {
         expect(errorOf(Status.GENERIC, "x".repeat(512)).message).toHaveLength(512);
     });
 
-    testWasm("SolverRuntimeError comes out of the module", async () => {
+    testWasm("OutOfRangeError comes out of the module", async () => {
         const bclibc = await WasmManager.init();
         let caught: unknown;
         try {
+            // Beyond the maximum range. Newton's method cannot converge on a target the shot never reaches, and
+            // Ridder's method, which takes over, says so. (This used to come out as a plain SolverRuntimeError:
+            // the first shot of Newton's method ended short of the target, which no fallback caught.)
             bclibc.findZeroAngle(plainShot(), 60000);
         } catch (error) {
             caught = error;
         }
-        expect(caught).toBeInstanceOf(SolverRuntimeError);
-        expect((caught as Error).name).toBe("SolverRuntimeError");
+        expect(caught).toBeInstanceOf(OutOfRangeError);
+        expect(caught).toBeInstanceOf(SolverRuntimeError); // an OutOfRangeError is a SolverRuntimeError
+        expect((caught as Error).name).toBe("OutOfRangeError");
+        const e = caught as OutOfRangeError;
+        expect(e.requestedDistanceFt).toBeCloseTo(60000, 6);
+        expect(e.maxRangeFt).toBeGreaterThan(0);
+        expect(e.maxRangeFt).toBeLessThan(60000);
     });
 
     testWasm("InterceptionError comes out of the module", async () => {
