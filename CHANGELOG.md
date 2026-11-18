@@ -8,8 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-11-18
+
 ### Changed
-- Built against bclibc be7978f (was v2.0.0). `BCLIBCFFI_get_layout` now has 96 values (was 85): `StepStats` and `ZeroInit`
+- Built against [bclibc v2.1.0](https://github.com/ballistics-lab/bclibc/releases/tag/v2.1.0) (was v2.0.0). `BCLIBCFFI_get_layout` now has 96 values (was 85): `StepStats` and `ZeroInit`
   are appended at its end, and `src/wasm/abi.ts` reads them (`LAYOUT_FIELD_COUNT` is 96). Its zero search no longer depends on the early-termination limits
   (`maximumDrop`, `minimumAltitude`): a zero with either set to `0` ("stop at muzzle level"), or a long one (3500 yd and
   more) at the default limits, no longer fails with "Trajectory too short to determine error at distance", and the
@@ -390,7 +392,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.1...HEAD
+[3.1.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0
 [3.1.0-rc.4]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...v3.1.0-rc.4
 [3.1.0-rc.3]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.2...v3.1.0-rc.3
