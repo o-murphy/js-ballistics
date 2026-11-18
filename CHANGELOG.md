@@ -9,7 +9,8 @@ and this project adheres to
 ## [Unreleased]
 
 ### Changed
-- Built against bclibc f83740a (was v2.0.0). Its zero search no longer depends on the early-termination limits
+- Built against bclibc be7978f (was v2.0.0). `BCLIBCFFI_get_layout` now has 96 values (was 85): `StepStats` and `ZeroInit`
+  are appended at its end, and `src/wasm/abi.ts` reads them (`LAYOUT_FIELD_COUNT` is 96). Its zero search no longer depends on the early-termination limits
   (`maximumDrop`, `minimumAltitude`): a zero with either set to `0` ("stop at muzzle level"), or a long one (3500 yd and
   more) at the default limits, no longer fails with "Trajectory too short to determine error at distance", and the
   higher (lofted) zero is found. Zero angles at the default limits are unchanged.

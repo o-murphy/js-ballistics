@@ -12,13 +12,13 @@ import {
     OutOfRangeError,
     InterceptionError,
 } from "../src/exceptions";
-import { errorFromStatus, LAYOUT_FIELD_COUNT, parseLayout, Status } from "../src/wasm/abi";
+import { errorFromStatus, LAYOUT_FIELD_COUNT, layoutIndex, parseLayout, Status } from "../src/wasm/abi";
 import { testWasm } from "./wasmAvailable";
 import { plainShot } from "./_rawShot";
 
 // A BCLIBCFFI_Error in memory, by a layout of our own (the offsets are only needed to be consistent).
 const values = new Array<number>(LAYOUT_FIELD_COUNT).fill(0);
-values.splice(LAYOUT_FIELD_COUNT - 7, 7, 560, 0, 4, 520, 528, 536, 544); // size, code, message, f64_0..2, i32_0
+values.splice(layoutIndex("error"), 7, 560, 0, 4, 520, 528, 536, 544); // size, code, message, f64_0..2, i32_0
 const layout = parseLayout(values);
 
 function errorOf(code: number, message: string, f64: [number, number, number] = [0, 0, 0], i32 = 0): Error {

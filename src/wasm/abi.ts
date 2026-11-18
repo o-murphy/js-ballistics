@@ -84,6 +84,10 @@ const LAYOUT = {
     interception: ["raw_data", "full_data"],
     zeroPoint: ["angle_rad", "point"],
     error: ["code", "message", "f64_0", "f64_1", "f64_2", "i32_0"],
+    // The structs of the adaptive integrators and the solver building blocks (bclibc #46). A struct that joins the ABI
+    // goes at the END of BCLIBCFFI_get_layout(), so no earlier offset moves: add it here, after the last one.
+    stepStats: ["accepted", "rejected"],
+    zeroInit: ["status", "reserved", "look_angle_rad", "slant_range_ft", "target_x_ft", "target_y_ft", "start_height_ft"],
 } as const;
 
 type LayoutName = keyof typeof LAYOUT;
@@ -92,6 +96,16 @@ export type Layout = { [N in LayoutName]: StructLayout<N> };
 
 /** Number of int32 that `BCLIBCFFI_get_layout` writes. */
 export const LAYOUT_FIELD_COUNT = Object.values(LAYOUT).reduce((n, fields) => n + 1 + fields.length, 0);
+
+/** Index, in the values of `BCLIBCFFI_get_layout`, of the size of the struct `name` (its field offsets follow). */
+export function layoutIndex(name: LayoutName): number {
+    let i = 0;
+    for (const [n, fields] of Object.entries(LAYOUT)) {
+        if (n === name) return i;
+        i += 1 + fields.length;
+    }
+    throw new Error(`no struct ${name} in the layout`);
+}
 
 export function parseLayout(values: ArrayLike<number>): Layout {
     const layout: Record<string, Record<string, number>> = {};
