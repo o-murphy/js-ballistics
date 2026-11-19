@@ -9,15 +9,16 @@ import { LAYOUT_FIELD_COUNT, layoutIndex, parseLayout } from "../src/wasm/abi";
 import { testWasm } from "./wasmAvailable";
 
 describe("ABI layout", () => {
-    test("96 values: the 85 of the structs of the first ABI, StepStats (3) and ZeroInit (8) after them", () => {
-        expect(LAYOUT_FIELD_COUNT).toBe(96);
+    test("100 values: the 85 of the structs of the first ABI, StepStats (3), ZeroInit (8) and BaseTrajBuf (4) after them", () => {
+        expect(LAYOUT_FIELD_COUNT).toBe(100);
     });
 
-    test("a struct that joins the ABI goes at the end: StepStats and ZeroInit follow Error", () => {
+    test("a struct that joins the ABI goes at the end: StepStats, ZeroInit and BaseTrajBuf follow Error", () => {
         expect(layoutIndex("config")).toBe(0);
         expect(layoutIndex("error")).toBe(78);
         expect(layoutIndex("stepStats")).toBe(85);
         expect(layoutIndex("zeroInit")).toBe(88);
+        expect(layoutIndex("baseTrajBuf")).toBe(96);
     });
 
     test("parseLayout reads StepStats and ZeroInit", () => {
@@ -36,6 +37,12 @@ describe("ABI layout", () => {
             target_y_ft: 32,
             start_height_ft: 40,
         });
+    });
+
+    test("parseLayout reads BaseTrajBuf", () => {
+        const values = Array.from({ length: LAYOUT_FIELD_COUNT }, (_, i) => i);
+        values.splice(layoutIndex("baseTrajBuf"), 4, 12, 0, 4, 8); // size, data, count, capacity (wasm32)
+        expect(parseLayout(values).baseTrajBuf).toEqual({ size: 12, data: 0, count: 4, capacity: 8 });
     });
 
     testWasm("the module's BCLIBCFFI_get_layout has the same count (it throws on a mismatch)", async () => {

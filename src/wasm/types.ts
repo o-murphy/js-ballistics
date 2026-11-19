@@ -39,8 +39,13 @@ export type _TrajectoryRequest = {
   range_limit_ft: number,
   range_step_ft: number,
   time_step: number,
+  /** Also return the accepted steps of the integrator (`_HitOutput.dense_trajectory`). */
   dense_output: boolean,
-  filter_flags: _TrajFlag
+  filter_flags: _TrajFlag,
+  /** Tolerances of the adaptive methods (CASH_KARP, DOPRI, TSITOURAS) when `dense_output` is on: finite and positive. Default 1e-6. */
+  relative_tolerance?: number,
+  /** Finite and non-negative. Default 1e-6. */
+  absolute_tolerance?: number
 };
 
 export type _MaxRangeResult = {
@@ -117,9 +122,11 @@ export type _Interception = {
 
 export type _HitOutput = {
   trajectory: _TrajectoryData[],
-  /** Not produced by the bare WebAssembly build: always empty. */
+  /** The accepted steps of the integrator, in time order, when the request had `dense_output`; else empty. */
   dense_trajectory: _BaseTrajData[],
-  reason: _TerminationReason
+  reason: _TerminationReason,
+  /** Accepted and rejected steps of an adaptive method (a request with `dense_output`); else absent. */
+  step_stats?: { accepted: number, rejected: number }
 };
 
 /** What `WasmManager.get()` gives: the functions of the flat C ABI of bclibc (bclibc_ffi.h), in JavaScript terms. */
@@ -177,4 +184,14 @@ export interface MainModule {
   findZeroPoint(shot: _ShotPropsInput, distanceFt: number): _ZeroPointResult;
   integrateRawAt(shot: _ShotPropsInput, key: _BaseTrajDataInterpKey, targetValue: number): _Interception;
   integrate(shot: _ShotPropsInput, request: _TrajectoryRequest): _HitOutput;
+  /**
+   * The step where `key` reaches `value`, interpolated in dense output (`steps`, time-ordered), or the exact step when
+   * one matches. Only steps with time >= `startFromTime` are searched (0 or negative: all; ignored for TIME). A value
+   * beyond the stream is an `OutOfBoundsError` (with the range of the stream), fewer than 3 steps a `DomainError`.
+   */
+  denseGetAt(steps: _BaseTrajData[], key: _BaseTrajDataInterpKey, value: number, startFromTime: number): _BaseTrajData;
+  /** The step where the height above the line of sight at `lookAngleRad` reaches `value`. */
+  denseGetAtSlantHeight(steps: _BaseTrajData[], lookAngleRad: number, value: number): _BaseTrajData;
+  /** The full record (distance, drop, windage, energy, ...) of a dense step, with the atmosphere, drag and Coriolis data of the shot. */
+  trajectoryDataFromStep(shot: _ShotPropsInput, step: _BaseTrajData, flag: _TrajFlag): _TrajectoryData;
 }

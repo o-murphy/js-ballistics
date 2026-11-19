@@ -49,6 +49,7 @@ top of it.
     - [Powder Temperature Sensitivity](#powder-temperature-sensitivity)
     - [Integration Method](#integration-method)
     - [Custom Calculator Config](#custom-calculator-config)
+    - [Dense output and points between the rows](#dense-output-and-points-between-the-rows)
   - [Browser / CDN Usage](#browser--cdn-usage)
     - [Via jsDelivr](#via-jsdelivr)
     - [Via unpkg](#via-unpkg)
@@ -446,6 +447,33 @@ const calc = new Calculator({
     },
 });
 ```
+
+---
+
+### Dense output and points between the rows
+
+`fire` returns the rows you asked for (every `trajectoryStep`, and the events). With `denseOutput: true` the result also keeps the
+accepted steps of the integrator (`HitResult.denseSteps`), and `HitResult.getAt` interpolates in them (bclibc's interpolation) for
+the keys time, distance and slant height, giving a full record at any point:
+
+```typescript
+const calc = new Calculator({ method: IntegrationMethod.DOPRI });
+const hit = await calc.fire({
+    shot,
+    trajectoryRange: UNew.Meter(1000),
+    trajectoryStep: UNew.Meter(100),
+    denseOutput: true, // the adaptive methods also take relativeTolerance / absoluteTolerance (default 1e-6)
+});
+
+const at150 = await hit.getAt(1, UNew.Meter(150).foot); // key DISTANCE (1), the value in feet
+const at1s = await hit.getAt(0, 1.0); // key TIME (0), seconds
+```
+
+Without `denseOutput`, `getAt` interpolates between the rows (three-point PCHIP). `HitResult.getAtDistance` is the nearest row, not an
+interpolation. A value the trajectory does not reach is an `OutOfBoundsError`.
+
+Errors that are not a solver's have types of their own (`BclibcError`, with `kind`): `DomainError` (`lhs`, `rhs`),
+`InvalidArgumentError` and `OutOfBoundsError` (`requestedValue`, `minimumValue`, `maximumValue`).
 
 ---
 

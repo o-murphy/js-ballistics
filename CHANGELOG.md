@@ -8,6 +8,28 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-11-19
+
+Built against bclibc `v2.1.0-3-g10b5d05` ([bclibc #51](https://github.com/ballistics-lab/bclibc/pull/51), towards 2.2.0): its C ABI tells
+the kinds of error apart and has what dense output needs.
+
+### Added
+- **Dense output.** `Calculator.fire({ denseOutput: true })` now keeps the accepted steps of the integrator (`HitResult.denseSteps`);
+  the bare WebAssembly build used to return none. The fixed-step methods go through `BCLIBCFFI_integrate_dense_shot`, the adaptive ones
+  (`CASH_KARP`, `DOPRI`, `TSITOURAS`) through `BCLIBCFFI_integrate_adaptive_shot`, with `relativeTolerance` / `absoluteTolerance`
+  (default 1e-6) and the step statistics (`HitOutput.step_stats`). `HitResult.getAt` interpolates in the steps, by bclibc, for the keys
+  `TIME`, `DISTANCE` and `SLANT_HEIGHT` and gives a full record; the other keys, and a result without dense output, use the rows as before.
+  The module has `denseGetAt`, `denseGetAtSlantHeight` and `trajectoryDataFromStep`.
+- **Errors that are not a solver's have types of their own**: `BclibcError` (with `kind` and `code`), `DomainError` (`lhs`, `rhs`),
+  `InvalidArgumentError` and `OutOfBoundsError` (`requestedValue`, `minimumValue`, `maximumValue`). They used to be a plain `Error`.
+  `src/wasm/abi.ts` has the new status codes.
+
+### Changed
+- `BCLIBCFFI_get_layout` has 100 values (was 96): `BaseTrajBuf` is appended at its end, and `src/wasm/abi.ts` reads it (`LAYOUT_FIELD_COUNT` is 100).
+- A drag table of fewer than 2 points, a tolerance out of range and a key beyond the dense output are an `InvalidArgumentError` /
+  `OutOfBoundsError`, no longer a plain `Error` (both are an `Error`, so a `catch` of `Error` still matches).
+- `HitResult.getAtDistance` is documented as the nearest row; for an interpolated point `await hit.getAt(1, distance.foot)`.
+
 ## [3.1.1] - 2026-11-18
 
 ### Changed
@@ -392,7 +414,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/o-murphy/js-ballistics/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0
 [3.1.0-rc.4]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0-rc.3...v3.1.0-rc.4

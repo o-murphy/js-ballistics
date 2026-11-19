@@ -88,6 +88,8 @@ const LAYOUT = {
     // goes at the END of BCLIBCFFI_get_layout(), so no earlier offset moves: add it here, after the last one.
     stepStats: ["accepted", "rejected"],
     zeroInit: ["status", "reserved", "look_angle_rad", "slant_range_ft", "target_x_ft", "target_y_ft", "start_height_ft"],
+    // The growable buffer of base trajectory points (bclibc 2.2).
+    baseTrajBuf: ["data", "count", "capacity"],
 } as const;
 
 type LayoutName = keyof typeof LAYOUT;
@@ -126,6 +128,12 @@ export const Status = {
     ZERO_FINDING: 3,
     INTERCEPTION: 4,
     GENERIC: 5,
+    // the kinds of BCLIBC_Error that are not a solver's (bclibc 2.2; before, all of them were GENERIC)
+    DOMAIN: 6,
+    INVALID_ARGUMENT: 7,
+    OUT_OF_BOUNDS: 8,
+    LOGIC: 9,
+    RUNTIME: 10,
 } as const;
 
 const utf8 = new TextDecoder();
@@ -215,6 +223,23 @@ export function errorFromStatus(view: DataView, errPtr: number, layout: Layout):
             return make(Exceptions.InterceptionError, "InterceptionError");
         case Status.SOLVER_RUNTIME:
             return make(Exceptions.SolverRuntimeError, "SolverRuntimeError");
+        case Status.DOMAIN:
+            return make(Exceptions.DomainError, "DomainError", {
+                lhs: view.getFloat64(errPtr + e.f64_0, true),
+                rhs: view.getFloat64(errPtr + e.f64_1, true),
+            });
+        case Status.INVALID_ARGUMENT:
+            return make(Exceptions.InvalidArgumentError, "InvalidArgumentError");
+        case Status.OUT_OF_BOUNDS:
+            return make(Exceptions.OutOfBoundsError, "OutOfBoundsError", {
+                requestedValue: view.getFloat64(errPtr + e.f64_0, true),
+                minimumValue: view.getFloat64(errPtr + e.f64_1, true),
+                maximumValue: view.getFloat64(errPtr + e.f64_2, true),
+            });
+        case Status.LOGIC:
+            return make(Exceptions.BclibcError, "BclibcError", { kind: "logic", code });
+        case Status.RUNTIME:
+            return make(Exceptions.BclibcError, "BclibcError", { kind: "runtime", code });
         default:
             return new Error(message);
     }
