@@ -10,7 +10,7 @@ and this project adheres to
 
 ## [3.2.0] - 2026-11-19
 
-Built against bclibc `v2.1.0-3-gae72b61` ([bclibc #51](https://github.com/ballistics-lab/bclibc/pull/51), towards 2.2.0): its C ABI tells
+Built against [bclibc v2.2.0](https://github.com/ballistics-lab/bclibc/releases/tag/v2.2.0): its C ABI tells
 the kinds of error apart and has what dense output needs.
 
 ### Added
