@@ -17,7 +17,9 @@ import { Shot } from "./shot";
 import {
     _TrajectoryData,
     _TrajectoryDataInterpKey,
+    BaseTrajData,
     HitOutput,
+    ShotPropsInput,
     TrajFlag,
     TerminationReason,
     WasmManager,
@@ -333,19 +335,32 @@ class HitResult {
     error?: Error;
     readonly filterFlags: TrajFlag;
 
+    /**
+     * The accepted steps of the integrator (dense output), in time order; set only when the shot was fired with
+     * `denseOutput: true`. {@link getAt} interpolates in them (by bclibc) for the keys time, distance, Mach and slant
+     * height, and gives a full record.
+     */
+    readonly denseSteps?: BaseTrajData[];
+
     private _samples?: TrajectoryData[];
     private _events?: TrajectoryData[];
+    /** The shot as the module takes it (with the method and config it was fired with), for the records of dense steps. */
+    private readonly _wasmShot?: ShotPropsInput;
 
     constructor(
         shot: Shot,
         records: TrajectoryData[],
         filterFlags: TrajFlag = TrajFlag.NONE,
-        error?: Error
+        error?: Error,
+        denseSteps?: BaseTrajData[],
+        wasmShot?: ShotPropsInput
     ) {
         this.shot = shot;
         this.records = records;
         this.filterFlags = filterFlags;
         this.error = error;
+        this.denseSteps = denseSteps;
+        this._wasmShot = wasmShot;
     }
 
     /**
@@ -522,6 +537,11 @@ class HitResult {
         );
     }
 
+    /**
+     * The first row at or (to 0.1 ft) before the distance: the nearest row, not an interpolated point. For a point at the
+     * distance itself, `await hit.getAt(1, d.foot)` (the key DISTANCE): it interpolates in the dense output when there is
+     * one, else between the rows.
+     */
     getAtDistance(d: Distance): TrajectoryData {
         const index = this.indexAtDistance(d);
         if (index < 0) {
@@ -542,6 +562,9 @@ class HitResult {
         epsilon: number = 1e-9,
         startFromTime: number = 0.0
     ): Promise<TrajectoryData> {
+        const dense = await this._getAtDense(keyAttribute, value, startFromTime);
+        if (dense) return dense;
+
         const traj = this.records;
         const n = traj.length;
 
@@ -690,6 +713,42 @@ class HitResult {
     }
 
     /**
+     * The point where `keyAttribute` reaches `value`, interpolated in the dense output (bclibc's interpolation) and
+     * turned into a full record with the atmosphere, drag and Coriolis data of the shot; undefined when there is no
+     * dense output or the key has none to interpolate in (dense steps hold time, position, velocity and the speed of sound (not the Mach
+     * number of a row): the keys TIME, DISTANCE and SLANT_HEIGHT are served, the others use the rows). A value the trajectory does not reach
+     * is an `OutOfBoundsError`.
+     */
+    private async _getAtDense(
+        keyAttribute: _TrajectoryDataInterpKey,
+        value: number,
+        startFromTime: number
+    ): Promise<TrajectoryData | undefined> {
+        const steps = this.denseSteps;
+        const wasmShot = this._wasmShot;
+        if (!steps || steps.length === 0 || !wasmShot) return undefined;
+        const bclibc = await WasmManager.init();
+        const base = bclibc._BaseTrajDataInterpKey;
+        let step: BaseTrajData;
+        switch (keyAttribute) {
+            case bclibc._TrajectoryDataInterpKey.TIME:
+                step = bclibc.denseGetAt(steps, base.TIME, value, startFromTime);
+                break;
+            case bclibc._TrajectoryDataInterpKey.DISTANCE:
+                step = bclibc.denseGetAt(steps, base.POS_X, value, startFromTime);
+                break;
+            case bclibc._TrajectoryDataInterpKey.SLANT_HEIGHT:
+                step = bclibc.denseGetAtSlantHeight(steps, wasmShot.look_angle_rad, value);
+                break;
+            default:
+                return undefined;
+        }
+        return TrajectoryData.fromWasmTrajectoryData(
+            bclibc.trajectoryDataFromStep(wasmShot, step, TrajFlag.NONE)
+        );
+    }
+
+    /**
      * Calculate the danger space for a target centered at the given range.
      */
     async dangerSpace(
@@ -763,7 +822,8 @@ class HitResult {
         shot: Shot,
         hit: HitOutput,
         raiseRangeError: boolean = true,
-        filterFlags: TrajFlag = TrajFlag.NONE
+        filterFlags: TrajFlag = TrajFlag.NONE,
+        wasmShot?: ShotPropsInput
     ): HitResult {
         const trajectory = (hit.trajectory as _TrajectoryData[]).map((item) =>
             TrajectoryData.fromWasmTrajectoryData(item)
@@ -784,7 +844,8 @@ class HitResult {
             throw error;
         }
 
-        return new HitResult(shot, trajectory, filterFlags, error);
+        const dense = hit.dense_trajectory.length > 0 ? hit.dense_trajectory : undefined;
+        return new HitResult(shot, trajectory, filterFlags, error, dense, wasmShot);
     }
 }
 

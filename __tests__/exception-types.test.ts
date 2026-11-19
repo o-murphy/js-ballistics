@@ -11,6 +11,10 @@ import {
     ZeroFindingError,
     OutOfRangeError,
     InterceptionError,
+    BclibcError,
+    DomainError,
+    InvalidArgumentError,
+    OutOfBoundsError,
 } from "../src/exceptions";
 import { errorFromStatus, LAYOUT_FIELD_COUNT, layoutIndex, parseLayout, Status } from "../src/wasm/abi";
 import { testWasm } from "./wasmAvailable";
@@ -58,6 +62,38 @@ describe("Exception Type Conversion", () => {
         const e = errorOf(Status.INTERCEPTION, "no intercept");
         expect(e).toBeInstanceOf(InterceptionError);
         expect(e.name).toBe("InterceptionError");
+    });
+
+    test("the kinds that are not a solver's (bclibc 2.2) have types of their own", () => {
+        const domain = errorOf(Status.DOMAIN, "two equal keys", [3.5, 3.5, 0]);
+        expect(domain).toBeInstanceOf(DomainError);
+        expect(domain).toBeInstanceOf(BclibcError);
+        expect(domain).not.toBeInstanceOf(SolverRuntimeError);
+        expect(domain).toMatchObject({ name: "DomainError", kind: "domain", code: 6, lhs: 3.5, rhs: 3.5 });
+
+        const invalid = errorOf(Status.INVALID_ARGUMENT, "bad tolerance");
+        expect(invalid).toBeInstanceOf(InvalidArgumentError);
+        expect(invalid).toMatchObject({ name: "InvalidArgumentError", kind: "invalidArgument", code: 7 });
+
+        const bounds = errorOf(Status.OUT_OF_BOUNDS, "beyond the stream", [1e6, 0, 12.5]);
+        expect(bounds).toBeInstanceOf(OutOfBoundsError);
+        expect(bounds).toMatchObject({
+            name: "OutOfBoundsError",
+            kind: "outOfBounds",
+            code: 8,
+            requestedValue: 1e6,
+            minimumValue: 0,
+            maximumValue: 12.5,
+        });
+
+        for (const [status, kind] of [
+            [Status.LOGIC, "logic"],
+            [Status.RUNTIME, "runtime"],
+        ] as const) {
+            const e = errorOf(status, "inside");
+            expect(e).toBeInstanceOf(BclibcError);
+            expect(e).toMatchObject({ name: "BclibcError", kind, code: status, message: "inside" });
+        }
     });
 
     test("any other status is a plain Error, with the message", () => {

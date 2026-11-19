@@ -166,6 +166,26 @@ class Bclibc {
         };
     }
 
+    private writeBaseTraj(v: DataView, at: number, d: _BaseTrajData): void {
+        const b = this.L.baseTraj;
+        v.setFloat64(at + b.time, d.time, true);
+        v.setFloat64(at + b.px, d.px, true);
+        v.setFloat64(at + b.py, d.py, true);
+        v.setFloat64(at + b.pz, d.pz, true);
+        v.setFloat64(at + b.vx, d.vx, true);
+        v.setFloat64(at + b.vy, d.vy, true);
+        v.setFloat64(at + b.vz, d.vz, true);
+        v.setFloat64(at + b.mach, d.mach, true);
+    }
+
+    /** The steps as an array in the arena (0, a null pointer, for none: the library answers an empty stream itself). */
+    private writeSteps(arena: Arena, steps: _BaseTrajData[]): number {
+        const ptr = arena.alloc(steps.length * this.L.baseTraj.size);
+        const v = arena.view(); // after the allocation: it may have grown the memory
+        steps.forEach((step, i) => this.writeBaseTraj(v, ptr + i * this.L.baseTraj.size, step));
+        return ptr;
+    }
+
     private readBaseTraj(v: DataView, at: number): _BaseTrajData {
         const b = this.L.baseTraj;
         const px = v.getFloat64(at + b.px, true);
@@ -241,6 +261,136 @@ class Bclibc {
         });
 
     private integrate = (shot: _ShotPropsInput, request: _TrajectoryRequest): _HitOutput =>
+        request.dense_output ? this.integrateDense(shot, request) : this.integratePlain(shot, request);
+
+    /**
+     * The trajectory and the accepted steps of the integrator: the fixed-step methods through
+     * BCLIBCFFI_integrate_dense_shot, the adaptive ones through BCLIBCFFI_integrate_adaptive_shot with the tolerances of
+     * the request (default 1e-6).
+     */
+    private integrateDense = (shot: _ShotPropsInput, request: _TrajectoryRequest): _HitOutput =>
+        this.memory.withArena((arena) => {
+            const L = this.L;
+            const props = this.writeShot(arena, shot);
+            const req = arena.alloc(L.request.size);
+            const recordsPtr = arena.alloc(4);
+            const countPtr = arena.alloc(4);
+            const densePtr = arena.alloc(4);
+            const denseCountPtr = arena.alloc(4);
+            const reasonPtr = arena.alloc(4);
+            const statsPtr = arena.alloc(L.stepStats.size);
+            const err = arena.alloc(L.error.size);
+            this.writeRequest(arena.view(), req, request);
+
+            const adaptive = shot.method === 3 || shot.method === 4 || shot.method === 5; // CASH_KARP, DOPRI, TSITOURAS
+            const status = adaptive
+                ? this.ex.BCLIBCFFI_integrate_adaptive_shot(
+                      props,
+                      shot.method,
+                      request.relative_tolerance ?? 1e-6,
+                      request.absolute_tolerance ?? 1e-6,
+                      req,
+                      1, // want_dense
+                      recordsPtr,
+                      countPtr,
+                      densePtr,
+                      denseCountPtr,
+                      reasonPtr,
+                      statsPtr,
+                      err
+                  )
+                : this.ex.BCLIBCFFI_integrate_dense_shot(
+                      props,
+                      req,
+                      1, // want_dense
+                      recordsPtr,
+                      countPtr,
+                      densePtr,
+                      denseCountPtr,
+                      reasonPtr,
+                      err
+                  );
+            this.check(arena, err, status);
+
+            const v = arena.view();
+            const records = v.getUint32(recordsPtr, true);
+            const count = v.getInt32(countPtr, true);
+            const dense = v.getUint32(densePtr, true);
+            const denseCount = v.getInt32(denseCountPtr, true);
+            try {
+                const trajectory: _TrajectoryData[] = [];
+                for (let i = 0; i < count; i++) trajectory.push(this.readTraj(v, records + i * L.traj.size));
+                const steps: _BaseTrajData[] = [];
+                for (let i = 0; i < denseCount; i++) steps.push(this.readBaseTraj(v, dense + i * L.baseTraj.size));
+                return {
+                    trajectory,
+                    dense_trajectory: steps,
+                    reason: v.getInt32(reasonPtr, true) as _HitOutput["reason"],
+                    ...(adaptive
+                        ? {
+                              step_stats: {
+                                  accepted: v.getInt32(statsPtr + L.stepStats.accepted, true),
+                                  rejected: v.getInt32(statsPtr + L.stepStats.rejected, true),
+                              },
+                          }
+                        : {}),
+                };
+            } finally {
+                if (records) this.ex.BCLIBCFFI_free_trajectory(records);
+                if (dense) this.ex.BCLIBCFFI_free_base_trajectory(dense);
+            }
+        });
+
+    private writeRequest(w: DataView, req: number, request: _TrajectoryRequest): void {
+        const r = this.L.request;
+        w.setFloat64(req + r.range_limit_ft, request.range_limit_ft, true);
+        w.setFloat64(req + r.range_step_ft, request.range_step_ft, true);
+        w.setFloat64(req + r.time_step, request.time_step, true);
+        w.setInt32(req + r.filter_flags, request.filter_flags, true);
+    }
+
+    private denseGetAt = (steps: _BaseTrajData[], key: number, value: number, startFromTime: number): _BaseTrajData =>
+        this.memory.withArena((arena) => {
+            const stepsPtr = this.writeSteps(arena, steps);
+            const out = arena.alloc(this.L.baseTraj.size);
+            const err = arena.alloc(this.L.error.size);
+            this.check(
+                arena,
+                err,
+                this.ex.BCLIBCFFI_dense_get_at(stepsPtr, steps.length, key, value, startFromTime, out, err)
+            );
+            return this.readBaseTraj(arena.view(), out);
+        });
+
+    private denseGetAtSlantHeight = (steps: _BaseTrajData[], lookAngleRad: number, value: number): _BaseTrajData =>
+        this.memory.withArena((arena) => {
+            const stepsPtr = this.writeSteps(arena, steps);
+            const out = arena.alloc(this.L.baseTraj.size);
+            const err = arena.alloc(this.L.error.size);
+            this.check(
+                arena,
+                err,
+                this.ex.BCLIBCFFI_dense_get_at_slant_height(stepsPtr, steps.length, lookAngleRad, value, out, err)
+            );
+            return this.readBaseTraj(arena.view(), out);
+        });
+
+    private trajectoryDataFromStep = (shot: _ShotPropsInput, step: _BaseTrajData, flag: number): _TrajectoryData =>
+        this.memory.withArena((arena) => {
+            const props = this.writeShot(arena, shot);
+            const stepPtr = arena.alloc(this.L.baseTraj.size);
+            const out = arena.alloc(this.L.traj.size);
+            const err = arena.alloc(this.L.error.size);
+            this.writeBaseTraj(arena.view(), stepPtr, step);
+            this.check(
+                arena,
+                err,
+                this.ex.BCLIBCFFI_trajectory_data_from_step_shot(props, stepPtr, flag, out, err)
+            );
+            return this.readTraj(arena.view(), out);
+        });
+
+    private integratePlain = (shot: _ShotPropsInput, request: _TrajectoryRequest): _HitOutput =>
         this.memory.withArena((arena) => {
             const L = this.L;
             const props = this.writeShot(arena, shot);
@@ -269,7 +419,7 @@ class Bclibc {
                 for (let i = 0; i < count; i++) trajectory.push(this.readTraj(v, records + i * L.traj.size));
                 return {
                     trajectory,
-                    dense_trajectory: [], // not in the C ABI
+                    dense_trajectory: [], // with `dense_output` the request goes through integrateDense
                     reason: v.getInt32(reasonPtr, true) as _HitOutput["reason"],
                 };
             } finally {
@@ -377,6 +527,9 @@ class Bclibc {
             findZeroPoint: this.findZeroPoint,
             integrateRawAt: this.integrateRawAt,
             integrate: this.integrate,
+            denseGetAt: this.denseGetAt,
+            denseGetAtSlantHeight: this.denseGetAtSlantHeight,
+            trajectoryDataFromStep: this.trajectoryDataFromStep,
         };
     }
 }

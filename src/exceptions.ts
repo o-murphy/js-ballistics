@@ -13,11 +13,15 @@
  * │       └── UnitConversionError
  * ├── ValueError
  * │   └── UnitAliasError
- * └── SolverRuntimeError
- *     ├── ZeroFindingError
- *     ├── RangeError
- *     ├── OutOfRangeError
- *     └── InterceptionError
+ * ├── SolverRuntimeError
+ * │   ├── ZeroFindingError
+ * │   ├── RangeError
+ * │   ├── OutOfRangeError
+ * │   └── InterceptionError
+ * └── BclibcError          (the failures of bclibc that are not a solver's: `kind` tells which)
+ *     ├── DomainError
+ *     ├── InvalidArgumentError
+ *     └── OutOfBoundsError
  */
 
 import { Angular, Distance } from "./unit";
@@ -33,7 +37,13 @@ export {
     RangeError,
     OutOfRangeError,
     InterceptionError,
+    BclibcError,
+    DomainError,
+    InvalidArgumentError,
+    OutOfBoundsError,
 };
+
+export type { BclibcErrorKind };
 
 // ============================================================================
 // Unit-Related Exceptions
@@ -220,5 +230,67 @@ class InterceptionError extends SolverRuntimeError {
         super(message);
         this.name = "InterceptionError";
         this.lastData = lastData;
+    }
+}
+
+// ============================================================================
+// Failures of bclibc that are not a solver's (bclibc 2.2 tells them apart: BCLIBCFFI_ERR_DOMAIN, ...)
+// ============================================================================
+
+/** What kind of failure a {@link BclibcError} is (the status code of the C ABI, by name). */
+type BclibcErrorKind = "domain" | "invalidArgument" | "outOfBounds" | "logic" | "runtime";
+
+/**
+ * A failure of bclibc that is not a solver's: {@link DomainError}, {@link InvalidArgumentError} and
+ * {@link OutOfBoundsError} are the ones with fields of their own; `logic` (a defect inside the library) and `runtime`
+ * (any other failure) come as a plain BclibcError. Before bclibc 2.2 these were a plain `Error`.
+ */
+class BclibcError extends Error {
+    public kind: BclibcErrorKind;
+    /** The status code of the C ABI (`BCLIBCFFI_Status`). */
+    public code: number;
+
+    constructor(message?: string, kind: BclibcErrorKind = "runtime", code: number = 10) {
+        super(message);
+        this.name = "BclibcError";
+        this.kind = kind;
+        this.code = code;
+    }
+}
+
+/** Inputs the operation cannot work with: a degenerate interpolation segment, too few points. */
+class DomainError extends BclibcError {
+    /** The two values that could not be told apart or worked with (for example the first two equal keys). */
+    public lhs: number;
+    public rhs: number;
+
+    constructor(message?: string, lhs: number = 0, rhs: number = 0) {
+        super(message, "domain", 6);
+        this.name = "DomainError";
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+/** An argument that is not acceptable: a drag table of fewer than 2 points, a tolerance out of range, an unknown key. */
+class InvalidArgumentError extends BclibcError {
+    constructor(message?: string) {
+        super(message, "invalidArgument", 7);
+        this.name = "InvalidArgumentError";
+    }
+}
+
+/** An index or a value outside the data: a key beyond the dense output (with the range of the stream). */
+class OutOfBoundsError extends BclibcError {
+    public requestedValue: number;
+    public minimumValue: number;
+    public maximumValue: number;
+
+    constructor(message?: string, requestedValue: number = 0, minimumValue: number = 0, maximumValue: number = 0) {
+        super(message, "outOfBounds", 8);
+        this.name = "OutOfBoundsError";
+        this.requestedValue = requestedValue;
+        this.minimumValue = minimumValue;
+        this.maximumValue = maximumValue;
     }
 }

@@ -227,7 +227,10 @@ class Calculator {
      * @param options.trajectoryStep The step size for trajectory calculations (default: range/10)
      * @param options.timeStep Time step for integration (default: 0)
      * @param options.filterFlags Trajectory data filter flags (default: ALL)
-     * @param options.denseOutput Whether to generate dense output (default: false)
+     * @param options.denseOutput Whether to also keep the accepted steps of the integrator (default: false): `HitResult.denseSteps`,
+     *     which `HitResult.getAt` interpolates in (time, distance, slant height)
+     * @param options.relativeTolerance Relative tolerance of the adaptive methods (CASH_KARP, DOPRI, TSITOURAS) with `denseOutput` (default: 1e-6)
+     * @param options.absoluteTolerance Absolute tolerance of the adaptive methods with `denseOutput` (default: 1e-6)
      * @param options.raiseRangeError Should throw an error on termination (default: false)
      * @returns The complete trajectory result including hit data
      *
@@ -262,6 +265,8 @@ class Calculator {
         timeStep = 0.0,
         filterFlags = TrajFlag.RANGE,
         denseOutput = false,
+        relativeTolerance,
+        absoluteTolerance,
         raiseRangeError = true,
     }: {
         shot: Shot;
@@ -270,6 +275,8 @@ class Calculator {
         timeStep?: number;
         filterFlags?: TrajFlag;
         denseOutput?: boolean;
+        relativeTolerance?: number;
+        absoluteTolerance?: number;
         raiseRangeError?: boolean;
     }): Promise<HitResult> {
         // Convert trajectory range to Distance
@@ -293,14 +300,14 @@ class Calculator {
             time_step: timeStep,
             dense_output: denseOutput,
             filter_flags: filterFlags as unknown as _TrajFlag,
+            ...(relativeTolerance !== undefined ? { relative_tolerance: relativeTolerance } : {}),
+            ...(absoluteTolerance !== undefined ? { absolute_tolerance: absoluteTolerance } : {}),
         };
 
         // Calculate trajectory
-        const hit_out: HitOutput = engine.integrate(
-            shot.toWasmShotProps(this.method, this.config),
-            request
-        );
+        const wasmShot = shot.toWasmShotProps(this.method, this.config);
+        const hit_out: HitOutput = engine.integrate(wasmShot, request);
 
-        return HitResult.fromWasmHitOutput(shot, hit_out, raiseRangeError, filterFlags);
+        return HitResult.fromWasmHitOutput(shot, hit_out, raiseRangeError, filterFlags, wasmShot);
     }
 }
