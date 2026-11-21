@@ -8,6 +8,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+- Built against [bclibc v2.2.1](https://github.com/ballistics-lab/bclibc/releases/tag/v2.2.1) (was v2.2.0). It adds `BCLIBCFFI_integrate_dense_shot_stats` (step count of a fixed-step integration) and fixes the step count of a call that takes no step; `BCLIBCFFI_get_layout` is unchanged (100 values). No API changes.
+
 ## [3.2.0] - 2026-11-19
 
 Built against [bclibc v2.2.0](https://github.com/ballistics-lab/bclibc/releases/tag/v2.2.0): its C ABI tells
