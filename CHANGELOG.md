@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-11-21
+
 ### Changed
 - Built against [bclibc v2.2.1](https://github.com/ballistics-lab/bclibc/releases/tag/v2.2.1) (was v2.2.0). It adds `BCLIBCFFI_integrate_dense_shot_stats` (step count of a fixed-step integration) and fixes the step count of a call that takes no step; `BCLIBCFFI_get_layout` is unchanged (100 values). No API changes.
 
@@ -417,7 +419,8 @@ Maintenance release: no source or API changes.
 
 ---
 
-[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/o-murphy/js-ballistics/compare/v3.2.1...HEAD
+[3.2.1]: https://github.com/o-murphy/js-ballistics/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/o-murphy/js-ballistics/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/o-murphy/js-ballistics/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/o-murphy/js-ballistics/compare/v3.0.0...v3.1.0
